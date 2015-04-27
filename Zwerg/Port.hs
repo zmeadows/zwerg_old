@@ -13,18 +13,17 @@ fclabels [d|
             | OverWorld deriving (Show, Read, Eq)
   |]
 
-
 processMove :: Direction -> System Port
 processMove dir = movePlayer dir >> return OverWorld
 
 processInput :: Port -> (KeyMod, KeyCode) -> System Port
-processInput OverWorld (None, Letter 'w') = processMove North
+processInput OverWorld (None, Letter 'k') = processMove North
 
-processInput OverWorld (None, Letter 'a') = processMove West
+processInput OverWorld (None, Letter 'h') = processMove West
 
-processInput OverWorld (None, Letter 's') = processMove South
+processInput OverWorld (None, Letter 'j') = processMove South
 
-processInput OverWorld (None, Letter 'd') = processMove East
+processInput OverWorld (None, Letter 'l') = processMove East
 
 processInput port _ = return port
 
