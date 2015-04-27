@@ -1,4 +1,5 @@
-{-# LANGUAGE CPP, TemplateHaskell, TypeOperators, OverloadedStrings, GeneralizedNewtypeDeriving, TupleSections #-}
+{-# LANGUAGE CPP, TemplateHaskell, TypeOperators, OverloadedStrings,
+    GeneralizedNewtypeDeriving, TupleSections #-}
 module Zwerg.Entity where
 
 import Zwerg.Types
@@ -62,8 +63,6 @@ emptyEntities = Entities I.empty I.empty I.empty I.empty
                          I.empty I.empty I.empty I.empty
                          I.empty I.empty I.empty I.empty I.empty
                          0 (-1)
-
-
 
 getNextUUID :: System Int
 getNextUUID = do

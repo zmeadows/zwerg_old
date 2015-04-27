@@ -5,8 +5,6 @@ import Zwerg.Types
 import Zwerg.Entity
 import Zwerg.Port
 
--- import Prelude hiding ((.))
--- import Control.Category ((.))
 import Data.Label
 import Data.Label.Monadic
 import Control.Monad.State.Strict hiding (gets)
