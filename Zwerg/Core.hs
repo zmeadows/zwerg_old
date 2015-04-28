@@ -20,7 +20,7 @@ fclabels [d|
       entities    :: Entities,
       port        :: Port,
       timeElapsed :: Double,
-      ticks       :: Int,
+      ticksElapsed       :: Int,
       messages    :: [(Text, Color)],
       glyphMap    :: Map Position Glyph,
       randGen     :: PureMT
@@ -29,8 +29,8 @@ fclabels [d|
 
 type ZWERG = State ZWERGState
 
-initZwergState :: Entities -> PureMT -> ZWERGState
-initZwergState ets = ZWERGState ets OverWorld 0.0 0 [] M.empty
+_INITZWERGSTATE :: ZWERGState
+_INITZWERGSTATE = ZWERGState emptyEntities mainMenu 0.0 0 [] M.empty (pureMT 0)
 
 clearMessages :: ZWERG ()
 clearMessages = messages =: []
@@ -53,7 +53,11 @@ returnWithGlyphs :: System a -> System (a, [(Position, Glyph)])
 returnWithGlyphs sys = do
     res <- sys
     uuid <- gets playerUUID
-    layerUUID <- unsafeLookupComp uuid layer
-    ug <- getUpdatedGlyphs layerUUID
-    return (res,ug)
+    if (uuid /= (-1))
+      then do
+        layerUUID <- unsafeLookupComp uuid layer
+        ug <- getUpdatedGlyphs layerUUID
+        return (res,ug)
+      else (return (res, []))
+
 
