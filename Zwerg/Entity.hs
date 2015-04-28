@@ -57,12 +57,11 @@ newtype System a = System (ExceptT ZWERGError (RandT PureMT (State Entities)) a)
   deriving (Functor, Applicative, Monad, MonadState Entities,
             MonadError ZWERGError, MonadRandom)
 
+-- TODO: use fold to do this?
 emptyEntities :: Entities
-emptyEntities = Entities I.empty I.empty I.empty I.empty
-                         I.empty I.empty I.empty I.empty
-                         I.empty I.empty I.empty I.empty
-                         I.empty I.empty I.empty I.empty I.empty
-                         0 (-1)
+emptyEntities = Entities I.empty I.empty I.empty I.empty I.empty I.empty I.empty
+                         I.empty I.empty I.empty I.empty I.empty I.empty I.empty
+                         I.empty I.empty I.empty 0 (-1)
 
 getNextUUID :: System Int
 getNextUUID = do
