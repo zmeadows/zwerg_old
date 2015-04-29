@@ -17,13 +17,13 @@ import Data.Map.Strict as M
 
 fclabels [d|
   data ZWERGState = ZWERGState {
-      entities    :: Entities,
-      port        :: Port,
-      timeElapsed :: Double,
-      ticksElapsed       :: Int,
-      messages    :: [(Text, Color)],
-      glyphMap    :: Map Position Glyph,
-      randGen     :: PureMT
+      entities     :: Entities,
+      port         :: Port,
+      timeElapsed  :: Double,
+      ticksElapsed :: Int,
+      messages     :: [ZString],
+      glyphMap     :: Map Position Glyph,
+      randGen      :: PureMT
       } deriving (Show)
   |]
 
@@ -46,18 +46,19 @@ modifyEntities sys = do
           entities =: newEntities
           port =: newPort
           glyphMap =. M.union (M.fromList ug)
-      Left (PlayerError txt) -> messages =. ((txt, Red) :)
-      Left (FatalError ln txt) ->  error (T.unpack txt ++ " LINE NUMBER: " ++ show ln)
+      Left (PlayerError txt) -> messages =.  (:) (txt, _PLAYER_ERR_ATTR)
+      Left (FatalError ln txt) ->
+        error (T.unpack txt ++ " LINE NUMBER: " ++ show ln)
 
 returnWithGlyphs :: System a -> System (a, [(Position, Glyph)])
 returnWithGlyphs sys = do
     res <- sys
     uuid <- gets playerUUID
-    if (uuid /= (-1))
+    if uuid /= (-1)
       then do
         layerUUID <- unsafeLookupComp uuid layer
         ug <- getUpdatedGlyphs layerUUID
         return (res,ug)
-      else (return (res, []))
+      else return (res, [])
 
 
