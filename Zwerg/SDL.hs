@@ -2,19 +2,15 @@
 module Zwerg.SDL where
 
 import Zwerg.Core
--- import Zwerg.Entity
--- import Zwerg.Layer.Simple
 import Zwerg.Port
--- import Zwerg.Entity.Player
 import Zwerg.Types
 import Zwerg.SDL.Util
 
 import Prelude hiding ((.))
 import Control.Category ((.))
-import Data.Label (fclabels, (:->))
+import Data.Label (get,fclabels, (:->))
 import Data.Label.Monadic ((=:), (=.), gets, puts)
 
--- import System.Random.Mersenne.Pure64 (pureMT)
 import Control.Monad.State.Strict (StateT, execState)
 import Control.Monad (when, replicateM_, liftM, void)
 import Control.Monad.IO.Class (liftIO)
@@ -36,11 +32,16 @@ import Foreign (Ptr, nullPtr, with, alloca, maybePeek, peek)
 import Data.Text (Text)
 import qualified Data.Text as T (unpack)
 
--- import Data.Char (chr)
+import Data.Char (chr)
 
 import System.Exit (exitFailure, exitSuccess)
 
 fclabels [d|
+    data GlyphTexture = GlyphTexture {
+        texture       :: SDL.Texture,
+        textureDims  :: (CInt, CInt)
+    } deriving (Show, Eq, Ord)
+
     data ZWERGSDLState = ZWERGSDLState {
         zwergState       :: ZWERGState,
         window           :: SDL.Window,
@@ -49,11 +50,13 @@ fclabels [d|
         fontBold         :: TTFFont,
         fontItalic       :: TTFFont,
         fontBoldItalic   :: TTFFont,
-        glyphTextureDims :: (Int, Int),
-        glyphTextureMap  :: Map Glyph SDL.Texture,
+        maxGlyphTextureDims :: (CInt, CInt),
+        glyphTextureMap  :: Map Glyph GlyphTexture,
         logoTexture      :: SDL.Texture
     } deriving (Show)
   |]
+
+
 
 type ZWERGSDL a = StateT ZWERGSDLState IO a
 
@@ -72,7 +75,7 @@ _STATSUBWIN  = SDL.Rect 961 0   320 720
 _MSGSUBWIN   = SDL.Rect 0   541 960 180
 
 _REGFONTPATH, _BOLDFONTPATH, _ITALICFONTPATH, _BOLDITALICFONTPATH :: String
-_REGFONTPATH        = "/Users/zac/Code/mine/zwerg/assets/fonts/LiberationMono-Regular.ttf"
+_REGFONTPATH        = "/Users/zac/Code/mine/zwerg/assets/fonts/SourceCodePro-Regular.ttf"
 _BOLDFONTPATH       = "/Users/zac/Code/mine/zwerg/assets/fonts/LiberationMono-Bold.ttf"
 _ITALICFONTPATH     = "/Users/zac/Code/mine/zwerg/assets/fonts/LiberationMono-Italic.ttf"
 _BOLDITALICFONTPATH = "/Users/zac/Code/mine/zwerg/assets/fonts/LiberationMono-BoldItalic.ttf"
@@ -142,11 +145,16 @@ initFonts = do
                     (fontBoldItalic, _BOLDITALICFONTPATH)]
 
     rf <- gets fontRegular
-    liftIO (TTF.sizeText rf "@") >>= puts glyphTextureDims
+    let allChars = map (\i -> [chr i]) [32..126]
+    chdims <- mapM (liftIO . TTF.sizeText rf) allChars
+    let maxWidth = maximum $ map fst chdims
+        maxHeight = maximum $ map snd chdims
+    puts maxGlyphTextureDims (fromIntegral maxWidth, fromIntegral maxHeight)
+    liftIO $ print $ quot 1280 maxWidth
 
 initFont :: (ZWERGSDLState :-> TTFFont, String) -> ZWERGSDL ()
 initFont (fontLens, fontPath) = do
-    _font <- liftIO $ TTF.openFont fontPath 15
+    _font <- liftIO $ TTF.openFont fontPath 20
     checkPTR _font $ "SDL_TTF failed to initialize font: " ++ fontPath
     liftIO $ TTF.setFontHinting _font TTFHLight
     fontLens =: _font
@@ -157,17 +165,18 @@ getFont ft = gets $ case ft of FontRegular -> fontRegular
                                FontItalic -> fontItalic
                                FontBoldItalic -> fontBoldItalic
 
-glyphToTexture :: Glyph -> ZWERGSDL SDL.Texture
-glyphToTexture (Glyph ch ft fg bg fa ba) = do
+glyphToTexture :: Glyph -> ZWERGSDL GlyphTexture
+glyphToTexture (ch, Attributes ft fg bg fa ba) = do
     ren <- gets renderer
     font <- getFont ft
     glyphSurface <- liftIO $ TTF.renderTextShaded font [ch]
                                 (makeSDLColor fg fa) (makeSDLColor bg ba)
     glyphTexture <- SDL.createTextureFromSurface ren glyphSurface
+    (w,h) <- liftIO $ TTF.sizeText font [ch]
     SDL.freeSurface glyphSurface
-    return glyphTexture
+    return (GlyphTexture glyphTexture (fromIntegral w, fromIntegral h))
 
-getGlyphTexture :: Glyph -> ZWERGSDL SDL.Texture
+getGlyphTexture :: Glyph -> ZWERGSDL GlyphTexture
 getGlyphTexture glyph = do
     gt <- liftM (M.lookup glyph) $ gets glyphTextureMap
     maybe (do
@@ -184,14 +193,37 @@ drawText sw ft fg bg (x,y) str = do
                                 (makeSDLColor fg 0) (makeSDLColor bg 0)
     textTexture <- SDL.createTextureFromSurface ren textSurface
     SDL.freeSurface textSurface
-    (w,h) <- liftIO $ TTF.sizeText font (T.unpack str)
+    (w, h) <- liftIO $ TTF.sizeText font (T.unpack str)
     let loc = SDL.Rect x y (fromIntegral w) (fromIntegral h)
     void $ liftIO $ with loc $ \loc' ->
                 SDL.renderCopy ren textTexture nullPtr loc'
 
+-- (x,y) are map tile positions, not pixel positions
+-- i.e. same as position in Entities.hs
+drawGlyph :: (Int,Int) -> Glyph -> ZWERGSDL ()
+drawGlyph (i,j) glyph = do
+    ren <- gets renderer
+    switchSubWindow ren _WHOLESCREEN
+    glyphTexture <- getGlyphTexture glyph
+    (maxW, maxH) <- gets maxGlyphTextureDims
+
+    let (w',h') = get textureDims glyphTexture
+        x0 = i * fromIntegral maxW
+        y0 = j * fromIntegral maxH
+        x' = x0 + floor (0.5 * (fromIntegral maxW - fromIntegral w'))
+        y' = y0 + floor (0.5 * (fromIntegral maxH - fromIntegral h'))
+        loc = makeSDLRect x' y' w' h'
+        gtxt = get texture glyphTexture
+    void $ liftIO $ with loc $ \loc' ->
+                SDL.renderCopy ren gtxt nullPtr loc'
+
 switchSubWindow :: SDL.Renderer -> SDL.Rect -> ZWERGSDL ()
 switchSubWindow ren rect = liftIO (with rect $ \rectPtr ->
     SDL.renderSetViewport ren rectPtr) >>= checkRC "failed to switch SDL viewport"
+
+makeSDLRect x y w h = SDL.Rect (fromIntegral x) (fromIntegral y)
+                               (fromIntegral w) (fromIntegral h)
+
 
 drawScreen :: Port -> ZWERGSDL ()
 
@@ -218,11 +250,15 @@ drawScreen (MainMenu entries focus) = do
 
 drawScreen OverWorld = do
     ren <- gets renderer
-    SDL.setRenderDrawColor ren 240 240 240 0
+    SDL.setRenderDrawColor ren 25 25 25 0
        >>= checkRC "failed to set draw color"
     SDL.renderClear ren
        >>= checkRC "failed to clear screen"
+
+    gm <- liftM M.toList $ gets (glyphMap . zwergState)
+    mapM_ (uncurry drawGlyph) gm
     SDL.renderPresent ren
+
 
 drawScreen _ = return ()
 
@@ -235,7 +271,6 @@ getEvent = alloca $ \ptr -> do
 
 eventLoop :: ZWERGSDL ()
 eventLoop = do
-    gets (port . zwergState) >>= drawScreen
     mbEvent <- liftIO getEvent
     case mbEvent of
       Just ev -> handleEvent ev >> eventLoop
@@ -247,13 +282,13 @@ handleEvent ke@SDL.KeyboardEvent{ SDL.keyboardEventState = SDL.SDL_PRESSED }  = 
    let ks = SDL.keyboardEventKeysym ke
        kc = convertSDLKeyCode $ SDL.keysymKeycode ks
        km = convertSDLKeyMod $ SDL.keysymMod ks
-   liftIO $ print (kc,km)
    p <- gets (port . zwergState)
    zwergState =. execState (modifyEntities $ processInput p (km,kc))
+   gets (port . zwergState) >>= drawScreen
 
 handleEvent SDL.QuitEvent{} = closeGraphics
 
-handleEvent _ = return ()
+handleEvent ev = return ()
 
 -- renderGlyphMap :: ZWERGSDL ()
 -- renderGlyphMap = do
