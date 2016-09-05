@@ -1,5 +1,0 @@
-module Zwerg.Layer where
-
-_LAYERWIDTH, _LAYERHEIGHT :: Int
-_LAYERWIDTH = 105
-_LAYERHEIGHT = 35
