@@ -1,0 +1,113 @@
+name:                zwerg
+version:             0.1.0.0
+synopsis:            A purely-functional roguelike game.
+description:         see README.md
+homepage:            http://github.com/zmeadows/zwerg
+license:             MIT
+license-file:        LICENSE
+author:              Z. Meadows
+maintainer:          zmeadows@gmail.com
+copyright:           2015 Zachary Meadows
+category:            Game
+build-type:          Simple
+cabal-version:       >=1.10
+
+data-files:          assets/glyphs/*.bmp
+                     assets/fonts/*.ttf
+
+library
+  default-language:    Haskell2010
+
+  ghc-options:         -Wall
+                       -optc-O3
+                       -optc-ffast-math
+
+  hs-source-dirs:      lib/
+
+  exposed-modules:     Zwerg
+                       Zwerg.Action
+                       Zwerg.Behavior
+                       Zwerg.Component
+                       Zwerg.Component.EntityType
+                       Zwerg.Component.Equipment
+                       Zwerg.Component.Glyph
+                       Zwerg.Component.HP
+                       Zwerg.Component.Parent
+                       Zwerg.Component.Position
+                       Zwerg.Component.Stats
+                       Zwerg.Component.Tiles
+                       Zwerg.Component.TileType
+                       Zwerg.Component.UUID
+                       Zwerg.Const
+                       Zwerg.Data.Color
+                       Zwerg.Data.Error
+                       Zwerg.Data.RanGen
+                       Zwerg.Data.UUIDGen
+                       Zwerg.Data.UUIDMap
+                       Zwerg.Data.UUIDSet
+                       Zwerg.Event
+                       Zwerg.EventTree
+                       Zwerg.Game
+                       Zwerg.Generator
+                       Zwerg.Generator.Level
+                       Zwerg.Log
+                       Zwerg.Options
+                       Zwerg.Sound
+                       Zwerg.System
+                       Zwerg.UI
+                       Zwerg.UI.Animation
+                       Zwerg.UI.Backend.SDL
+                       Zwerg.UI.Backend.SDL.Texture
+                       Zwerg.UI.GlyphMap
+                       Zwerg.UI.Input
+                       Zwerg.UI.Port
+                       Zwerg.UI.Font
+                       Zwerg.Util
+                       Paths_zwerg
+
+  other-modules:       Zwerg.Component.All
+
+  build-depends:       base >= 4.7 && < 5,
+                       containers,
+                       unordered-containers,
+                       hashable,
+                       vector,
+                       linear,
+                       lens,
+                       mersenne-random-pure64,
+                       text,
+                       deepseq,
+                       mtl,
+                       transformers,
+                       MonadRandom,
+                       colour,
+                       sdl2,
+                       sdl2-ttf,
+                       filepath,
+                       StateVar
+
+  default-extensions:  GeneralizedNewtypeDeriving,
+                       TemplateHaskell,
+                       RankNTypes,
+                       DeriveGeneric,
+                       TupleSections,
+                       DeriveTraversable,
+                       TypeFamilies,
+                       OverloadedStrings,
+                       Strict,
+                       CPP
+
+executable zwerg
+  hs-source-dirs:      src/
+
+  main-is:             Main.hs
+
+  default-language:    Haskell2010
+
+  ghc-options:         -Wall
+                       -optc-O3
+                       -optc-ffast-math
+
+  build-depends:       base >= 4.7 && < 5, zwerg
+
+
