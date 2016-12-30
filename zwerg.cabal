@@ -83,6 +83,8 @@ library
                        sdl2,
                        sdl2-ttf,
                        filepath,
+                       binary,
+                       vector-binary-instances,
                        StateVar
 
   default-extensions:  GeneralizedNewtypeDeriving,
@@ -91,6 +93,7 @@ library
                        DeriveGeneric,
                        TupleSections,
                        DeriveTraversable,
+                       StandaloneDeriving,
                        TypeFamilies,
                        OverloadedStrings,
                        Strict,

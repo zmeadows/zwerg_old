@@ -2,11 +2,11 @@ module Zwerg.Component.Equipment where
 
 import Zwerg.Component.UUID (UUID)
 
-import Data.HashMap.Strict (HashMap)
-import qualified Data.HashMap.Strict as HM
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 
 import GHC.Generics (Generic)
-import Data.Hashable (Hashable)
+import Data.Binary
 
 data EquipmentSlot =
       Gloves
@@ -18,14 +18,16 @@ data EquipmentSlot =
     | Boots
     deriving (Show, Read, Eq, Ord, Enum, Generic)
 
-instance Hashable EquipmentSlot
+instance Binary EquipmentSlot
 
-newtype Equipment = MkEquipment (HashMap EquipmentSlot UUID)
-    deriving (Show, Read, Eq)
+newtype Equipment = MkEquipment (Map EquipmentSlot UUID)
+    deriving (Show, Read, Eq, Generic)
+
+instance Binary Equipment
 
 {-# INLINABLE emptyEquipment #-}
 emptyEquipment :: Equipment
-emptyEquipment = MkEquipment HM.empty
+emptyEquipment = MkEquipment M.empty
 
 {-# INLINABLE isHand #-}
 isHand :: EquipmentSlot -> Bool
@@ -36,12 +38,12 @@ isHand _ = False
 {-# INLINABLE removeEquipment #-}
 removeEquipment :: EquipmentSlot -> Equipment -> Maybe (Equipment, UUID)
 removeEquipment slot (MkEquipment eqp) =
-    HM.lookup slot eqp >>= \uuid -> Just (MkEquipment $ HM.delete slot eqp, uuid)
+    M.lookup slot eqp >>= \uuid -> Just (MkEquipment $ M.delete slot eqp, uuid)
 
 {-# INLINABLE replaceEquipment #-}
 replaceEquipment :: EquipmentSlot -> UUID -> Equipment -> (Maybe UUID, Equipment)
 replaceEquipment slot eqid (MkEquipment eqp) =
-    let newEqp = MkEquipment $ HM.insert slot eqid eqp in
-        case HM.lookup slot eqp of
+    let newEqp = MkEquipment $ M.insert slot eqid eqp in
+        case M.lookup slot eqp of
           Just oldEqID -> (Just oldEqID, newEqp)
           Nothing -> (Nothing, newEqp)

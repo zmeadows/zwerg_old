@@ -3,4 +3,4 @@ packages:
 - location: '.'
 extra-deps:
 - sdl2-ttf-1.0.0
-resolver: nightly-2016-09-04
+resolver: lts-7.14

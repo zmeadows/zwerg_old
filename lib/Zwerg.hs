@@ -1,9 +1,12 @@
 module Zwerg where
 
+
 import Zwerg.UI
 import Zwerg.UI.Backend.SDL
 import Zwerg.UI.Font
 import Zwerg.Game
+
+import qualified SDL
 
 import Zwerg.Data.Color (mkColor)
 import Zwerg.Component.Glyph
@@ -13,7 +16,9 @@ import Control.Concurrent (threadDelay)
 import Control.Monad.State (StateT, MonadState, runStateT)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 
-import Control.Lens (makeClassy)
+import Control.Lens (makeClassy, use)
+
+import Control.Monad (forM_)
 
 data ZwergState = ZwergState
     { _sdlContext  :: BackendContext
@@ -24,9 +29,9 @@ makeClassy ''ZwergState
 
 initZwergState :: ZwergState
 initZwergState = ZwergState
-    { _sdlContext = uninitializedBackendContext
+    { _sdlContext  = uninitializedBackendContext
     , _zsGameState = emptyGameState
-    , _zsUI = initUI
+    , _zsUI        = initUI
     }
 
 instance HasGameState ZwergState where
@@ -53,11 +58,12 @@ runZwerg (Zwerg a) = runStateT a initZwergState
 test :: Zwerg ()
 test = do
     initBackend
-    blitGlyph (Glyph Normal 'b' $ mkColor 200 0 200) $ mkPosition (0,0)
-    blitGlyph (Glyph Normal 'c' $ mkColor 200 0 200) $ mkPosition (1,0)
+
+    forM_ [ (x',y') | x' <- [0..60], y' <- [0..20] ] $ \(x,y) ->
+       blitGlyph (Glyph Normal '.' $ mkColor 200 200 200) $ mkPosition (x,y)
+
     ren <- use (sdlContext . renderer)
     SDL.present ren
-    liftIO $ putStrLn "asdf"
-    liftIO $ threadDelay 90000000
+    liftIO $ threadDelay 10000000
     shutdownBackend
 

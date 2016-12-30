@@ -36,14 +36,20 @@ import Control.Lens (
     (<&>)
     )
 
+import Data.Binary
+import GHC.Generics (Generic)
+
 newtype UUIDMap a = MkUUIDMap (IntMap a)
     deriving (
         Functor,
         Foldable,
         Traversable,
         Monoid,
+        Generic,
         Show, Read, Eq, Ord
     )
+
+instance Binary a => Binary (UUIDMap a)
 
 type instance IxValue (UUIDMap a) = a
 

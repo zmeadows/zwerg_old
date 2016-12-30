@@ -5,12 +5,12 @@ import Zwerg.Const (mapWidth, mapHeight)
 import Control.Exception.Base (assert)
 
 import GHC.Generics (Generic)
-import Data.Hashable (Hashable)
+import Data.Binary
 
 newtype Position = MkPosition (Int,Int)
     deriving (Show, Read, Eq, Ord, Generic)
 
-instance Hashable Position
+instance Binary Position
 
 data Metric = Euclidean | TaxiCab
     deriving (Show, Read, Eq)
@@ -41,7 +41,7 @@ distanceBetween metric (MkPosition (x1,y1)) (MkPosition (x2,y2)) =
         x2' = fromIntegral x2
         y2' = fromIntegral y2
     in case metric of
-         Euclidean -> sqrt $ (x1' - x2')**2 + (y1' - y2')**2
+         Euclidean -> sqrt $ (x1' - x2')**2.0 + (y1' - y2')**2.0
          TaxiCab -> abs (x1' - x2') + abs (y1' - y2')
 
 {-# INLINABLE modifyPosition #-}

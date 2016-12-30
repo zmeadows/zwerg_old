@@ -7,9 +7,13 @@ module Zwerg.Component.HP (
     ) where
 
 import Control.Exception.Base (assert)
+import GHC.Generics (Generic)
+import Data.Binary
 
 newtype HP = MkHP (Int,Int)
-    deriving (Show, Read, Eq, Ord)
+    deriving (Show, Read, Eq, Ord, Generic)
+
+instance Binary HP
 
 {-# INLINABLE mkHP #-}
 mkHP :: (Int,Int) -> HP

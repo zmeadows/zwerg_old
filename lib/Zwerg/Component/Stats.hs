@@ -1,30 +1,32 @@
 module Zwerg.Component.Stats where
 
-import Data.HashMap.Strict (HashMap)
-import qualified Data.HashMap.Strict as HM
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 
 import GHC.Generics (Generic)
-import Data.Hashable (Hashable)
+import Data.Binary
 
 data Stat = STR | DEX | INT | CHA | CON | WIS
     deriving (Read, Show, Eq, Ord, Enum, Generic)
 
-instance Hashable Stat
+instance Binary Stat
 
 newtype StatMod = MkStatMod (Stat,Int)
-    deriving (Read, Show, Eq, Ord)
+    deriving (Read, Show, Eq, Ord, Generic)
 
-newtype Stats = MkStats (HashMap Stat Int)
-    deriving (Show, Read, Eq)
+newtype Stats = MkStats (Map Stat Int)
+    deriving (Show, Read, Eq, Generic)
+
+instance Binary Stats
 
 {-# INLINABLE zeroStats #-}
 zeroStats :: Stats
-zeroStats = MkStats $ HM.fromList $ map (,0) $ enumFrom $ toEnum 0
+zeroStats = MkStats $ M.fromList $ fmap (,0) $ enumFrom $ toEnum 0
 
 {-# INLINABLE lookupStat #-}
 lookupStat :: Stat -> Stats -> Int
-lookupStat s (MkStats m) = m HM.! s
+lookupStat s (MkStats m) = m M.! s
 
 {-# INLINABLE replaceStat #-}
 replaceStat :: Stat -> Int -> Stats -> Stats
-replaceStat s v (MkStats m) = MkStats $ HM.insert s v m
+replaceStat s v (MkStats m) = MkStats $ M.insert s v m

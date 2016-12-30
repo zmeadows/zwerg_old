@@ -5,25 +5,26 @@ module Zwerg.Data.Color (
     toV3
     ) where
 
-import Data.Colour
-import Data.Colour.SRGB
 import Data.Word (Word8)
 
 import Linear (V3(..))
 
-newtype Color = MkColor (Colour Float)
-    deriving (Show, Read, Eq)
+import GHC.Generics (Generic)
+import Data.Binary
+
+newtype Color = MkColor (Word8,Word8,Word8)
+    deriving (Show, Read, Eq, Generic)
+
+instance Binary Color
 
 {-# INLINABLE mkColor #-}
 mkColor :: Word8 -> Word8 -> Word8 -> Color
-mkColor r g b = MkColor $ sRGB24 r g b
+mkColor r g b = MkColor (r,g,b)
 
 {-# INLINABLE toRGB #-}
 toRGB :: Color -> (Word8,Word8,Word8)
-toRGB (MkColor c) = go $ toSRGB24 c
-    where go rgb = (channelRed rgb, channelGreen rgb, channelBlue rgb)
+toRGB (MkColor c) = c
 
 {-# INLINABLE toV3 #-}
 toV3 :: Color -> V3 Word8
-toV3 (MkColor c) = go $ toSRGB24 c
-    where go rgb = V3 (channelRed rgb) (channelGreen rgb) (channelBlue rgb)
+toV3 (MkColor (r,g,b)) = V3 r g b

@@ -6,10 +6,12 @@ import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Data.UUIDMap (UUIDMap)
 import qualified Zwerg.Data.UUIDMap as UM
 
+import Data.Binary
 import Data.Text (Text)
 import Data.Maybe (isJust, fromJust)
 import Control.Monad.State.Strict (MonadState)
 import Control.Exception.Base (assert)
+import GHC.Generics (Generic)
 
 import Control.Lens (
     makeClassy,
@@ -37,8 +39,10 @@ data Components = Components
     , _blocked     :: UUIDMap Bool
     , _needsRedraw :: UUIDMap Bool
     , _playerUUID  :: UUID
-    } deriving (Show, Read, Eq)
+    } deriving (Show, Read, Eq, Generic)
 makeClassy ''Components
+
+instance Binary Components
 
 type Component s a = HasComponents s => Lens' s (UUIDMap a)
 

@@ -9,6 +9,8 @@ import Zwerg.Component.UUID
 
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
+import GHC.Generics (Generic)
+import Data.Binary
 
 newtype UUIDSet = MkUUIDSet IntSet
     deriving (
@@ -16,8 +18,11 @@ newtype UUIDSet = MkUUIDSet IntSet
         Ord,
         Read,
         Show,
-        Monoid
+        Monoid,
+        Generic
         )
+
+instance Binary UUIDSet
 
 {-# INLINABLE empty #-}
 empty :: UUIDSet

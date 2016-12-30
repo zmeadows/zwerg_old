@@ -7,7 +7,7 @@ import qualified SDL.Raw as Raw
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.State.Class (MonadState)
-import Control.Monad (unless)
+import Control.Monad (unless, forM_, mapM_)
 import Data.StateVar (($=))
 
 import Foreign.Ptr (nullPtr)
@@ -19,6 +19,7 @@ import Zwerg.Component.Position
 import Zwerg.Data.Color
 import Zwerg.UI.Font
 import Zwerg.Util
+import Zwerg.Const (allChars)
 
 import Zwerg.UI.Backend.SDL.Texture
 
@@ -50,7 +51,7 @@ uninitializedBackendContext = BackendContext
     { _window        = SDL.Internal.Window nullPtr
     , _renderer      = SDL.Internal.Renderer nullPtr
     , _charTextures  = emptyCharTextureMap
-    , _ttfFonts	     = HM.empty
+    , _ttfFonts      = HM.empty
     }
 
 initBackend :: (HasBackendContext s, MonadState s m, MonadIO m) => m ()
@@ -59,7 +60,7 @@ initBackend = do
 
     SDL.createWindow "zwerg" SDL.defaultWindow
         { SDL.windowInitialSize = V2 1200 800
-        , SDL.windowBorder = False
+        , SDL.windowBorder = True
         } >>= assign window
 
     SDL.HintRenderScaleQuality $= SDL.ScaleLinear
@@ -75,11 +76,20 @@ initBackend = do
     inited <- SDL.TTF.wasInit
     unless inited $ error "[Bug] Font system not initialized"
 
-    regularFontPath <- getAsset "fonts/Hack-Regular.ttf"
-    SDL.TTF.openFont regularFontPath 150 >>= \f -> do
-        ttfFonts %= HM.insert Normal f
-        SDL.TTF.sizeUTF8 f "a" >>= \(w,h) -> liftIO $ print (w,h)
+    let fonts =
+            [ (Normal     , "fonts/Hack-Regular.ttf")
+            , (Bold       , "fonts/Hack-Bold.ttf")
+            , (Italic     , "fonts/Hack-Italic.ttf")
+            , (BoldItalic , "fonts/Hack-BoldItalic.ttf")
+            ]
+
+    forM_ fonts $ \(ft, fp) -> do
+        fullFontPath <- getAsset fp
+        newTTFFont <- SDL.TTF.openFont fullFontPath 22
+        ttfFonts %= HM.insert ft newTTFFont
+
     loadGlyphs
+    use window >>= SDL.showWindow
 
 shutdownBackend :: (HasBackendContext s, MonadState s m, MonadIO m) => m ()
 shutdownBackend = do
@@ -100,7 +110,7 @@ getUserInput = do
       _ -> getUserInput
 
 loadGlyphSurface :: (HasBackendContext s, MonadState s m, MonadIO m)
-				 => FontType
+                 => FontType
                  -> Char
                  -> m ()
 loadGlyphSurface ft ch = do
@@ -112,10 +122,20 @@ loadGlyphSurface ft ch = do
     SDL.queryTexture textTexture >>= \q -> liftIO $ print (SDL.textureWidth q, SDL.textureHeight q)
     charTextures %= addCharTexture ft ch textTexture
 
-loadGlyphs :: (HasBackendContext s, MonadState s m, MonadIO m) => m ()
+loadGlyphs :: (HasBackendContext s, MonadState s m, MonadIO m)
+           => m ()
 loadGlyphs = do
-    mapM_ (loadGlyphSurface Normal) ['a'..'z']
-    mapM_ (loadGlyphSurface Normal) ['A'..'Z']
+    mapM_ (loadGlyphSurface Normal) allChars
+    mapM_ (loadGlyphSurface Bold) allChars
+    mapM_ (loadGlyphSurface Italic) allChars
+    mapM_ (loadGlyphSurface BoldItalic) allChars
+
+glyphToTexture :: (HasBackendContext s, MonadState s m)
+               => Glyph
+               -> m SDL.Texture
+glyphToTexture g = do
+    t <- getCharTexture (fontType g) (char g) <$> use charTextures
+    return $ fromJust t
 
 blitGlyph :: (HasBackendContext s, MonadState s m, MonadIO m)
           => Glyph
@@ -123,10 +143,11 @@ blitGlyph :: (HasBackendContext s, MonadState s m, MonadIO m)
           -> m ()
 blitGlyph g pos = do
     let (x,y) = unPosition pos
-    t <- getCharTexture (fontType g) (char g) <$> use charTextures
+
+    t <- glyphToTexture g
+    SDL.textureColorMod t $= toV3 (color g)
+
     ren <- use renderer
-    SDL.clear ren
-    SDL.textureColorMod (fromJust t) $= toV3 (color g)
-    SDL.copy ren (fromJust t) Nothing $ Just $ SDL.Rectangle (P $ V2 (15* fromIntegral x) (25* fromIntegral y)) (V2 15 25)
+    SDL.copy ren t Nothing $ Just $ SDL.Rectangle (P $ V2 (13* fromIntegral x) (27* fromIntegral y)) (V2 13 27)
 
 

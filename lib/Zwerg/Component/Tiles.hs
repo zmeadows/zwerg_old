@@ -8,14 +8,20 @@ import Zwerg.Component.Position
 import Zwerg.Component.UUID
 
 import Data.Vector.Unboxed (Vector)
+import Data.Vector.Binary
 import qualified Data.Vector.Unboxed as V
 
 import Control.Exception.Base (assert)
 
+import GHC.Generics (Generic)
+import Data.Binary
+
 import qualified Data.List as L (sortBy, nub)
 
 newtype Tiles = MkTiles (Vector Int)
-    deriving (Show, Read, Eq)
+    deriving (Show, Read, Eq, Generic)
+
+instance Binary Tiles
 
 mkTiles :: [(UUID, Position)] -> Tiles
 mkTiles upl = assert isValidTileList
