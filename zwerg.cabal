@@ -34,8 +34,8 @@ library
                        Zwerg.Component.Parent
                        Zwerg.Component.Position
                        Zwerg.Component.Stats
-                       Zwerg.Component.Tiles
                        Zwerg.Component.TileType
+                       Zwerg.Component.Tiles
                        Zwerg.Component.UUID
                        Zwerg.Const
                        Zwerg.Data.Color
@@ -56,11 +56,14 @@ library
                        Zwerg.UI
                        Zwerg.UI.Animation
                        Zwerg.UI.Backend.SDL
+                       Zwerg.UI.Backend.SDL.Glyph
+                       Zwerg.UI.Backend.SDL.Init
+                       Zwerg.UI.Backend.SDL.Text
                        Zwerg.UI.Backend.SDL.Texture
+                       Zwerg.UI.Font
                        Zwerg.UI.GlyphMap
                        Zwerg.UI.Input
                        Zwerg.UI.Port
-                       Zwerg.UI.Font
                        Zwerg.Util
                        Paths_zwerg
 
@@ -79,12 +82,12 @@ library
                        mtl,
                        transformers,
                        MonadRandom,
-                       colour,
                        sdl2,
                        sdl2-ttf,
                        filepath,
                        binary,
                        vector-binary-instances,
+                       ListZipper,
                        StateVar
 
   default-extensions:  GeneralizedNewtypeDeriving,
@@ -96,6 +99,7 @@ library
                        StandaloneDeriving,
                        TypeFamilies,
                        OverloadedStrings,
+                       LambdaCase,
                        Strict,
                        CPP
 

@@ -8,7 +8,7 @@ import Zwerg.Component.Position
 import Zwerg.Component.UUID
 
 import Data.Vector.Unboxed (Vector)
-import Data.Vector.Binary
+import Data.Vector.Binary()
 import qualified Data.Vector.Unboxed as V
 
 import Control.Exception.Base (assert)

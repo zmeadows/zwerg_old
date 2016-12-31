@@ -3,4 +3,5 @@ packages:
 - location: '.'
 extra-deps:
 - sdl2-ttf-1.0.0
+- ListZipper-1.2.0.2
 resolver: lts-7.14

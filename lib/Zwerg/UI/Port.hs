@@ -1,6 +1,5 @@
 module Zwerg.UI.Port where
 
-
 data Port =
       Inventory
     | Map
@@ -8,5 +7,3 @@ data Port =
     | ChooseTarget
     | MainMenu
     deriving (Show, Read, Eq)
-
-asdf = 2
