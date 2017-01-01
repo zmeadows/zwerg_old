@@ -1,22 +1,16 @@
 module Zwerg.UI where
 
-import Zwerg.UI.Port (Port(..))
-import Zwerg.Options (Options, defaultOptions)
+import Zwerg.UI.Port
 
 import Control.Lens (makeClassy)
-import Data.List.Zipper (Zipper)
-import qualified Data.List.Zipper as Z
 
 data UserInterface = UserInterface
     { _port        :: Port
-    , _options     :: Options
-    } deriving (Show, Read, Eq)
+    } deriving (Show, Eq)
 makeClassy ''UserInterface
 
 initUI :: UserInterface
 initUI = UserInterface
-    { _port = MainMenu
-    , _options = defaultOptions
+    { _port = MainMenu initMainMenu
     }
 
-type Menu a = Zipper a

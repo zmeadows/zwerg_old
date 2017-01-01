@@ -39,5 +39,5 @@ keyboardEventToKey keyData =
         isKeyPress = (SDL.keyboardEventKeyMotion keyData) == SDL.Pressed
 
 convertSDLkey :: SDL.Keysym -> Maybe Key
-convertSDLkey (SDL.Keysym scanCode _ keyMod) = Just (None, Return)
+convertSDLkey (SDL.Keysym scanCode _ keyMod) = Just (None, KeyChar 'j')
 

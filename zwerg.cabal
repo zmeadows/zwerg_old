@@ -1,11 +1,11 @@
 name:                zwerg
-version:             0.1.0.0
-synopsis:            A purely-functional roguelike game.
+version:             0.0.1.0
+synopsis:            A roguelike game.
 description:         see README.md
 homepage:            http://github.com/zmeadows/zwerg
 license:             MIT
 license-file:        LICENSE
-author:              Z. Meadows
+author:              Zac Meadows
 maintainer:          zmeadows@gmail.com
 copyright:           2015 Zachary Meadows
 category:            Game
@@ -63,6 +63,7 @@ library
                        Zwerg.UI.Font
                        Zwerg.UI.GlyphMap
                        Zwerg.UI.Input
+                       Zwerg.UI.Menu
                        Zwerg.UI.Port
                        Zwerg.Util
                        Paths_zwerg

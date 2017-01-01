@@ -1,13 +1,10 @@
 module Main where
 
 import Zwerg
+import Control.Monad (void)
 
 main :: IO ()
-main = do
-    _ <- runZwerg test
-    return ()
-
-
+main = void zwerg
 
 -- loadGlyphSurface :: IO ()
 -- loadGlyphSurface =
