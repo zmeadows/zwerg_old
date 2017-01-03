@@ -8,7 +8,7 @@ import Zwerg.Component.Position
 import Zwerg.Data.Color
 import Zwerg.Const (allChars)
 
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Class (MonadState)
 import Control.Monad (mapM_)
 import Data.StateVar (($=))
@@ -18,7 +18,7 @@ import qualified Data.HashMap.Strict as HM
 import qualified SDL
 import qualified SDL.TTF
 import qualified SDL.Raw as Raw
-import Linear (V2(..), V4(..))
+import Linear (V2(..))
 import Linear.Affine (Point(..))
 import Control.Lens (use, (%=))
 
@@ -32,7 +32,7 @@ loadGlyphSurface ft ch = do
     ren <- use renderer
     textTexture <- SDL.createTextureFromSurface ren textSurface
     SDL.freeSurface textSurface
-    SDL.queryTexture textTexture >>= \q -> liftIO $ print (SDL.textureWidth q, SDL.textureHeight q)
+    -- SDL.queryTexture textTexture >>= \q -> liftIO $ print (SDL.textureWidth q, SDL.textureHeight q)
     charTextures %= addCharTexture ft ch textTexture
 
 loadGlyphs :: (HasBackendContext s, MonadState s m, MonadIO m)

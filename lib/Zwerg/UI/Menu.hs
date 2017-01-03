@@ -17,3 +17,6 @@ prev (MkMenu m) = MkMenu $ Z.left m
 
 focus :: Menu a -> a
 focus (MkMenu m) = Z.cursor m
+
+menuToList :: Menu a -> [a]
+menuToList (MkMenu m) = Z.toList m

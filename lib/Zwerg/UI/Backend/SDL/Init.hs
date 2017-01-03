@@ -11,7 +11,6 @@ import Control.Monad.IO.Class (MonadIO)
 import qualified Data.HashMap.Strict as HM
 
 import Linear (V2(..), V4(..))
-import Linear.Affine (Point(..))
 import SDL (($=))
 import qualified SDL
 import qualified SDL.TTF

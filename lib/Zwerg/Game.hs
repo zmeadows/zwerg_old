@@ -6,8 +6,11 @@ import Zwerg.Data.Error   (Error)
 import Zwerg.Data.RanGen  (RanGen)
 import Zwerg.Data.UUIDGen (UUIDGen, HasUUIDGen(..), initUUIDGen)
 import Zwerg.Log          (Log, HasLog(..), emptyLog)
+import Zwerg.UI.Port
+import Zwerg.UI.Input
+import Zwerg.UI.Menu
 
-import Control.Lens (makeClassy)
+import Control.Lens (makeClassy, use, (.=))
 import Control.Monad.Except (MonadError, ExceptT)
 import Control.Monad.Random (MonadRandom, RandT)
 import Control.Monad.State  (MonadState, State)
@@ -17,6 +20,7 @@ data GameState = GameState
     , _gsBehaviors  :: Behaviors
     , _gsUUIDGen    :: UUIDGen
     , _gsLog        :: Log
+    , _gsPort       :: Port
     } deriving (Show)
 makeClassy ''GameState
 
@@ -26,6 +30,7 @@ emptyGameState = GameState
     , _gsBehaviors  = emptyBehaviors
     , _gsUUIDGen    = initUUIDGen
     , _gsLog        = emptyLog
+    , _gsPort       = initMainMenu
     }
 
 instance HasComponents GameState where
@@ -36,6 +41,8 @@ instance HasUUIDGen GameState where
     uuidGen = gsUUIDGen
 instance HasLog GameState where
     userLog = gsLog
+instance HasPort GameState where
+    port = gsPort
 
 newtype Game a = Game (ExceptT Error (RandT RanGen (State GameState)) a)
     deriving (
@@ -46,3 +53,17 @@ newtype Game a = Game (ExceptT Error (RandT RanGen (State GameState)) a)
         MonadError Error,
         MonadRandom
     )
+
+processUserInput :: Key -> Game ()
+processUserInput k = do
+    currentPort <- use port
+    processUserInput' currentPort k
+
+processUserInput' :: Port -> Key -> Game ()
+processUserInput' (MainMenu m) (None, KeyChar 'j') =
+    port .= (MainMenu $ next m)
+
+processUserInput' (MainMenu m) (None, KeyChar 'k') =
+    port .= (MainMenu $ prev m)
+
+processUserInput' _ _ = return ()
