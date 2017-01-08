@@ -25,6 +25,7 @@ library
 
   exposed-modules:     Zwerg
                        Zwerg.Action
+                       Zwerg.Animation
                        Zwerg.Behavior
                        Zwerg.Component
                        Zwerg.Component.EntityType
@@ -49,16 +50,16 @@ library
                        Zwerg.Game
                        Zwerg.Generator
                        Zwerg.Generator.Level
+                       Zwerg.Graphics.SDL
+                       Zwerg.Graphics.SDL.Core
+                       Zwerg.Graphics.SDL.Glyph
+                       Zwerg.Graphics.SDL.Text
+                       Zwerg.Graphics.SDL.MainMenu
+                       Zwerg.Graphics.SDL.Util
                        Zwerg.Log
                        Zwerg.Options
                        Zwerg.Sound
                        Zwerg.System
-                       Zwerg.UI.Animation
-                       Zwerg.UI.Backend.SDL
-                       Zwerg.UI.Backend.SDL.Glyph
-                       Zwerg.UI.Backend.SDL.Init
-                       Zwerg.UI.Backend.SDL.Text
-                       Zwerg.UI.Backend.SDL.Texture
                        Zwerg.UI.Font
                        Zwerg.UI.GlyphMap
                        Zwerg.UI.Input
@@ -73,6 +74,7 @@ library
                        containers,
                        unordered-containers,
                        hashable,
+                       hashtables,
                        vector,
                        linear,
                        lens,

@@ -1,4 +1,4 @@
-module Zwerg.UI.Animation where
+module Zwerg.Animation where
 
 import Zwerg.Component.Position (Position)
 import Zwerg.Data.Color (Color)

@@ -1,7 +1,7 @@
 module Zwerg.Event (Event(..)) where
 
 import Zwerg.Action (Action)
-import Zwerg.UI.Animation (Animation)
+import Zwerg.Animation (Animation)
 import Zwerg.Sound (Sound)
 
 import Control.Lens (makeClassy)

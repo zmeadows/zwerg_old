@@ -54,16 +54,16 @@ newtype Game a = Game (ExceptT Error (RandT RanGen (State GameState)) a)
         MonadRandom
     )
 
-processUserInput :: Key -> Game ()
+processUserInput :: KeyCode -> Game ()
 processUserInput k = do
     currentPort <- use port
     processUserInput' currentPort k
 
-processUserInput' :: Port -> Key -> Game ()
-processUserInput' (MainMenu m) (None, KeyChar 'j') =
+processUserInput' :: Port -> KeyCode -> Game ()
+processUserInput' (MainMenu m) (KeyChar 'j') =
     port .= (MainMenu $ next m)
 
-processUserInput' (MainMenu m) (None, KeyChar 'k') =
+processUserInput' (MainMenu m) (KeyChar 'k') =
     port .= (MainMenu $ prev m)
 
 processUserInput' _ _ = return ()

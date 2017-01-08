@@ -1,8 +1,8 @@
 module Zwerg (zwerg) where
 
 import Zwerg.Game
-import Zwerg.UI.Backend.SDL
-import Zwerg.UI.Backend.SDL.Init
+import Zwerg.Graphics.SDL
+import Zwerg.Graphics.SDL.Core
 import Zwerg.UI.Port
 import Zwerg.Util
 
@@ -13,19 +13,21 @@ import Control.Lens (makeClassy, use)
 import qualified SDL
 
 data ZwergState = ZwergState
-    { _sdlContext  :: BackendContext
+    { _sdlContext  :: ContextSDL
     , _zsGameState :: GameState
     }
 makeClassy ''ZwergState
 
 instance HasGameState ZwergState where
     gameState = zsGameState
-instance HasBackendContext ZwergState where
-    backendContext = sdlContext
+instance HasContextSDL ZwergState where
+    contextSDL = sdlContext
+instance HasCoreContextSDL ZwergState where
+    coreContextSDL = sdlContext . core
 
 initZwergState :: ZwergState
 initZwergState = ZwergState
-    { _sdlContext  = uninitializedBackendContext
+    { _sdlContext  = uninitializedContextSDL
     , _zsGameState = emptyGameState
     }
 
@@ -42,7 +44,7 @@ runZwerg :: Zwerg a -> IO (a, ZwergState)
 runZwerg (Zwerg a) = runStateT a initZwergState
 
 test :: Zwerg ()
-test = initBackend >> mainLoop
+test = initSDL >> mainLoop
 
 zwerg :: IO ((), ZwergState)
 zwerg = runZwerg test
@@ -63,11 +65,11 @@ mainLoop = do
 drawZwergScreen :: Port -> Zwerg ()
 drawZwergScreen (MainMenu _) = do
     --let focusedItem = focus m
-    ren <- use (backendContext . renderer)
+    ren <- use (sdl . renderer)
     SDL.clear ren
     SDL.present ren
 
 drawZwergScreen _ = return ()
 
 quitZwerg :: Zwerg ()
-quitZwerg = shutdownBackend
+quitZwerg = shutdownSDL

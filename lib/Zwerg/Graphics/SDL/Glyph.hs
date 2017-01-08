@@ -1,0 +1,61 @@
+module Zwerg.Graphics.SDL.Glyph where
+
+import Zwerg.UI.Font
+import Zwerg.Graphics.SDL.Core
+import Zwerg.Component.Glyph
+
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.State.Class (MonadState)
+import Control.Monad (mapM_)
+import Data.Maybe
+
+import qualified SDL
+import qualified SDL.TTF
+import qualified SDL.Raw as Raw
+import Control.Lens (use)
+import qualified Data.HashTable.IO as H
+
+newtype CharTextureMap = MkCharTextureMap (H.CuckooHashTable (FontType,Char) SDL.Texture)
+
+allChars :: String
+allChars = drop 33 $ take 127 [ (minBound :: Char) .. ]
+
+initializeCharTextureMap :: (HasCoreContextSDL s, MonadState s m, MonadIO m) 
+                         => m CharTextureMap
+initializeCharTextureMap = do
+    ht <- liftIO (H.newSized $ 4 * (length allChars))
+    let loadGlyphSurface ft ch = do
+           font <- getTTFFont ft
+           textSurface <- SDL.TTF.renderUTF8Shaded font [ch] (Raw.Color 255 255 255 0) (Raw.Color 0 0 0 255)
+           ren <- use (core . renderer)
+           textTexture <- SDL.createTextureFromSurface ren textSurface
+           SDL.freeSurface textSurface
+           -- SDL.queryTexture textTexture >>= \q -> liftIO $ print (SDL.textureWidth q, SDL.textureHeight q)
+           liftIO $ H.insert ht (ft,ch) textTexture
+    mapM_ (loadGlyphSurface Normal) allChars
+    mapM_ (loadGlyphSurface Bold) allChars
+    mapM_ (loadGlyphSurface Italic) allChars
+    mapM_ (loadGlyphSurface BoldItalic) allChars
+    return $ MkCharTextureMap ht
+
+glyphToRawTexture :: (MonadIO m)
+                  => CharTextureMap
+                  -> Glyph
+                  -> m SDL.Texture
+glyphToRawTexture (MkCharTextureMap charMap) glyph = do
+    tex <- liftIO $ H.lookup charMap (fontType glyph, char glyph)
+    return $ fromJust tex
+
+-- blitGlyph :: (HasBackendContext s, MonadState s m, MonadIO m)
+--           => Glyph
+--           -> Position
+--           -> m ()
+-- blitGlyph g pos = do
+--     let (x,y) = unPosition pos
+
+--     t <- glyphToTexture g
+--     SDL.textureColorMod t $= toV3 (color g)
+
+--     ren <- use renderer
+--     SDL.copy ren t Nothing $ Just $ SDL.Rectangle (P $ V2 (13* fromIntegral x) (27* fromIntegral y)) (V2 13 27)
+
