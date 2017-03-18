@@ -5,6 +5,7 @@ import Zwerg.Graphics.SDL
 import Zwerg.Graphics.SDL.Core
 import Zwerg.Graphics.SDL.Util
 import Zwerg.Graphics.SDL.MainMenu
+import Zwerg.Graphics.SDL.MainScreen
 import Zwerg.Data.RanGen
 import Zwerg.UI.Port
 import Zwerg.Util
@@ -32,6 +33,8 @@ instance HasCoreContextSDL ZwergState where
     coreContextSDL = sdlContext . core
 instance HasMainMenuContextSDL ZwergState where
     mainMenuContextSDL = sdlContext . mainMenuContext
+instance HasMainScreenContextSDL ZwergState where
+    mainScreenContextSDL = sdlContext . mainScreenContext
 
 initZwergState :: ZwergState
 initZwergState = ZwergState
@@ -84,6 +87,12 @@ drawZwergScreen (MainMenu m) = do
     ren <- use (sdl . renderer)
     SDL.clear ren
     drawMainMenu m
+    SDL.present ren
+
+drawZwergScreen MainScreen = do
+    ren <- use (sdl . renderer)
+    SDL.clear ren
+    drawMainScreen
     SDL.present ren
 
 drawZwergScreen _ = return ()
