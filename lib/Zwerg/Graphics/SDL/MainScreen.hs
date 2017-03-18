@@ -1,78 +1,75 @@
-module Zwerg.Graphics.SDL.MainMenu where
+module Zwerg.Graphics.SDL.MainScreen where
 
 import Zwerg.Graphics.SDL.Core
-import Zwerg.Graphics.SDL.Text
+import Zwerg.Graphics.SDL.Glyph
 import Zwerg.UI.Font
-import Zwerg.UI.Menu
+import Zwerg.Component.Glyph
+import Zwerg.Component.Position
+-- import Zwerg.UI.Menu
 import Zwerg.Data.Color
 import Zwerg.Const
-
+-- 
 import Foreign.C.Types (CInt)
 import Control.Monad (forM_, forM)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Class (MonadState)
-import Data.Maybe (fromJust)
-
+-- import Data.Maybe (fromJust)
+-- 
 import Control.Lens (makeClassy, (%=), use, assign)
-import Data.HashMap.Strict (HashMap)
-import Data.Text (Text)
+-- import Data.HashMap.Strict (HashMap)
+-- import Data.Text (Text)
 import SDL (($=))
 import SDL.Vect
-import qualified Data.HashMap.Strict as HM
+-- import qualified Data.HashMap.Strict as HM
 import qualified SDL
 
-data MainMenuContextSDL = MainMenuContextSDL
-    { _mainVP :: SDL.Rectangle CInt
-    , _infoVP :: SDL.Rectangle CInt
-    , _logVP  :: SDL.Rectangle CInt
-    } deriving (Eq)
-makeClassy ''MainMenuContextSDL
+data MainScreenContextSDL = MainScreenContextSDL
+    { _charTextures   :: CharTextureMap
+    , _mapViewport    :: SDL.Rectangle CInt
+    , _statusViewport :: SDL.Rectangle CInt
+    , _logViewport    :: SDL.Rectangle CInt
+    }
+makeClassy ''MainScreenContextSDL
 
-uninitializedMainMenuContextSDL :: MainMenuContextSDL
-uninitializedMainMenuContextSDL = MainMenuContextSDL
-    { _focusEntryTextures   = HM.empty
-    , _unfocusEntryTextures = HM.empty
-    , _mainMenuViewport     = SDL.Rectangle
-                                (P (V2 (screenWidth `div` 2) (screenHeight `div` 2)))
+uninitializedMainScreenContextSDL :: MainScreenContextSDL
+uninitializedMainScreenContextSDL = MainScreenContextSDL
+    { _charTextures   = unitializedCharTextureMap
+    , _mapViewport    = SDL.Rectangle
+                                (P (V2 (screenWidth `div` 3) (screenHeight `div` 3)))
                                 (V2 (screenWidth `div` 3) (screenHeight `div` 3))
-    , _verticalSpacing = 0
+    , _statusViewport = SDL.Rectangle
+                                (P (V2 (screenWidth `div` 3) (screenHeight `div` 3)))
+                                (V2 (screenWidth `div` 3) (screenHeight `div` 3))
+    , _logViewport    = SDL.Rectangle
+                                (P (V2 (screenWidth `div` 3) (screenHeight `div` 3)))
+                                (V2 (screenWidth `div` 3) (screenHeight `div` 3))
     }
 
-initializeMainMenuContextSDL :: (HasMainMenuContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
-                             => Menu Text -> m ()
-initializeMainMenuContextSDL menu =
-    let fgFocus   = mkColor 255 255 255
-        fgUnfocus = mkColor 255 100 100
-        bg        = mkColor 25 25 25
-     in do
-        forM_ (menuToList menu) $ \entry -> do
-            focusTexture <- loadStringTexture entry Bold fgFocus bg
-            unfocusTexture <- loadStringTexture entry Normal fgUnfocus bg
-            (mainMenuContextSDL . focusEntryTextures) %= HM.insert entry focusTexture
-            (mainMenuContextSDL . unfocusEntryTextures) %= HM.insert entry unfocusTexture
-        computeEntryVerticalSpacing >>= assign verticalSpacing
+initializeMainScreenContextSDL :: (HasMainScreenContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
+                               => m ()
+initializeMainScreenContextSDL = do
+  initializeCharTextureMap >>= assign charTextures
+  return ()
 
-computeEntryVerticalSpacing :: (HasMainMenuContextSDL s, MonadState s m, MonadIO m)
-                            => m CInt
-computeEntryVerticalSpacing = do
-    textures <- HM.elems <$> use focusEntryTextures
-    entryHeights <- forM textures $ \t -> SDL.queryTexture t >>= return . SDL.textureHeight
-    return $ 4 + maximum entryHeights
-
-drawMainMenu :: (HasMainMenuContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
-             => Menu Text -> m ()
-drawMainMenu m = do
+blitGlyph :: (HasCoreContextSDL s, HasMainScreenContextSDL s, MonadState s m, MonadIO m)
+          => Glyph
+          -> Position
+          -> m ()
+blitGlyph g pos = do
+    let (x,y) = unPosition pos
+    t <- use charTextures >>= glyphToRawTexture g
+    SDL.textureColorMod t $= toV3 (color g)
     ren <- use (core . renderer)
-    vp <- use mainMenuViewport
-    SDL.rendererViewport ren $= Just vp
-    vs <- use verticalSpacing
-    let entries = menuToList m
-        entryCoords = zip entries $ take (length entries) [0,vs..]
-    ft <- use focusEntryTextures
-    ut <- use unfocusEntryTextures
-    forM_ entryCoords $ \(entry,yCoord) -> do
-        let txt = if (entry == focus m) 
-            then HM.lookup entry ft
-            else HM.lookup entry ut
-        (w,h) <- getTextureDimensions (fromJust txt)
-        SDL.copy ren (fromJust txt) Nothing $ Just $ SDL.Rectangle (P $ V2 0 yCoord) (V2 w h)
+    SDL.copy ren t Nothing $ Just $ SDL.Rectangle
+      (P $ V2 (13* fromIntegral x) (27* fromIntegral y)) (V2 13 27)
+
+
+drawMainScreen :: (HasMainScreenContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
+               => m ()
+drawMainScreen = do
+  forM_ [ (x',y') | x' <- [0..80], y' <- [0..25] ] $ \(x,y) ->
+          blitGlyph (Glyph Normal 'A' $ mkColor 200 200 200) $ mkPosition (x,y)
+  forM_ [ (x',y') | x' <- [81..105], y' <- [0..32] ] $ \(x,y) ->
+          blitGlyph (Glyph Normal 'B' $ mkColor 200 200 200) $ mkPosition (x,y)
+  forM_ [ (x',y') | x' <- [0..80], y' <- [26..32] ] $ \(x,y) ->
+          blitGlyph (Glyph Normal 'C' $ mkColor 200 200 200) $ mkPosition (x,y)
