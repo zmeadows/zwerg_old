@@ -34,7 +34,11 @@ uninitializedMainMenuContextSDL = MainMenuContextSDL
     { _focusEntryTextures   = HM.empty
     , _unfocusEntryTextures = HM.empty
     , _mainMenuViewport     = SDL.Rectangle
-                                (P (V2 (screenWidth `div` 2) (screenHeight `div` 2)))
+                                (P (V2
+                                    (screenWidth `div` 3)
+                                    (screenHeight `div` 3)
+                                   )
+                                )
                                 (V2 (screenWidth `div` 3) (screenHeight `div` 3))
     , _verticalSpacing = 0
     }
@@ -42,8 +46,8 @@ uninitializedMainMenuContextSDL = MainMenuContextSDL
 initializeMainMenuContextSDL :: (HasMainMenuContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
                              => TextMenu -> m ()
 initializeMainMenuContextSDL menu =
-    let fgFocus   = mkColor 255 255 255
-        fgUnfocus = mkColor 255 100 100
+    let fgFocus   = mkColor 255 100 100
+        fgUnfocus = mkColor 255 255 255
         bg        = mkColor 25 25 25
      in do
         forM_ (menuToList menu) $ \entry -> do
@@ -67,13 +71,18 @@ drawMainMenu m = do
     vp <- use mainMenuViewport
     SDL.rendererViewport ren $= Just vp
     vs <- use verticalSpacing
+
     let entries = menuToList m
         entryCoords = zip entries $ take (length entries) [0,vs..]
+        SDL.Rectangle (P (V2 _ _)) (V2 mainMenuWidth _) = vp
+
     ft <- use focusEntryTextures
     ut <- use unfocusEntryTextures
+
     forM_ entryCoords $ \(entry,yCoord) -> do
         let txt = if (entry == (label $ focus m))
             then HM.lookup entry ft
             else HM.lookup entry ut
         (w,h) <- getTextureDimensions (fromJust txt)
-        SDL.copy ren (fromJust txt) Nothing $ Just $ SDL.Rectangle (P $ V2 0 yCoord) (V2 w h)
+        SDL.copy ren (fromJust txt) Nothing $
+             Just $ SDL.Rectangle (P $ V2 ((mainMenuWidth - w) `div` 2) yCoord) (V2 w h)
