@@ -42,23 +42,10 @@ initializeCharTextureMap = do
     return $ MkCharTextureMap ht
 
 glyphToRawTexture :: (MonadIO m)
-                  => CharTextureMap
-                  -> Glyph
+                  => Glyph
+                  -> CharTextureMap
                   -> m SDL.Texture
-glyphToRawTexture (MkCharTextureMap charMap) glyph = do
+glyphToRawTexture glyph (MkCharTextureMap charMap) = do
     tex <- liftIO $ H.lookup charMap (fontType glyph, char glyph)
     return $ fromJust tex
-
--- blitGlyph :: (HasBackendContext s, MonadState s m, MonadIO m)
---           => Glyph
---           -> Position
---           -> m ()
--- blitGlyph g pos = do
---     let (x,y) = unPosition pos
-
---     t <- glyphToTexture g
---     SDL.textureColorMod t $= toV3 (color g)
-
---     ren <- use renderer
---     SDL.copy ren t Nothing $ Just $ SDL.Rectangle (P $ V2 (13* fromIntegral x) (27* fromIntegral y)) (V2 13 27)
 
