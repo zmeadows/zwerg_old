@@ -44,7 +44,7 @@ initGeneratorState ug =
     { _genComponents = emptyComponents
     , _genBehaviors  = emptyBehaviors
     , _genUUIDGen    = ug'
-    , _targetUUID   = i
+    , _targetUUID    = i
     }
 
 newtype Generator a =
