@@ -9,6 +9,7 @@ import Zwerg.Log          (Log, HasLog(..), emptyLog)
 import Zwerg.UI.Port
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
+import Zwerg.UI.GlyphMap
 
 import Data.Functor.Identity
 import Control.Lens (makeClassy, use, (.=))
@@ -23,6 +24,7 @@ data GameState = GameState
     , _gsUUIDGen    :: UUIDGen
     , _gsLog        :: Log
     , _gsPort       :: Port
+    , _gsGlyphMap   :: GlyphMap
     } deriving (Show)
 makeClassy ''GameState
 
@@ -33,6 +35,7 @@ emptyGameState = GameState
     , _gsUUIDGen    = initUUIDGen
     , _gsLog        = emptyLog
     , _gsPort       = initMainMenu
+    , _gsGlyphMap   = emptyGlyphMap
     }
 
 instance HasComponents GameState where
