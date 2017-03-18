@@ -34,11 +34,7 @@ uninitializedMainMenuContextSDL = MainMenuContextSDL
     { _focusEntryTextures   = HM.empty
     , _unfocusEntryTextures = HM.empty
     , _mainMenuViewport     = SDL.Rectangle
-                                (P (V2
-                                    (screenWidth `div` 3)
-                                    (screenHeight `div` 3)
-                                   )
-                                )
+                                (P (V2 (screenWidth `div` 3) (screenHeight `div` 3)))
                                 (V2 (screenWidth `div` 3) (screenHeight `div` 3))
     , _verticalSpacing = 0
     }
