@@ -1,9 +1,9 @@
 module Zwerg.Component where
 
 import Zwerg.Component.All
-
-import Zwerg.Data.UUIDSet
 import Zwerg.Data.UUIDMap (UUIDMap)
+import Zwerg.Data.UUIDSet
+import Zwerg.UI.GlyphMap
 import qualified Zwerg.Data.UUIDMap as UM
 
 import Data.Binary
@@ -15,12 +15,7 @@ import Control.Monad.State.Strict (MonadState, forM)
 import Control.Exception.Base (assert)
 import GHC.Generics (Generic)
 
-import Control.Lens (
-    makeClassy,
-    Lens',
-    at, use, to,
-    (%=)
-    )
+import Control.Lens (makeClassy, Lens', at, use, to, (%=))
 
 data Components = Components
     { _name        :: UUIDMap Text
@@ -40,7 +35,6 @@ data Components = Components
     , _stats       :: UUIDMap Stats
     , _blocked     :: UUIDMap Bool
     , _needsRedraw :: UUIDMap Bool
-    , _playerUUID  :: UUID
     } deriving (Show, Read, Eq, Generic)
 makeClassy ''Components
 
@@ -48,10 +42,13 @@ instance Binary Components
 
 type Component s a = HasComponents s => Lens' s (UUIDMap a)
 
+playerUUID :: UUID
+playerUUID = mkUUID 0
+
 emptyComponents :: Components
 emptyComponents = Components UM.empty UM.empty UM.empty UM.empty UM.empty UM.empty
                              UM.empty UM.empty UM.empty UM.empty UM.empty UM.empty
-                             UM.empty UM.empty UM.empty UM.empty UM.empty (mkUUID 0)
+                             UM.empty UM.empty UM.empty UM.empty UM.empty
 
 getComp :: (HasComponents s, MonadState s m)
         => UUID
@@ -72,6 +69,13 @@ addComp :: (HasComponents s, MonadState s m)
         -> m ()
 addComp uuid comp dat = comp %= UM.insert uuid dat
 
+setComp :: (HasComponents s, MonadState s m)
+        => UUID
+        -> Component s a
+        -> a
+        -> m ()
+setComp = addComp
+
 modComp :: (HasComponents s, MonadState s m)
         => UUID
         -> Component s a
@@ -85,17 +89,30 @@ filterComp :: (HasComponents s, MonadState s m)
            -> m ()
 filterComp comp f = comp %= UM.filter f
 
-eraseEntityComps :: (HasComponents s, MonadState s m)
+eraseEntity :: (HasComponents s, MonadState s m)
             => UUID
             -> m ()
-eraseEntityComps uuid =
+eraseEntity uuid =
   let eraseUUID :: UUIDMap a -> UUIDMap a
       eraseUUID = UM.delete uuid
   in do
-    name     %= eraseUUID
-    hp       %= eraseUUID
-    position %= eraseUUID
-    cooldown %= eraseUUID
+    name        %= eraseUUID
+    glyph       %= eraseUUID
+    hp          %= eraseUUID
+    entityType  %= eraseUUID
+    position    %= eraseUUID
+    cooldown    %= eraseUUID
+    equipment   %= eraseUUID
+    baseDamage  %= eraseUUID
+    level       %= eraseUUID
+    tiles       %= eraseUUID
+    tileType    %= eraseUUID
+    occupants   %= eraseUUID
+    parent      %= eraseUUID
+    children    %= eraseUUID
+    stats       %= eraseUUID
+    blocked     %= eraseUUID
+    needsRedraw %= eraseUUID
 
 demandComp :: (HasComponents s, MonadState s m)
            => Component s a
@@ -122,3 +139,16 @@ getPrimaryOccupant tileUUID = do
     let (maxUUID,_) = maximumBy (comparing snd) $ zip occs types
     return maxUUID
 
+getGlyphMapUpdates :: (HasComponents s, MonadState s m)
+                   => m GlyphMap
+getGlyphMapUpdates = do
+  currentLevelUUID <- demandComp level playerUUID
+  currentLevelTiles <- demandComp tiles currentLevelUUID
+  tilesWithUpdatedNeeded <- filterTilesM (demandComp needsRedraw) currentLevelTiles
+  updatedGlyphs <- forM tilesWithUpdatedNeeded $ \tileUUID -> do
+    pos <- demandComp position tileUUID
+    occ <- getPrimaryOccupant tileUUID
+    gly <- demandComp glyph occ
+    setComp tileUUID needsRedraw False
+    return (pos, gly)
+  return $ mkGlyphMap updatedGlyphs
