@@ -11,17 +11,9 @@ import Zwerg.Component.UUID
 
 import Prelude hiding (ceiling)
 import Control.Lens ((^.), (.=), over, use, to, makeLenses, Lens')
-
 import Control.Monad.State (MonadState)
-
 import Data.IntSet (IntSet)
-import qualified Data.IntSet as IS (
-    empty,
-    insert,
-    delete,
-    lookupGE
-    )
-
+import qualified Data.IntSet as IS (empty, insert, delete, lookupGE)
 
 data UUIDGen = UUIDGen
     { _graveyard :: IntSet
