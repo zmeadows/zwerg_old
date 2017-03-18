@@ -3,6 +3,7 @@ module Zwerg.Graphics.SDL where
 import Zwerg.Graphics.SDL.Core
 import Zwerg.Graphics.SDL.MainMenu
 import Zwerg.Graphics.SDL.Glyph
+import Zwerg.UI.Port
 
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Class (MonadState)
@@ -26,15 +27,19 @@ instance HasMainMenuContextSDL ContextSDL where
 
 uninitializedContextSDL :: ContextSDL
 uninitializedContextSDL = ContextSDL
-    { _coreSDL            = unitializedCoreContextSDL
-    , _charTextures    = undefined
+    { _coreSDL         = unitializedCoreContextSDL
+    , _charTextures    = unitializedCharTextureMap
     , _mainMenuContext = uninitializedMainMenuContextSDL
     }
 
-initSDL :: (HasCoreContextSDL s, HasContextSDL s, MonadState s m, MonadIO m) => m ()
+initSDL :: (HasCoreContextSDL s,
+            HasMainMenuContextSDL s,
+            HasContextSDL s,
+            MonadState s m, MonadIO m) => m ()
 initSDL = do
     initCoreSDL
     initializeCharTextureMap >>= assign charTextures
+    let (MainMenu m) = initMainMenu in initializeMainMenuContextSDL m
 
 shutdownSDL :: (HasCoreContextSDL s, MonadState s m, MonadIO m) => m ()
 shutdownSDL = shutdownCoreSDL

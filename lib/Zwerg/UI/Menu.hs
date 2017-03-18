@@ -1,22 +1,44 @@
 module Zwerg.UI.Menu where
 
-import Data.List.Zipper (Zipper)
-import qualified Data.List.Zipper as Z
+import Data.Text (Text, unpack)
+import Data.Foldable (minimumBy)
+import Data.Function (on)
 
-newtype Menu a = MkMenu (Zipper a) 
-    deriving (Show, Eq)
+data MenuEntry a = MenuEntry
+    { shortcut :: Char
+    , label    :: Text
+    , item     :: a
+    } deriving (Show, Eq)
 
-makeMenu :: [a] -> Menu a
-makeMenu = MkMenu . Z.fromList
+data Menu a = Menu [MenuEntry a] [MenuEntry a] deriving (Show, Eq)
+
+type TextMenu = Menu ()
 
 next :: Menu a -> Menu a
-next (MkMenu m) = MkMenu $ Z.right m
+next (Menu [] [r]) = (Menu [] [r])
+next (Menu [] (r:rs)) = (Menu [r] rs)
+next (Menu ls [r]) = Menu [] (ls ++ [r])
+next (Menu ls (r:rs)) = Menu (ls ++ [r]) rs
 
 prev :: Menu a -> Menu a
-prev (MkMenu m) = MkMenu $ Z.left m
+prev (Menu [] [r]) = (Menu [] [r])
+prev (Menu [] rs) = (Menu (init rs) [last rs])
+prev (Menu ls rs) = Menu (init ls) ((last ls):rs)
 
-focus :: Menu a -> a
-focus (MkMenu m) = Z.cursor m
+focus :: Menu a -> MenuEntry a
+focus (Menu _ (r:_)) = r
+focus (Menu _ []) = error $ "blah"
 
-menuToList :: Menu a -> [a]
-menuToList (MkMenu m) = Z.toList m
+makeTextMenu :: [Text] -> TextMenu
+makeTextMenu labels = makeTextMenu' labels []
+
+makeTextMenu' :: [Text] -> [MenuEntry ()] -> TextMenu
+makeTextMenu' (l:ls) entries =
+  let usedChars = map shortcut entries
+      newCharCounts = zip (unpack l) $ map (\x -> length $ filter (== x) usedChars) $ unpack l
+      newChar = fst $ minimumBy (compare `on` snd) newCharCounts
+  in makeTextMenu' ls $ (MenuEntry newChar l ()):entries
+makeTextMenu' [] entries = Menu [] $ reverse entries
+
+menuToList :: Menu a -> [Text]
+menuToList (Menu ls rs) = map label (ls ++ rs)

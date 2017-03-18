@@ -2,18 +2,17 @@ module Zwerg.UI.Port where
 
 import Zwerg.UI.Menu
 
-import Data.Text (Text)
-
 import Control.Lens (makeClassy)
 
 data Port =
       Inventory
     | Map
-    | Main
+    | MainScreen
     | ChooseTarget
-    | MainMenu (Menu Text)
+    | MainMenu TextMenu
+    | ExitScreen
     deriving (Show, Eq)
 makeClassy ''Port
 
 initMainMenu :: Port
-initMainMenu = MainMenu $ makeMenu [ "new game", "load game", "options", "about", "exit" ]
+initMainMenu = MainMenu $ makeTextMenu [ "new game", "load game", "options", "about", "exit" ]

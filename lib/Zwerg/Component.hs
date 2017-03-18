@@ -2,14 +2,16 @@ module Zwerg.Component where
 
 import Zwerg.Component.All
 
-import Zwerg.Data.UUIDSet (UUIDSet)
+import Zwerg.Data.UUIDSet
 import Zwerg.Data.UUIDMap (UUIDMap)
 import qualified Zwerg.Data.UUIDMap as UM
 
 import Data.Binary
+import Data.Foldable (maximumBy)
 import Data.Text (Text)
+import Data.Ord (comparing)
 import Data.Maybe (isJust, fromJust)
-import Control.Monad.State.Strict (MonadState)
+import Control.Monad.State.Strict (MonadState, forM)
 import Control.Exception.Base (assert)
 import GHC.Generics (Generic)
 
@@ -96,10 +98,10 @@ eraseEntityComps uuid =
     cooldown %= eraseUUID
 
 demandComp :: (HasComponents s, MonadState s m)
-       => UUID
-       -> Component s a
-       -> m a
-demandComp uuid comp = do
+           => Component s a
+           -> UUID
+           -> m a
+demandComp comp uuid = do
     result <- getComp uuid comp
     assert (isJust result) $ return (fromJust result)
 
@@ -110,4 +112,13 @@ demandHasComp :: (HasComponents s, MonadState s m)
 demandHasComp uuid comp = do
     result <- hasComp uuid comp
     assert result $ return ()
+
+getPrimaryOccupant :: (HasComponents s, MonadState s m)
+                   => UUID -> m UUID
+getPrimaryOccupant tileUUID = do
+    demandHasComp tileUUID tileType
+    occs <- uuidSetToList <$> demandComp occupants tileUUID
+    types <- forM occs $ \uuid -> demandComp entityType uuid
+    let (maxUUID,_) = maximumBy (comparing snd) $ zip occs types
+    return maxUUID
 

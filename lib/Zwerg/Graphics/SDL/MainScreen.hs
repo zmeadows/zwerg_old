@@ -22,10 +22,9 @@ import qualified Data.HashMap.Strict as HM
 import qualified SDL
 
 data MainMenuContextSDL = MainMenuContextSDL
-    { _focusEntryTextures   :: HashMap Text SDL.Texture
-    , _unfocusEntryTextures :: HashMap Text SDL.Texture
-    , _mainMenuViewport     :: SDL.Rectangle CInt
-    , _verticalSpacing      :: CInt
+    { _mainVP :: SDL.Rectangle CInt
+    , _infoVP :: SDL.Rectangle CInt
+    , _logVP  :: SDL.Rectangle CInt
     } deriving (Eq)
 makeClassy ''MainMenuContextSDL
 
@@ -40,7 +39,7 @@ uninitializedMainMenuContextSDL = MainMenuContextSDL
     }
 
 initializeMainMenuContextSDL :: (HasMainMenuContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
-                             => TextMenu -> m ()
+                             => Menu Text -> m ()
 initializeMainMenuContextSDL menu =
     let fgFocus   = mkColor 255 255 255
         fgUnfocus = mkColor 255 100 100
@@ -61,7 +60,7 @@ computeEntryVerticalSpacing = do
     return $ 4 + maximum entryHeights
 
 drawMainMenu :: (HasMainMenuContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
-             => TextMenu -> m ()
+             => Menu Text -> m ()
 drawMainMenu m = do
     ren <- use (core . renderer)
     vp <- use mainMenuViewport
@@ -72,7 +71,7 @@ drawMainMenu m = do
     ft <- use focusEntryTextures
     ut <- use unfocusEntryTextures
     forM_ entryCoords $ \(entry,yCoord) -> do
-        let txt = if (entry == (label $ focus m))
+        let txt = if (entry == focus m) 
             then HM.lookup entry ft
             else HM.lookup entry ut
         (w,h) <- getTextureDimensions (fromJust txt)

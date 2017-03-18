@@ -2,23 +2,26 @@ module Zwerg.Graphics.SDL.Core where
 
 import Zwerg.UI.Font
 import Zwerg.Util
+import Zwerg.Const
 
 import Data.Maybe (fromJust)
 
+import Control.Arrow ((&&&))
 import Control.Lens (Lens', makeClassy, assign, use, (%=))
 import Control.Monad
-import SDL (($=))
-import qualified SDL
-import qualified SDL.TTF
-import qualified SDL.Internal.Types as SDL.Internal
-import SDL.TTF.FFI (TTFFont)
-import Data.HashMap.Strict (HashMap)
-import qualified Data.HashMap.Strict as HM
 import Control.Monad (forM_)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Class (MonadState)
+import Data.HashMap.Strict (HashMap)
+import Foreign.C.Types (CInt)
 import Foreign.Ptr (nullPtr)
 import Linear (V2(..), V4(..))
+import SDL (($=))
+import SDL.TTF.FFI (TTFFont)
+import qualified Data.HashMap.Strict as HM
+import qualified SDL
+import qualified SDL.Internal.Types as SDL.Internal
+import qualified SDL.TTF
 
 type FontSDL = SDL.TTF.FFI.TTFFont
 
@@ -33,7 +36,7 @@ core :: (HasCoreContextSDL s) => Lens' s CoreContextSDL
 core = coreContextSDL
 
 unitializedCoreContextSDL :: CoreContextSDL
-unitializedCoreContextSDL = CoreContextSDL 
+unitializedCoreContextSDL = CoreContextSDL
     { _window   = SDL.Internal.Window nullPtr
     , _renderer = SDL.Internal.Renderer nullPtr
     , _fonts    = HM.empty
@@ -45,13 +48,13 @@ initCoreSDL = do
     SDL.initialize [SDL.InitVideo]
 
     SDL.createWindow "zwerg" SDL.defaultWindow
-        { SDL.windowInitialSize = V2 1400 900
+        { SDL.windowInitialSize = V2 screenWidth screenHeight
         , SDL.windowBorder = True
         } >>= assign window
 
     SDL.HintRenderScaleQuality $= SDL.ScaleLinear
 
-    let rconf = SDL.RendererConfig SDL.AcceleratedRenderer False
+    let rconf = SDL.RendererConfig SDL.AcceleratedVSyncRenderer False
 
     use window >>= \w -> SDL.createRenderer w (-1) rconf >>= assign renderer
     ren <- use renderer
@@ -84,6 +87,11 @@ shutdownCoreSDL = do
     SDL.quit
 
 getTTFFont :: (HasCoreContextSDL s, MonadState s m)
-           => FontType 
+           => FontType
            -> m FontSDL
 getTTFFont ft = fromJust <$> HM.lookup ft <$> use fonts
+
+getTextureDimensions :: MonadIO m
+                     => SDL.Texture
+                     -> m (CInt,CInt)
+getTextureDimensions txt = (SDL.textureWidth &&& SDL.textureHeight) <$> SDL.queryTexture txt

@@ -5,6 +5,7 @@ import Zwerg.Graphics.SDL.Core
 import Zwerg.Component.Glyph
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import System.IO.Unsafe (unsafePerformIO)
 import Control.Monad.State.Class (MonadState)
 import Control.Monad (mapM_)
 import Data.Maybe
@@ -16,6 +17,9 @@ import Control.Lens (use)
 import qualified Data.HashTable.IO as H
 
 newtype CharTextureMap = MkCharTextureMap (H.CuckooHashTable (FontType,Char) SDL.Texture)
+
+unitializedCharTextureMap :: CharTextureMap
+unitializedCharTextureMap = MkCharTextureMap $ unsafePerformIO H.new
 
 allChars :: String
 allChars = drop 33 $ take 127 [ (minBound :: Char) .. ]
@@ -30,7 +34,6 @@ initializeCharTextureMap = do
            ren <- use (core . renderer)
            textTexture <- SDL.createTextureFromSurface ren textSurface
            SDL.freeSurface textSurface
-           -- SDL.queryTexture textTexture >>= \q -> liftIO $ print (SDL.textureWidth q, SDL.textureHeight q)
            liftIO $ H.insert ht (ft,ch) textTexture
     mapM_ (loadGlyphSurface Normal) allChars
     mapM_ (loadGlyphSurface Bold) allChars

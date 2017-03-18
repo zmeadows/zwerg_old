@@ -10,10 +10,12 @@ import Zwerg.UI.Port
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
 
+import Data.Functor.Identity
 import Control.Lens (makeClassy, use, (.=))
-import Control.Monad.Except (MonadError, ExceptT)
-import Control.Monad.Random (MonadRandom, RandT)
-import Control.Monad.State  (MonadState, State)
+import Control.Monad.Except
+import Control.Monad.Random (runRandT, RandT, MonadRandom)
+import Control.Monad.State.Strict
+import Control.Monad.State.Class (MonadState)
 
 data GameState = GameState
     { _gsComponents :: Components
@@ -54,6 +56,13 @@ newtype Game a = Game (ExceptT Error (RandT RanGen (State GameState)) a)
         MonadRandom
     )
 
+runGame :: Game () -> RanGen -> GameState -> (GameState, Maybe Error, RanGen)
+runGame (Game a) gen st = 
+    let ((e,gen'),st') = runIdentity (runStateT (runRandT (runExceptT a) gen) st)
+        in case e of
+            Left err -> (st', Just err, gen')
+            Right () -> (st', Nothing, gen')
+
 processUserInput :: KeyCode -> Game ()
 processUserInput k = do
     currentPort <- use port
@@ -65,5 +74,11 @@ processUserInput' (MainMenu m) (KeyChar 'j') =
 
 processUserInput' (MainMenu m) (KeyChar 'k') =
     port .= (MainMenu $ prev m)
+
+processUserInput' (MainMenu m) Return =
+    case (label $ focus m) of
+      "new game" -> port .= MainScreen
+      "exit"     -> port .= ExitScreen
+      _          -> return ()
 
 processUserInput' _ _ = return ()

@@ -20,6 +20,7 @@ library
   ghc-options:         -Wall
                        -optc-O3
                        -optc-ffast-math
+                       -funbox-strict-fields
 
   hs-source-dirs:      lib/
 
@@ -102,6 +103,9 @@ library
                        TypeFamilies,
                        OverloadedStrings,
                        LambdaCase,
+                       MultiParamTypeClasses,
+                       FunctionalDependencies,
+                       MultiWayIf,
                        Strict,
                        CPP
 
