@@ -1,45 +1,43 @@
-module Zwerg.Data.UUIDSet (
-    UUIDSet,
-    empty,
-    member,
-    insert,
-    uuidSetToList
-    ) where
+module Zwerg.Data.UUIDSet where
 
+import Zwerg.Prelude hiding (toList, empty, filterM)
 import Zwerg.Component.UUID
+import Zwerg.Class
 
-import Data.IntSet (IntSet)
-import qualified Data.IntSet as IS
-import GHC.Generics (Generic)
 import Data.Binary
+import Data.Set (Set)
+import qualified Data.Set as S
+import GHC.Generics (Generic)
+import qualified Control.Monad as CM (filterM)
 
-newtype UUIDSet = MkUUIDSet IntSet
-    deriving (
-        Eq,
-        Ord,
-        Read,
-        Show,
-        Monoid,
-        Generic
-        )
+newtype UUIDSet = MkUUIDSet (Set UUID)
+    deriving (Eq, Ord, Read, Show, Monoid, Generic)
 
 instance Binary UUIDSet
 
-{-# INLINABLE empty #-}
-empty :: UUIDSet
-empty = MkUUIDSet IS.empty
+instance ZWrapped UUIDSet (Set UUID) where
+  {-# INLINABLE unwrap #-}
+  unwrap (MkUUIDSet us) = us
 
-{-# INLINABLE member #-}
-member :: UUID -> UUIDSet -> Bool
-member uuid (MkUUIDSet us) = IS.member (unUUID uuid) us
+instance ZContainer UUIDSet UUID where
+  {-# INLINABLE zAdd #-}
+  zAdd uuid (MkUUIDSet us) = MkUUIDSet $ S.insert uuid us
+  {-# INLINABLE zDelete #-}
+  zDelete uuid (MkUUIDSet us) = MkUUIDSet $ S.delete uuid us
+  {-# INLINABLE zMember #-}
+  zMember uuid (MkUUIDSet us) = S.member uuid us
 
-{-# INLINABLE insert #-}
-insert :: UUID -> UUIDSet -> UUIDSet
-insert uuid (MkUUIDSet us) = MkUUIDSet $ IS.insert (unUUID uuid) us
+instance ZFilterable UUIDSet UUID where
+  {-# INLINABLE zFilter #-}
+  zFilter f (MkUUIDSet us) = MkUUIDSet $ S.filter f us
+  {-# INLINABLE zFilterM #-}
+  zFilterM f (MkUUIDSet us)  = MkUUIDSet <$> S.fromAscList <$> CM.filterM f (S.toAscList us)
 
-uuidSetToList :: UUIDSet -> [UUID]
-uuidSetToList (MkUUIDSet us) = map mkUUID $ IS.toList us
+instance ZEmptiable UUIDSet where
+  {-# INLINABLE zEmpty #-}
+  zEmpty = MkUUIDSet S.empty
+  zIsNull (MkUUIDSet us) = S.null us
 
--- {-# INLINABLE delete #-}
--- delete :: UUID -> UUIDSet -> UUIDSet
--- delete uuid (MkUUIDSet us) = MkUUIDSet $ IS.delete (unUUID uuid) us
+instance ZIsList UUIDSet UUID where
+  zToList (MkUUIDSet us) = S.toAscList us
+  zFromList = MkUUIDSet . S.fromList

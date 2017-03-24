@@ -1,15 +1,16 @@
 module Zwerg.Graphics.SDL where
 
 import Zwerg.Graphics.SDL.Core
+import Zwerg.Data.Error
 import Zwerg.Graphics.SDL.MainMenu
 import Zwerg.Graphics.SDL.MainScreen
-import Zwerg.Graphics.SDL.Glyph
 import Zwerg.UI.Port
 
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Class (MonadState)
+import Control.Monad.Except
 
-import Control.Lens (Lens', makeClassy, assign)
+import Control.Lens (Lens', makeClassy)
 
 data ContextSDL = ContextSDL
     { _coreSDL           :: CoreContextSDL
@@ -38,7 +39,7 @@ uninitializedContextSDL = ContextSDL
 initSDL :: (HasCoreContextSDL s,
             HasMainScreenContextSDL s,
             HasMainMenuContextSDL s,
-            HasContextSDL s,
+            MonadError ZError m,
             MonadState s m,
             MonadIO m)
         => m ()

@@ -1,5 +1,6 @@
 module Zwerg.Event (Event(..)) where
 
+import Zwerg.Prelude
 import Zwerg.Action (Action)
 import Zwerg.Animation (Animation)
 import Zwerg.Sound (Sound)
@@ -12,3 +13,4 @@ data Event = Event
     , _sound     :: Maybe Sound
     } deriving (Show, Read, Eq)
 makeClassy ''Event
+

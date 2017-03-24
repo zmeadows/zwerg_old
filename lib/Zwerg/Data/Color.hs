@@ -5,12 +5,12 @@ module Zwerg.Data.Color (
     toV3
     ) where
 
-import Data.Word (Word8)
+import Zwerg.Prelude
 
-import Linear (V3(..))
-
-import GHC.Generics (Generic)
 import Data.Binary
+import Data.Word (Word8)
+import GHC.Generics (Generic)
+import Linear (V3(..))
 
 newtype Color = MkColor (Word8,Word8,Word8)
     deriving (Show, Read, Eq, Generic)

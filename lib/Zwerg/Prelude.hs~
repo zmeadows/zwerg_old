@@ -1,0 +1,4 @@
+{-# LANGUAGE Strict #-}
+module Zwerg.Prelude (module EXPORTED) where
+
+import Protolude as EXPORTED

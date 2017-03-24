@@ -1,5 +1,7 @@
 module Zwerg.UI.Font where
 
+import Zwerg.Prelude
+
 import GHC.Generics (Generic)
 import Data.Binary
 import Data.Hashable

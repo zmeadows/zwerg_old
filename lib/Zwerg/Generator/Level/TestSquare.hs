@@ -1,46 +1,48 @@
 module Zwerg.Generator.Level.TestSquare where
 
 import Zwerg.Generator
+import Zwerg.Util
 import Zwerg.Generator.Level
+import Zwerg.UI.Font
+import Zwerg.Generator.Enemy.Goblin
 
-import Control.Lens (makeLenses, use, to, view)
-import Control.Monad (forM_)
+import Data.Map.Strict (traverseWithKey)
 
-data TestSquareGenContext = TestSquareGenContext
-    { _testSquareLevelUUID :: UUID
-    } deriving (Show, Read, Eq)
-makeLenses ''TestSquareGenContext
+testSquareGenerator :: Generator UUID
+testSquareGenerator = MkGenerator $ do
+    traceM "generating Test Square..."
+    testSquareLevelUUID <- getNewUUID
+    generate $ levelSkeletonGenerator testSquareLevelUUID
+    testSquareTiles <- demandComp tileMap testSquareLevelUUID
 
-instance LevelGenContext TestSquareGenContext where
-    levelUUID = testSquareLevelUUID
+    _ <- flip traverseWithKey (unwrap testSquareTiles) $ \pos tileUUID -> do
+        let (x,y) = unPosition pos
+            isWallTile = x == 0 || x == round mapWidth - 1 || y == 0 || y == round mapHeight - 1
 
-type TestSquareGenerator = Generator TestSquareGenContext
+        if isWallTile
+          then do
+              setComp tileUUID tileType Wall
+              setComp tileUUID glyph $ Glyph Normal 'X' $ mkColor 255 255 255
+          else do
+              setComp tileUUID tileType Floor
+              setComp tileUUID blocked False
+              setComp tileUUID glyph $ Glyph Normal '.' $ mkColor 255 255 255
 
-generateTestSquare :: TestSquareGenerator ()
-generateTestSquare = do
-    genLevelSkeleton
-    lid <- view levelUUID
-    ltiles <- demandComp lid tiles
+    traceM "generating Goblins..."
+    replicateM_ 5 $ do
+      traceM $ show (__LINE__ :: Int)
+      goblinUUID <- generate goblinGenerator
+      traceM $ show (__LINE__ :: Int)
+      goblinTileUUID <- getRandomTile testSquareLevelUUID
 
-    let addTileComp p = addComp $ getTileUUIDAtPos p ltiles
+      traceM $ show (__LINE__ :: Int)
+      goblinTileUUID' <- fromJustErrM goblinTileUUID $
+        ZError __FILE__ __LINE__ Fatal "Could not find an open tile to place Player"
 
-    forM_ wallPositions $ \pos -> do
-        addTileComp pos tileType Wall
-        addTileComp pos glyph $ mkGlyph 'X' $ mkColor 255 255 255
+      traceM $ show (__LINE__ :: Int)
+      demandComp position goblinTileUUID' >>= addComp goblinUUID position
+      addOccupant goblinUUID goblinTileUUID'
+      addComp goblinTileUUID' blocked True
+      traceM $ show (__LINE__ :: Int)
 
-    forM_ floorPositions $ \pos -> do
-        addTileComp pos tileType Floor
-        addTileComp pos blocked False
-        addTileComp pos glyph $ mkGlyph '.' $ mkColor 255 255 255
-
-wallPositions :: [Position]
-wallPositions = [ mkPosition (x,y)
-                    | x <- [0, mapWidth - 1]
-                    , y <- [0,mapHeight - 1]
-                ]
-
-floorPositions :: [Position]
-floorPositions = [ mkPosition (x,y)
-                     | x <- [1..mapWidth - 2]
-                     , y <- [1..mapHeight - 2]
-                 ]
+    return testSquareLevelUUID

@@ -1,11 +1,11 @@
-module Zwerg.Component.TileType where
+module Zwerg.Data.Direction where
 
 import Zwerg.Prelude
 
 import GHC.Generics (Generic)
 import Data.Binary
 
-data TileType = Floor | Wall | Door | Void
+data Direction = Up | Down | Left | Right
     deriving (Show, Read, Eq, Generic)
 
-instance Binary TileType
+instance Binary Direction

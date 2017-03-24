@@ -1,44 +1,60 @@
 module Zwerg.UI.Menu where
 
-import Data.Text (Text, unpack)
+import Zwerg.Prelude
+import Zwerg.Class
+import Zwerg.Data.Error
+
+import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Foldable (minimumBy)
 import Data.Function (on)
+import Data.Sequence (Seq, (<|), (|>), ViewL(..), ViewR(..))
+import qualified Data.Sequence as S
+import Control.Lens (makeLenses, view)
 
 data MenuEntry a = MenuEntry
-    { shortcut :: Char
-    , label    :: Text
-    , item     :: a
+    { _shortcut :: Char
+    , _label    :: Text
+    , _item     :: a
     } deriving (Show, Eq)
+makeLenses ''MenuEntry
 
-data Menu a = Menu [MenuEntry a] [MenuEntry a] deriving (Show, Eq)
+newtype Menu a = MkMenu (Seq (MenuEntry a))
+  deriving (Show, Eq)
 
 type TextMenu = Menu ()
 
+instance ZConstructable (Menu a) [(Text,a)] where
+  zConstruct xs = if
+    | null xs -> throwError $ ZError __FILE__ __LINE__ Fatal "Tried to construct empty menu"
+    | otherwise -> return $ makeMenu xs
+
 next :: Menu a -> Menu a
-next (Menu [] [r]) = (Menu [] [r])
-next (Menu [] (r:rs)) = (Menu [r] rs)
-next (Menu ls [r]) = Menu [] (ls ++ [r])
-next (Menu ls (r:rs)) = Menu (ls ++ [r]) rs
+next (MkMenu s) = if
+  | S.null s        -> MkMenu S.empty
+  | S.length s == 1 -> MkMenu s
+  | otherwise       -> let (a :< s') = S.viewl s in MkMenu $ s' |> a
 
 prev :: Menu a -> Menu a
-prev (Menu [] [r]) = (Menu [] [r])
-prev (Menu [] rs) = (Menu (init rs) [last rs])
-prev (Menu ls rs) = Menu (init ls) ((last ls):rs)
+prev (MkMenu s) = if
+  | S.null s        -> MkMenu S.empty
+  | S.length s == 1 -> MkMenu s
+  | otherwise       -> let (s' :> a) = S.viewr s in MkMenu $ a <| s'
 
 focus :: Menu a -> MenuEntry a
-focus (Menu _ (r:_)) = r
-focus (Menu _ []) = error $ "blah"
+focus (MkMenu s) = let (a :< _) = S.viewl s in a
 
-makeTextMenu :: [Text] -> TextMenu
-makeTextMenu labels = makeTextMenu' labels []
+makeMenu :: [(Text,a)] -> Menu a
+makeMenu entries = makeMenu' entries []
 
-makeTextMenu' :: [Text] -> [MenuEntry ()] -> TextMenu
-makeTextMenu' (l:ls) entries =
-  let usedChars = map shortcut entries
-      newCharCounts = zip (unpack l) $ map (\x -> length $ filter (== x) usedChars) $ unpack l
+makeMenu' :: [(Text,a)] -> [MenuEntry a] -> Menu a
+makeMenu' ((newLabel, newItem) : remaining) entries =
+  let alreadyUsedChars = map (view shortcut) entries :: [Char]
+      newCharCounts = map (\x -> (x, length $ filter (== x) alreadyUsedChars)) (T.unpack newLabel)
       newChar = fst $ minimumBy (compare `on` snd) newCharCounts
-  in makeTextMenu' ls $ (MenuEntry newChar l ()):entries
-makeTextMenu' [] entries = Menu [] $ reverse entries
+  in makeMenu' remaining $ (MenuEntry newChar newLabel newItem):entries
 
-menuToList :: Menu a -> [Text]
-menuToList (Menu ls rs) = map label (ls ++ rs)
+makeMenu' [] entries = MkMenu $ S.fromList entries
+
+getMenuLabels :: Menu a -> [Text]
+getMenuLabels (MkMenu s) = toList $ fmap (view label) s

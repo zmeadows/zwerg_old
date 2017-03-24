@@ -1,0 +1,26 @@
+{-# LANGUAGE OverlappingInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+module Zwerg.Component.Empty (emptyComponents) where
+
+import Zwerg.Class (zEmpty)
+import Zwerg.Component (Components)
+
+class TypeCast   a b   | a -> b, b->a   where typeCast   :: a -> b
+class TypeCast'  t a b | t a -> b, t b -> a where typeCast'  :: t->a->b
+class TypeCast'' t a b | t a -> b, t b -> a where typeCast'' :: t->a->b
+instance TypeCast'  () a b => TypeCast a b where typeCast x = typeCast' () x
+instance TypeCast'' t a b => TypeCast' t a b where typeCast' = typeCast''
+instance TypeCast'' () a a where typeCast'' _ x  = x
+
+class ListApply f a r | f -> a r where
+    ($...) :: f -> [a] -> r
+
+instance (TypeCast b r) => ListApply b a r where
+    x $... _ = typeCast x
+
+instance (ListApply f a r) => ListApply (a -> f) a r where
+    f $... (x:xs) = (f x) $... xs                                
+
+emptyComponents :: Components
+emptyComponents = Components $... UM.empty
+

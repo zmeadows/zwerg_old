@@ -1,12 +1,11 @@
 module Zwerg.Const where
 
-import Foreign.C.Types (CInt)
+import Zwerg.Prelude
 
-mapWidth, mapHeight :: Int
-mapWidth = 15
-mapHeight = 15
+mapWidth, mapHeight :: Double
+mapWidth = 80
+mapHeight = 25
 
-screenWidth, screenHeight :: CInt
+screenWidth, screenHeight :: Double
 screenWidth = 1400
 screenHeight = 900
-

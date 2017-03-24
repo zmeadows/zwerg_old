@@ -1,8 +1,9 @@
 module Zwerg.Component.Stats where
 
+import Zwerg.Prelude
+
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-
 import GHC.Generics (Generic)
 import Data.Binary
 

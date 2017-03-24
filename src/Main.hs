@@ -1,5 +1,6 @@
 module Main where
 
+import Zwerg.Prelude
 import Zwerg
 import Control.Monad (void)
 

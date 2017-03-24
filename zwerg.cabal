@@ -37,13 +37,14 @@ library
                        Zwerg.Component.Position
                        Zwerg.Component.Stats
                        Zwerg.Component.TileType
-                       Zwerg.Component.Tiles
+                       Zwerg.Component.TileMap
                        Zwerg.Component.UUID
                        Zwerg.Const
+                       Zwerg.Class
                        Zwerg.Data.Color
+                       Zwerg.Data.Direction
                        Zwerg.Data.Error
                        Zwerg.Data.RanGen
-                       Zwerg.Data.UUIDGen
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
                        Zwerg.Event
@@ -51,6 +52,9 @@ library
                        Zwerg.Game
                        Zwerg.Generator
                        Zwerg.Generator.Level
+                       Zwerg.Generator.Level.TestSquare
+                       Zwerg.Generator.Player.TestPlayer
+                       Zwerg.Generator.Enemy.Goblin
                        Zwerg.Graphics.SDL
                        Zwerg.Graphics.SDL.Core
                        Zwerg.Graphics.SDL.Glyph
@@ -60,6 +64,7 @@ library
                        Zwerg.Graphics.SDL.Util
                        Zwerg.Log
                        Zwerg.Options
+                       Zwerg.Prelude
                        Zwerg.Sound
                        Zwerg.System
                        Zwerg.UI.Font
@@ -86,29 +91,35 @@ library
                        mtl,
                        transformers,
                        MonadRandom,
+                       random,
                        sdl2,
                        sdl2-ttf,
                        filepath,
                        binary,
+                       xml,
                        vector-binary-instances,
-                       ListZipper,
+                       protolude,
                        StateVar
 
-  default-extensions:  GeneralizedNewtypeDeriving,
-                       TemplateHaskell,
-                       RankNTypes,
-                       DeriveGeneric,
-                       TupleSections,
-                       DeriveTraversable,
-                       StandaloneDeriving,
-                       TypeFamilies,
-                       OverloadedStrings,
-                       LambdaCase,
-                       MultiParamTypeClasses,
-                       FunctionalDependencies,
-                       MultiWayIf,
-                       Strict,
-                       CPP
+  default-extensions: CPP,
+                      DeriveFoldable,
+                      DeriveGeneric,
+                      DeriveTraversable,
+                      FlexibleContexts,
+                      FlexibleInstances,
+                      FunctionalDependencies,
+                      GeneralizedNewtypeDeriving,
+                      LambdaCase,
+                      MultiParamTypeClasses,
+                      MultiWayIf,
+                      NoImplicitPrelude,
+                      OverloadedStrings,
+                      RankNTypes,
+                      StandaloneDeriving,
+                      Strict,
+                      TemplateHaskell,
+                      TupleSections,
+                      TypeFamilies
 
 executable zwerg
   hs-source-dirs:      src/

@@ -1,21 +1,24 @@
 module Zwerg.Graphics.SDL.Core where
 
+import Zwerg.Prelude
 import Zwerg.UI.Font
+import Zwerg.Graphics.SDL.Util
 import Zwerg.Util
 import Zwerg.Const
+import Zwerg.Data.Error
 
-import Data.Maybe (fromJust)
 
+import Data.Text (unpack)
 import Control.Arrow ((&&&))
 import Control.Lens (Lens', makeClassy, assign, use, (%=))
-import Control.Monad
+import Control.Monad()
 import Control.Monad (forM_)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Class (MonadState)
 import Data.HashMap.Strict (HashMap)
 import Foreign.C.Types (CInt)
 import Foreign.Ptr (nullPtr)
-import Linear (V2(..), V4(..))
+import Linear (V2(..))
 import SDL (($=))
 import SDL.TTF.FFI (TTFFont)
 import qualified Data.HashMap.Strict as HM
@@ -48,7 +51,7 @@ initCoreSDL = do
     SDL.initialize [SDL.InitVideo]
 
     SDL.createWindow "zwerg" SDL.defaultWindow
-        { SDL.windowInitialSize = V2 screenWidth screenHeight
+        { SDL.windowInitialSize = V2 (round screenWidth) (round screenHeight)
         , SDL.windowBorder = True
         } >>= assign window
 
@@ -58,15 +61,16 @@ initCoreSDL = do
 
     use window >>= \w -> SDL.createRenderer w (-1) rconf >>= assign renderer
     ren <- use renderer
-    SDL.rendererDrawColor ren $= V4 25 25 25 maxBound
+    SDL.rendererDrawColor ren $= zwergBkgColor
     SDL.clear ren
 
     void SDL.TTF.init
-    inited <- SDL.TTF.wasInit
+    _ <- SDL.TTF.wasInit
     -- TODO: replace with zwerg error
-    unless inited $ error "[Bug] Font system not initialized"
+    -- unless inited $ error "[Bug] Font system not initialized"
 
-    let fontPaths =
+    let
+        fontPaths =
             [ (Normal     , "fonts/Hack-Regular.ttf")
             , (Bold       , "fonts/Hack-Bold.ttf")
             , (Italic     , "fonts/Hack-Italic.ttf")
@@ -75,7 +79,7 @@ initCoreSDL = do
 
     forM_ fontPaths $ \(ft, fp) -> do
         fullFontPath <- getAsset fp
-        newTTFFont <- SDL.TTF.openFont fullFontPath 22
+        newTTFFont <- SDL.TTF.openFont (unpack fullFontPath) 22
         fonts %= HM.insert ft newTTFFont
 
     use window >>= SDL.showWindow
@@ -86,10 +90,15 @@ shutdownCoreSDL = do
     use renderer >>= SDL.destroyRenderer
     SDL.quit
 
-getTTFFont :: (HasCoreContextSDL s, MonadState s m)
+getTTFFont :: ( HasCoreContextSDL s,
+                MonadError ZError m,
+                MonadState s m
+              )
            => FontType
            -> m FontSDL
-getTTFFont ft = fromJust <$> HM.lookup ft <$> use fonts
+getTTFFont ft = do
+  sdlFont <- HM.lookup ft <$> use fonts
+  whenJustErr sdlFont (ZError __FILE__ __LINE__ Fatal "Failed to load SDL font") return
 
 getTextureDimensions :: MonadIO m
                      => SDL.Texture

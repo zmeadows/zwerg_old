@@ -8,5 +8,5 @@ import Zwerg.Component.Parent     as EXPORTED
 import Zwerg.Component.Stats      as EXPORTED
 import Zwerg.Component.EntityType as EXPORTED
 import Zwerg.Component.Glyph      as EXPORTED
-import Zwerg.Component.Tiles      as EXPORTED
 import Zwerg.Component.TileType   as EXPORTED
+import Zwerg.Component.TileMap    as EXPORTED

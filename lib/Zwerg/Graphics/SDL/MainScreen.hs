@@ -1,61 +1,84 @@
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 module Zwerg.Graphics.SDL.MainScreen where
 
+import Zwerg.Prelude
 import Zwerg.Graphics.SDL.Core
 import Zwerg.Graphics.SDL.Glyph
-import Zwerg.UI.Font
+import Zwerg.Graphics.SDL.Util
 import Zwerg.Component.Glyph
 import Zwerg.Component.Position
--- import Zwerg.UI.Menu
 import Zwerg.Data.Color
+import Zwerg.Data.Error
 import Zwerg.Const
--- 
+import Zwerg.UI.GlyphMap
+ 
 import Foreign.C.Types (CInt)
-import Control.Monad (forM_, forM)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.State.Class (MonadState)
--- import Data.Maybe (fromJust)
--- 
-import Control.Lens (makeClassy, (%=), use, assign)
--- import Data.HashMap.Strict (HashMap)
--- import Data.Text (Text)
+ 
+import Control.Lens (makeClassy, use, assign)
 import SDL (($=))
 import SDL.Vect
--- import qualified Data.HashMap.Strict as HM
 import qualified SDL
 
 data MainScreenContextSDL = MainScreenContextSDL
     { _charTextures   :: CharTextureMap
-    , _mapViewport    :: SDL.Rectangle CInt
+    , _mainViewport    :: SDL.Rectangle CInt
     , _statusViewport :: SDL.Rectangle CInt
     , _logViewport    :: SDL.Rectangle CInt
     }
 makeClassy ''MainScreenContextSDL
 
+pixelGap :: Double
+pixelGap = 4.0
+
+mainW, mainH :: Double
+mainW = 0.75
+mainH = 0.75
+
+statusW, statusH :: Double
+statusW = 1.0 - mainW
+statusH = 1.0
+
+logW, logH :: Double
+logW = mainW
+logH = 1.0 - mainH
+  
+
 uninitializedMainScreenContextSDL :: MainScreenContextSDL
 uninitializedMainScreenContextSDL = MainScreenContextSDL
     { _charTextures   = unitializedCharTextureMap
-    , _mapViewport    = SDL.Rectangle
-                                (P (V2 (screenWidth `div` 3) (screenHeight `div` 3)))
-                                (V2 (screenWidth `div` 3) (screenHeight `div` 3))
-    , _statusViewport = SDL.Rectangle
-                                (P (V2 (screenWidth `div` 3) (screenHeight `div` 3)))
-                                (V2 (screenWidth `div` 3) (screenHeight `div` 3))
-    , _logViewport    = SDL.Rectangle
-                                (P (V2 (screenWidth `div` 3) (screenHeight `div` 3)))
-                                (V2 (screenWidth `div` 3) (screenHeight `div` 3))
+    , _mainViewport    = makeSDLRect pixelGap pixelGap
+                                    (screenWidth * mainW - pixelGap/2.0)
+                                    (screenHeight * mainH - pixelGap/2.0)
+    , _statusViewport = makeSDLRect (screenWidth * mainW + 3*pixelGap/2.0) pixelGap
+                                    (screenWidth * statusW - 5.0 * pixelGap / 2.0)
+                                    (screenHeight * statusH - 2*pixelGap)
+    , _logViewport    = makeSDLRect pixelGap (screenHeight * mainH + 3*pixelGap/2.0)
+                                    (screenWidth * logW - pixelGap/2.0)
+                                    (screenHeight * logH - 5.0 * pixelGap / 2.0)
     }
 
-initializeMainScreenContextSDL :: (HasMainScreenContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
+initializeMainScreenContextSDL :: ( HasMainScreenContextSDL s,
+                                    HasCoreContextSDL s,
+                                    MonadError ZError m,
+                                    MonadState s m,
+                                    MonadIO m)
                                => m ()
 initializeMainScreenContextSDL = do
   initializeCharTextureMap >>= assign charTextures
   return ()
 
-blitGlyph :: (HasCoreContextSDL s, HasMainScreenContextSDL s, MonadState s m, MonadIO m)
-          => Glyph
-          -> Position
+blitGlyph :: ( HasCoreContextSDL s,
+               HasMainScreenContextSDL s,
+               MonadError ZError m,
+               MonadState s m,
+               MonadIO m
+             )
+          => Position
+          -> Glyph
           -> m ()
-blitGlyph g pos = do
+blitGlyph pos g = do
     let (x,y) = unPosition pos
     t <- use charTextures >>= glyphToRawTexture g
     SDL.textureColorMod t $= toV3 (color g)
@@ -64,12 +87,42 @@ blitGlyph g pos = do
       (P $ V2 (13* fromIntegral x) (27* fromIntegral y)) (V2 13 27)
 
 
-drawMainScreen :: (HasMainScreenContextSDL s, HasCoreContextSDL s, MonadState s m, MonadIO m)
-               => m ()
-drawMainScreen = do
-  forM_ [ (x',y') | x' <- [0..80], y' <- [0..25] ] $ \(x,y) ->
-          blitGlyph (Glyph Normal 'A' $ mkColor 200 200 200) $ mkPosition (x,y)
-  forM_ [ (x',y') | x' <- [81..105], y' <- [0..32] ] $ \(x,y) ->
-          blitGlyph (Glyph Normal 'B' $ mkColor 200 200 200) $ mkPosition (x,y)
-  forM_ [ (x',y') | x' <- [0..80], y' <- [26..32] ] $ \(x,y) ->
-          blitGlyph (Glyph Normal 'C' $ mkColor 200 200 200) $ mkPosition (x,y)
+drawMainScreen :: ( HasMainScreenContextSDL s,
+                    HasCoreContextSDL s,
+                    MonadState s m,
+                    MonadError ZError m,
+                    MonadIO m)
+               => GlyphMap -> m ()
+drawMainScreen gm = do
+  ren <- use (core . renderer)
+
+  mainVP   <- use mainViewport
+  statusVP <- use statusViewport
+  logVP    <- use logViewport
+
+  SDL.rendererViewport ren $= Nothing
+  SDL.rendererDrawColor ren $= zwergBkgColor
+  SDL.clear ren
+
+  SDL.rendererDrawColor ren $= V4 255 100 100 maxBound
+  SDL.drawRect ren $ Just mainVP
+
+  SDL.rendererDrawColor ren $= V4 100 255 100 maxBound
+  SDL.drawRect ren $ Just statusVP
+
+  SDL.rendererDrawColor ren $= V4 100 100 255 maxBound
+  SDL.drawRect ren $ Just logVP
+
+  SDL.rendererViewport ren $= Just mainVP
+  forGlyphs gm blitGlyph
+
+  return ()
+
+  
+
+  -- forM_ [ (x',y') | x' <- [0..80], y' <- [0..25] ] $ \(x,y) ->
+  --         blitGlyph (Glyph Normal 'A' $ mkColor 200 200 200) $ mkPosition (x,y)
+  -- forM_ [ (x',y') | x' <- [81..105], y' <- [0..32] ] $ \(x,y) ->
+  --         blitGlyph (Glyph Normal 'B' $ mkColor 200 200 200) $ mkPosition (x,y)
+  -- forM_ [ (x',y') | x' <- [0..80], y' <- [26..32] ] $ \(x,y) ->
+  --         blitGlyph (Glyph Normal 'C' $ mkColor 200 200 200) $ mkPosition (x,y)

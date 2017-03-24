@@ -1,5 +1,6 @@
 module Zwerg.Component.Equipment where
 
+import Zwerg.Prelude
 import Zwerg.Component.UUID (UUID)
 
 import Data.Map.Strict (Map)

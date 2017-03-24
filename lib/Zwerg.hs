@@ -1,20 +1,21 @@
 module Zwerg (zwerg) where
 
+import Zwerg.Data.Error
+import Zwerg.Data.RanGen
 import Zwerg.Game
 import Zwerg.Graphics.SDL
 import Zwerg.Graphics.SDL.Core
-import Zwerg.Graphics.SDL.Util
 import Zwerg.Graphics.SDL.MainMenu
 import Zwerg.Graphics.SDL.MainScreen
-import Zwerg.Data.RanGen
+import Zwerg.Graphics.SDL.Util
+import Zwerg.Prelude
+import Zwerg.UI.GlyphMap
 import Zwerg.UI.Port
 import Zwerg.Util
 
-import Control.Monad.State (StateT, MonadState, runStateT)
-import Control.Monad.IO.Class (MonadIO)
-import Control.Monad (unless)
-
 import Control.Lens (makeClassy, use, assign)
+import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified SDL
 
 data ZwergState = ZwergState
@@ -44,43 +45,48 @@ initZwergState = ZwergState
     , _quitting    = False
     }
 
-newtype Zwerg a = Zwerg (StateT ZwergState IO a)
+newtype Zwerg a = Zwerg (ExceptT ZError (StateT ZwergState IO) a)
     deriving (
         Functor,
         Applicative,
         Monad,
         MonadState ZwergState,
+        MonadError ZError,
         MonadIO
     )
 
-runZwerg :: Zwerg a -> IO (a, ZwergState)
-runZwerg (Zwerg a) = runStateT a initZwergState
+runZwerg :: Zwerg a -> IO (Either ZError a, ZwergState)
+runZwerg (Zwerg a) = runStateT (runExceptT a) initZwergState
 
 test :: Zwerg ()
 test = do
     newPureRanGen >>= assign ranGen
     initSDL
+    currentPort <- use (gameState . port)
+    drawZwergScreen currentPort
     mainLoop
 
-zwerg :: IO ((), ZwergState)
+zwerg :: IO (Either ZError (), ZwergState)
 zwerg = runZwerg test
 
 mainLoop :: Zwerg ()
 mainLoop = do
-    currentPort <- use (gameState . port)
-    drawZwergScreen currentPort
     whenJustM (fmap SDL.eventPayload <$> SDL.pollEvent) $ \case
         SDL.KeyboardEvent ked -> whenJust (keyboardEventToKey ked) $ \keycode -> do
             st <- use gameState
             gen <- use ranGen
-            let (st', _, gen') = runGame (processUserInput keycode) gen st
+            let (st', err, gen') = runGame (processUserInput keycode) gen st
             assign gameState st'
             assign ranGen gen'
+            currentPort <- use (gameState . port)
+            drawZwergScreen currentPort
+            whenJust err $ \err' -> do
+              liftIO $ print err'
+              assign quitting True
         SDL.QuitEvent       -> assign quitting True
         _                   -> return ()
 
-    use quitting >>= \q -> unless q mainLoop
-    quitZwerg
+    use quitting >>= \q -> if q then quitZwerg else mainLoop
 
 drawZwergScreen :: Port -> Zwerg ()
 drawZwergScreen (MainMenu m) = do
@@ -91,11 +97,12 @@ drawZwergScreen (MainMenu m) = do
 
 drawZwergScreen MainScreen = do
     ren <- use (sdl . renderer)
-    SDL.clear ren
-    drawMainScreen
+    gm <- use (gameState . glyphMap)
+    drawMainScreen gm
     SDL.present ren
 
 drawZwergScreen _ = return ()
 
 quitZwerg :: Zwerg ()
-quitZwerg = shutdownSDL
+quitZwerg = do
+  shutdownSDL

@@ -1,5 +1,6 @@
 module Zwerg.Animation where
 
+import Zwerg.Prelude
 import Zwerg.Component.Position (Position)
 import Zwerg.Data.Color (Color)
 

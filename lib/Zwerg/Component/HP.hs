@@ -1,24 +1,30 @@
 module Zwerg.Component.HP (
     HP,
-    mkHP,
     adjustHP,
     adjustMaxHP,
     fullHeal
     ) where
 
-import Control.Exception.Base (assert)
-import GHC.Generics (Generic)
+import Zwerg.Prelude
+import Zwerg.Class
+import Zwerg.Data.Error
+
 import Data.Binary
+import GHC.Generics (Generic)
 
 newtype HP = MkHP (Int,Int)
     deriving (Show, Read, Eq, Ord, Generic)
 
 instance Binary HP
 
-{-# INLINABLE mkHP #-}
-mkHP :: (Int,Int) -> HP
-mkHP (curHP,maxHP) = assert isValidHP $ MkHP (curHP,maxHP)
-    where isValidHP = curHP >= 0 && curHP <= maxHP && maxHP > 0
+instance ZConstructable HP (Int,Int) where
+  zConstruct (curHP, maxHP) = if
+    | curHP >= 0 && curHP <= maxHP && maxHP > 0 -> return $ MkHP (curHP,maxHP)
+    | otherwise -> throwError $ ZError __FILE__ __LINE__ Fatal
+                                "Attempted to create an invalid HP object"
+
+instance ZWrapped HP (Int,Int) where
+  unwrap (MkHP hp) = hp
 
 {-# INLINABLE adjustHP #-}
 adjustHP :: (Int -> Int) -> HP -> HP

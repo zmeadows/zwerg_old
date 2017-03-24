@@ -1,36 +1,35 @@
 module Zwerg.Behavior (
-    EventGen(..),
+    EventGenerator(..),
     Behaviors(..),
     HasBehaviors(..),
     Behavior,
     emptyBehaviors
     ) where
 
-import Zwerg.Data.RanGen (RanGen)
+import Zwerg.Prelude
+import Zwerg.Class
 import Zwerg.Event (Event)
 import Zwerg.Component (Components)
 import Zwerg.Data.UUIDMap (UUIDMap)
-import qualified Zwerg.Data.UUIDMap as UM
 
 import Control.Lens (makeClassy, Lens')
+import Control.Monad.Random       
 
-newtype EventGen = MkEventGen
-    { enact :: forall m. (Monad m)
-            => RanGen
-            -> Components
-            -> m [Event]
+newtype EventGenerator = MkEventGenerator {
+  enact :: forall m. (
+      MonadReader Components m,
+      MonadRandom m
+      ) => Event -> m [Event]
     }
 
 data Behaviors = Behaviors
-    { _tick    :: UUIDMap EventGen
-    , _onDeath :: UUIDMap EventGen
+    { _tick    :: UUIDMap EventGenerator
+    , _onDeath :: UUIDMap EventGenerator
     }
 makeClassy ''Behaviors
 
 emptyBehaviors :: Behaviors
-emptyBehaviors = Behaviors UM.empty UM.empty
+emptyBehaviors = Behaviors zEmpty zEmpty
 
-type Behavior s = HasBehaviors s => Lens' s EventGen
+type Behavior s = HasBehaviors s => Lens' s EventGenerator
 
-instance Show Behaviors where
-    show = const "<< Behaviors >>"

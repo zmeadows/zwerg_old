@@ -1,5 +1,6 @@
 module Zwerg.Component.Glyph where
 
+import Zwerg.Prelude
 import Zwerg.Data.Color
 import Zwerg.UI.Font
 

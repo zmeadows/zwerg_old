@@ -1,14 +1,16 @@
 module Zwerg.Graphics.SDL.Glyph where
 
+import Zwerg.Prelude
 import Zwerg.UI.Font
+import Zwerg.Util
 import Zwerg.Graphics.SDL.Core
 import Zwerg.Component.Glyph
+import Zwerg.Data.Error
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import System.IO.Unsafe (unsafePerformIO)
 import Control.Monad.State.Class (MonadState)
 import Control.Monad (mapM_)
-import Data.Maybe
 
 import qualified SDL
 import qualified SDL.TTF
@@ -21,10 +23,14 @@ newtype CharTextureMap = MkCharTextureMap (H.CuckooHashTable (FontType,Char) SDL
 unitializedCharTextureMap :: CharTextureMap
 unitializedCharTextureMap = MkCharTextureMap $ unsafePerformIO H.new
 
-allChars :: String
+allChars :: [Char]
 allChars = drop 33 $ take 127 [ (minBound :: Char) .. ]
 
-initializeCharTextureMap :: (HasCoreContextSDL s, MonadState s m, MonadIO m) 
+initializeCharTextureMap :: ( HasCoreContextSDL s,
+                              MonadState s m,
+                              MonadError ZError m,
+                              MonadIO m
+                            )
                          => m CharTextureMap
 initializeCharTextureMap = do
     ht <- liftIO (H.newSized $ 4 * (length allChars))
@@ -41,11 +47,11 @@ initializeCharTextureMap = do
     mapM_ (loadGlyphSurface BoldItalic) allChars
     return $ MkCharTextureMap ht
 
-glyphToRawTexture :: (MonadIO m)
+glyphToRawTexture :: (MonadError ZError m, MonadIO m)
                   => Glyph
                   -> CharTextureMap
                   -> m SDL.Texture
 glyphToRawTexture glyph (MkCharTextureMap charMap) = do
     tex <- liftIO $ H.lookup charMap (fontType glyph, char glyph)
-    return $ fromJust tex
+    whenJustErr tex (ZError __FILE__ __LINE__ Fatal "Could not load raw glyph texture") return
 

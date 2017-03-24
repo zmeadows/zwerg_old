@@ -1,5 +1,6 @@
 module Zwerg.Component.Parent where
 
+import Zwerg.Prelude
 import Zwerg.Component.UUID (UUID)
 
 import GHC.Generics (Generic)

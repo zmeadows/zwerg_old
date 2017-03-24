@@ -1,5 +1,7 @@
 module Zwerg.Options where
 
+import Zwerg.Prelude
+
 import Control.Lens (makeClassy)
 
 data Options = Options

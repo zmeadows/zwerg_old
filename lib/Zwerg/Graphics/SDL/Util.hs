@@ -1,10 +1,25 @@
 module Zwerg.Graphics.SDL.Util where
 
-import qualified SDL
-import qualified SDL.Raw as Raw
-
+import Zwerg.Prelude
 import Zwerg.Data.Color
 import Zwerg.UI.Input
+
+import Data.Word (Word8)
+import qualified SDL
+import qualified SDL.Raw as Raw
+import SDL.Vect
+import Foreign.C.Types (CInt)
+
+zwergBkgColor :: V4 Word8
+zwergBkgColor = V4 25 25 25 maxBound
+
+makeSDLRect :: (RealFrac a, RealFrac b, RealFrac c, RealFrac d)
+            => a -> b -> c -> d -> SDL.Rectangle CInt
+makeSDLRect x y w h = SDL.Rectangle (P (V2 x' y')) (V2 w' h')
+  where x' = fromIntegral (round x :: Int) :: CInt
+        y' = fromIntegral (round y :: Int) :: CInt
+        w' = fromIntegral (round w :: Int) :: CInt
+        h' = fromIntegral (round h :: Int) :: CInt
 
 colorToRawSDLColor :: Color -> Raw.Color
 colorToRawSDLColor col = let (r,g,b) = toRGB col in Raw.Color r g b 0

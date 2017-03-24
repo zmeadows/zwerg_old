@@ -1,16 +1,7 @@
 module Zwerg.Action (Action(..)) where
 
+import Zwerg.Prelude
 import Zwerg.Component.UUID (UUID)
-
--- import Control.Lens (Lens')
-
--- import Data.Sequence (Seq)
--- import qualified Data.Sequence as S (
---     empty,
---     (|>), (><),
---     ViewL(..),
---     viewl
---     )
 
 import Data.Text (Text)
 
@@ -18,7 +9,7 @@ data Action =
     Damage
     { targetUUID     :: UUID
     , amount         :: Int }
-    | Attack
+    | MeleeAttack
     { attackerUUID   :: UUID
     , defenderUUID   :: UUID }
     | Defence
