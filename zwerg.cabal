@@ -25,7 +25,6 @@ library
   hs-source-dirs:      lib/
 
   exposed-modules:     Zwerg
-                       Zwerg.Action
                        Zwerg.Animation
                        Zwerg.Behavior
                        Zwerg.Component
@@ -47,8 +46,8 @@ library
                        Zwerg.Data.RanGen
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
+                       Zwerg.Entity
                        Zwerg.Event
-                       Zwerg.EventTree
                        Zwerg.Game
                        Zwerg.Generator
                        Zwerg.Generator.Level

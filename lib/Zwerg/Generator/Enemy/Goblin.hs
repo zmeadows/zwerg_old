@@ -1,26 +1,35 @@
 module Zwerg.Generator.Enemy.Goblin where
 
+import Data.Text (append)
 import Zwerg.Component.All
 import Zwerg.Generator
 import Zwerg.UI.Font
 
 goblinGenerator :: Generator UUID
-goblinGenerator = MkGenerator $ do
-    traceM "generating individual goblin"
+goblinGenerator =
+  MkGenerator $ do
     goblinUUID <- getNewUUID
-
-    traceM $ show (__LINE__ :: Int)
-    addComp goblinUUID name "Goblin"
-    traceM $ show (__LINE__ :: Int)
+    generateGoblinName >>= addComp goblinUUID name
     addComp goblinUUID glyph $ Glyph Normal 'g' $ mkColor 100 255 100
-    traceM $ show (__LINE__ :: Int)
-    zConstruct (5,5) >>= addComp goblinUUID hp
-    traceM $ show (__LINE__ :: Int)
+    goblinHP <- getRandomR (3, 7)
+    zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
     addComp goblinUUID entityType Enemy
-    traceM $ show (__LINE__ :: Int)
     addComp goblinUUID equipment emptyEquipment
-    traceM $ show (__LINE__ :: Int)
     addComp goblinUUID stats zeroStats
-    traceM $ show (__LINE__ :: Int)
+    assignUniformRandomStat goblinUUID STR (1, 4)
+    assignUniformRandomStat goblinUUID DEX (2, 6)
+    assignUniformRandomStat goblinUUID INT (1, 2)
+    assignUniformRandomStat goblinUUID CHA (1, 2)
+    assignUniformRandomStat goblinUUID CON (1, 3)
+    assignUniformRandomStat goblinUUID WIS (1, 2)
     return goblinUUID
 
+generateGoblinName
+  :: (MonadRandom m)
+  => m Text
+generateGoblinName =
+  let firstNameFirstSyllables = ["Gol", "Kra", "Bah", "Quo"]
+      firstNameSecondSyllables = ["ith", "xul", "nix", "oth"]
+  in do f1 <- pickRandom firstNameFirstSyllables
+        f2 <- pickRandom firstNameSecondSyllables
+        return $ append f1 f2
