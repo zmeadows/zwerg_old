@@ -9,6 +9,8 @@ module Zwerg.Behavior
 import Zwerg.Class
 import Zwerg.Component (Components)
 import Zwerg.Component.UUID
+import Zwerg.Data.Error
+import Zwerg.Data.RanGen
 import Zwerg.Data.UUIDMap (UUIDMap)
 import Zwerg.Event
 import Zwerg.Prelude
@@ -16,31 +18,26 @@ import Zwerg.Prelude
 import Control.Lens (makeClassy, Lens', (%=), use, at)
 import Control.Monad.Random
 
-newtype EventGenerator a = MkEventGenerator
-  { react :: forall m. ( MonadState EventQueue m
-                       , MonadReader Components m
-                       , MonadRandom m
-                       , EventData a
-                       ) =>
-                         a -> m ()
-  }
+newtype EventGenerator =
+  EventGenerator (ExceptT ZError (RandT RanGen (ReaderT Components (State EventQueue))) ())
 
 data Behaviors = Behaviors
-  { _tick :: UUIDMap (EventGenerator TickEventData)
-  , _onDeath :: UUIDMap (EventGenerator DeathEventData)
+  { _tick :: UUIDMap (TickEventData -> EventGenerator)
+  , _onDeath :: UUIDMap EventGenerator
+  , _onHit :: UUIDMap EventGenerator
   }
 
 makeClassy ''Behaviors
 
 emptyBehaviors :: Behaviors
-emptyBehaviors = Behaviors zEmpty zEmpty
+emptyBehaviors = Behaviors zEmpty zEmpty zEmpty
 
-type Behavior s a = HasBehaviors s =>
-                      Lens' s (UUIDMap (EventGenerator a))
+type Behavior s a = (HasBehaviors s, EventData a) =>
+                      Lens' s (UUIDMap (a -> EventGenerator))
 
 addBehavior
   :: (HasBehaviors s, MonadState s m)
-  => UUID -> Behavior s a -> EventGenerator a -> m ()
+  => UUID -> Behavior s a -> (a -> EventGenerator) -> m ()
 addBehavior uuid behavior gen = behavior %= zInsert uuid gen
 
 getBehavior
