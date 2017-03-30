@@ -101,21 +101,21 @@ eraseEntity uuid = do
   setComp entityTileUUID needsRedraw True
   eType <- demandComp entityType uuid
   when (eType == Enemy) $ setComp entityTileUUID blocked False
-  (name . uuidMap) %= zRemoveAt uuid
-  (glyph . uuidMap) %= zRemoveAt uuid
-  (hp . uuidMap) %= zRemoveAt uuid
-  (entityType . uuidMap) %= zRemoveAt uuid
-  (position . uuidMap) %= zRemoveAt uuid
-  (cooldown . uuidMap) %= zRemoveAt uuid
-  (equipment . uuidMap) %= zRemoveAt uuid
-  (baseDamage . uuidMap) %= zRemoveAt uuid
-  (level . uuidMap) %= zRemoveAt uuid
-  (tiles . uuidMap) %= zRemoveAt uuid
-  (ticks . uuidMap) %= zRemoveAt uuid
-  (tileType . uuidMap) %= zRemoveAt uuid
-  (occupants . uuidMap) %= zRemoveAt uuid
-  (parent . uuidMap) %= zRemoveAt uuid
-  (children . uuidMap) %= zRemoveAt uuid
-  (stats . uuidMap) %= zRemoveAt uuid
-  (blocked . uuidMap) %= zRemoveAt uuid
-  (needsRedraw . uuidMap) %= zRemoveAt uuid
+  deleteComp uuid name
+  deleteComp uuid glyph
+  deleteComp uuid hp
+  deleteComp uuid entityType
+  deleteComp uuid position
+  deleteComp uuid cooldown
+  deleteComp uuid equipment
+  deleteComp uuid baseDamage
+  deleteComp uuid level
+  deleteComp uuid tiles
+  deleteComp uuid ticks
+  deleteComp uuid tileType
+  deleteComp uuid occupants
+  deleteComp uuid parent
+  deleteComp uuid children
+  deleteComp uuid stats
+  deleteComp uuid blocked
+  deleteComp uuid needsRedraw

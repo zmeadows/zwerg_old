@@ -2,6 +2,7 @@ module Zwerg.Component where
 
 import Zwerg.Class
 import Zwerg.Component.All
+import Zwerg.Data.Damage
 import Zwerg.Data.Error
 import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
@@ -10,7 +11,7 @@ import Zwerg.Util
 
 import Control.Exception.Base (assert)
 import Data.Binary
-import Data.Text (Text, pack, append)
+import Data.Text (Text, append)
 import GHC.Generics (Generic)
 
 import Control.Lens (makeClassy, Lens', at, use, to, (%=), view)
@@ -35,6 +36,8 @@ data Components = Components
   , _stats :: NamedUUIDMap Stats
   , _blocked :: NamedUUIDMap Bool
   , _needsRedraw :: NamedUUIDMap Bool
+  , _aiType :: NamedUUIDMap AIType
+  , _damageChain :: NamedUUIDMap DamageChain
   } deriving (Show, Eq, Generic)
 
 makeClassy ''Components
@@ -66,6 +69,8 @@ emptyComponents =
   , _stats = NamedUUIDMap "stats" zEmpty
   , _blocked = NamedUUIDMap "blocked" zEmpty
   , _needsRedraw = NamedUUIDMap "needsRedraw" zEmpty
+  , _aiType = NamedUUIDMap "aiType" zEmpty
+  , _damageChain = NamedUUIDMap "damageChain" zEmpty
   }
 
 {-- STATE --}
@@ -93,6 +98,11 @@ modComp
   :: (HasComponents s, MonadState s m)
   => UUID -> Component s a -> (a -> a) -> m ()
 modComp uuid comp f = (comp . uuidMap) %= zAdjust f uuid
+
+deleteComp
+  :: (HasComponents s, MonadState s m)
+  => UUID -> Component s a -> m ()
+deleteComp uuid comp = (comp . uuidMap) %= (zRemoveAt uuid)
 
 filterComp
   :: (HasComponents s, MonadState s m)

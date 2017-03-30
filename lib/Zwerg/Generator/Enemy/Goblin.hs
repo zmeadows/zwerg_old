@@ -3,7 +3,6 @@ module Zwerg.Generator.Enemy.Goblin where
 import Data.Text (append)
 import Zwerg.Component.All
 import Zwerg.Generator
-import Zwerg.UI.Font
 
 goblinGenerator :: Generator UUID
 goblinGenerator =
@@ -13,6 +12,7 @@ goblinGenerator =
     addComp goblinUUID glyph $ Glyph Normal 'g' $ mkColor 100 255 100
     goblinHP <- getRandomR (3, 7)
     zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
+    getRandomR (1, 100) >>= addComp goblinUUID ticks
     addComp goblinUUID entityType Enemy
     addComp goblinUUID equipment emptyEquipment
     addComp goblinUUID stats zeroStats

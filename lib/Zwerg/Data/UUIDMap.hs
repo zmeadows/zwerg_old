@@ -3,6 +3,7 @@ module Zwerg.Data.UUIDMap
   , NamedUUIDMap(..)
   , HasNamedUUIDMap(..)
   , Zwerg.Component.UUID.UUID
+  , getMinimumUUIDs
   ) where
 
 import Zwerg.Class
@@ -84,3 +85,16 @@ instance At (UUIDMap a) where
         Just v' -> zInsert k v' m
     where
       mv = zLookup k m
+
+getMinimumUUIDs
+  :: (Ord a, Bounded a)
+  => UUIDMap a -> (a, [UUID])
+getMinimumUUIDs (MkUUIDMap um) =
+  let (amin, ids) = IM.foldrWithKey f (minBound, []) um
+  in (amin, fmap mkUUID ids)
+  where
+    f uuid x (_, []) = (x, [uuid])
+    f uuid x (xmin, uuids) =
+      if | x == xmin -> (x, uuid : uuids)
+         | x < xmin -> (x, [uuid])
+         | otherwise -> (xmin, uuids)

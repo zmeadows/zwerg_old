@@ -1,11 +1,10 @@
 module Zwerg.Game where
 
-import Zwerg.Behavior (Behaviors, HasBehaviors(..), emptyBehaviors)
 import Zwerg.Component
 import qualified Zwerg.Component.TileMap as TM
 import qualified Zwerg.Data.Direction as Direction
 import Zwerg.Data.Error (ZError)
-import Zwerg.Data.RanGen (RanGen)
+import Zwerg.Data.UUIDMap
 import Zwerg.Entity
 import Zwerg.Event
 import Zwerg.Generator
@@ -24,7 +23,6 @@ import Unsafe (unsafeHead)
 
 data GameState = GameState
   { _gsComponents :: Components
-  , _gsBehaviors :: Behaviors
   , _gsUUIDGen :: UUIDGen
   , _gsLog :: Log
   , _gsPort :: Port
@@ -38,7 +36,6 @@ emptyGameState :: GameState
 emptyGameState =
   GameState
   { _gsComponents = emptyComponents
-  , _gsBehaviors = emptyBehaviors
   , _gsUUIDGen = initUUIDGen
   , _gsLog = emptyLog
   , _gsPort = initMainMenu
@@ -48,9 +45,6 @@ emptyGameState =
 
 instance HasComponents GameState where
   components = gsComponents
-
-instance HasBehaviors GameState where
-  behaviors = gsBehaviors
 
 instance HasUUIDGen GameState where
   uuidGen = gsUUIDGen
@@ -80,8 +74,7 @@ newtype Game a =
 
 runGame :: Game () -> RanGen -> GameState -> (GameState, Maybe ZError, RanGen)
 runGame (Game a) gen st =
-  let ((e, gen'), st') =
-        runIdentity (runStateT (runRandT (runExceptT a) gen) st)
+  let ((e, gen'), st') = runState (runRandT (runExceptT a) gen) st
   in case e of
        Left err -> (st', Just err, gen')
        Right () -> (st', Nothing, gen')
@@ -89,6 +82,12 @@ runGame (Game a) gen st =
 generateGame :: Game ()
 generateGame = do
   lid <- generate testSquareGenerator
+  _ <- generate testSquareGenerator
+  _ <- generate testSquareGenerator
+  _ <- generate testSquareGenerator
+  _ <- generate testSquareGenerator
+  _ <- generate testSquareGenerator
+  _ <- generate testSquareGenerator
   generate $ testPlayerGenerator lid
 
 processUserInput :: KeyCode -> Game ()
@@ -97,7 +96,12 @@ processUserInput k = do
   processUserInput' currentPort k
   processEvents
   newPort <- use port
-  when (newPort == MainScreen) updateGlyphMap
+  when (newPort == MainScreen) $ do
+    ts <- use (ticks . uuidMap)
+    let (minTick, uuids) = getMinimumUUIDs ts
+    traceShowM uuids
+    (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
+    updateGlyphMap
 
 processUserInput' :: Port -> KeyCode -> Game ()
 processUserInput' (MainMenu m) (KeyChar 'j') = port .= (MainMenu $ next m)
@@ -174,7 +178,7 @@ processEvent (MoveEntityDirectionEvent ed) = do
   setComp newTileUUID blocked True
   setComp oldTileUUID needsRedraw True
   setComp newTileUUID needsRedraw True
-processEvent (PhysicalAttackEvent ed) = eraseEntity (defenderUUID ed)
+processEvent (WeaponAttackAttemptEvent ed) = eraseEntity (view defenderUUID ed)
 processEvent _ = return ()
 
 getGlyphMapUpdates
@@ -196,11 +200,12 @@ getGlyphMapUpdates = do
 processPlayerDirectionInput :: Direction.Direction -> Game ()
 processPlayerDirectionInput dir =
   let processPlayerMove =
-        pushEvent $
+        pushEventM $
         MoveEntityDirectionEvent $ MoveEntityDirectionEventData playerUUID dir
       processPlayerAttack attackedUUID = do
-        pushEvent $
-          PhysicalAttackEvent $ PhysicalAttackEventData playerUUID attackedUUID
+        pushEventM $
+          WeaponAttackAttemptEvent $
+          WeaponAttackAttemptEventData playerUUID attackedUUID
   in getEntityPlayerAttacking dir >>=
      maybe processPlayerMove processPlayerAttack
 

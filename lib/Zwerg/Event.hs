@@ -3,42 +3,75 @@ module Zwerg.Event where
 import Zwerg.Class
 import Zwerg.Component.All
 import Zwerg.Component.UUID (UUID)
+import Zwerg.Data.Damage
 import qualified Zwerg.Data.Direction as Dir
 import Zwerg.Prelude
 
-import Control.Lens ((.=), (%=), over, use, to, makeClassy, Lens')
-import Data.Sequence (Seq, (<|), (|>), ViewL(..), ViewR(..))
+import Control.Lens
+       ((.=), (%=), over, use, to, makeClassy, makeFields, Lens')
+import Data.Sequence (Seq, (><), (<|), (|>), ViewL(..), ViewR(..))
 import qualified Data.Sequence as S
 
 class EventData a
 
+data IncomingDamageEventData = IncomingDamageEventData
+  { _incomingDamageEventDataAttackerUUID :: UUID
+  , _incomingDamageEventDataDefenderUUID :: UUID
+  , _incomingDamageEventDataDamage :: DamageChain
+  } deriving (Show, Eq)
+
+instance EventData IncomingDamageEventData
+
+makeFields ''IncomingDamageEventData
+
+data OutgoingDamageEventData = OutgoingDamageEventData
+  { _outgoingDamageEventDataAttackerUUID :: UUID
+  , _outgoingDamageEventDataDefenderUUID :: UUID
+  , _outgoingDamageEventDataDamageAmount :: Int
+  } deriving (Show, Eq)
+
+instance EventData OutgoingDamageEventData
+
+makeFields ''OutgoingDamageEventData
+
+data WeaponAttackAttemptEventData = WeaponAttackAttemptEventData
+  { _weaponAttackAttemptEventDataAttackerUUID :: UUID
+  , _weaponAttackAttemptEventDataDefenderUUID :: UUID
+  } deriving (Show, Eq)
+
+makeFields ''WeaponAttackAttemptEventData
+
+instance EventData WeaponAttackAttemptEventData
+
+data WeaponAttackHitEventData = WeaponAttackHitEventData
+  { _weaponAttackHitEventDataAttackerUUID :: UUID
+  , _weaponAttackHitEventDataDefenderUUID :: UUID
+  } deriving (Show, Eq)
+
+makeFields ''WeaponAttackHitEventData
+
+instance EventData WeaponAttackHitEventData
+
+data WeaponAttackMissEventData = WeaponAttackMissEventData
+  { _weaponAttackMissEventDataAttackerUUID :: UUID
+  , _weaponAttackMissEventDataDefenderUUID :: UUID
+  } deriving (Show, Eq)
+
+makeFields ''WeaponAttackMissEventData
+
+instance EventData WeaponAttackMissEventData
+
 data Event
   = IncomingDamageEvent IncomingDamageEventData
   | OutgoingDamageEvent OutgoingDamageEventData
-  | PhysicalAttackEvent PhysicalAttackEventData
-  | DefenceEvent DefenceEventData
+  | WeaponAttackAttemptEvent WeaponAttackAttemptEventData
+  | WeaponAttackHitEvent WeaponAttackHitEventData
+  | WeaponAttackMissEvent WeaponAttackMissEventData
   | DeathEvent DeathEventData
   | GenerateEntityEvent GenerateEntityEventData
   | MoveEntityEvent MoveEntityEventData
   | MoveEntityDirectionEvent MoveEntityDirectionEventData
   | TickEvent TickEventData
-  deriving (Show, Eq)
-
-data IncomingDamageEventData =
-  IncomingDamageEventData Int
-  deriving (Show, Eq)
-
-data OutgoingDamageEventData =
-  OutgoingDamageEventData Int
-  deriving (Show, Eq)
-
-data PhysicalAttackEventData = PhysicalAttackEventData
-  { attackerUUID :: UUID
-  , defenderUUID :: UUID
-  } deriving (Show, Eq)
-
-data DefenceEventData =
-  DefenceEventData Int
   deriving (Show, Eq)
 
 data DeathEventData =
@@ -75,6 +108,7 @@ instance ZWrapped EventQueue (Seq Event) where
 instance ZEmptiable EventQueue where
   zEmpty = MkEventQueue S.empty
   zIsNull = S.null . unwrap
+  zSize = S.length . unwrap
 
 popEvent
   :: (HasEventQueue s, MonadState s m)
@@ -87,7 +121,15 @@ popEvent = do
        in do eventQueue .= MkEventQueue eq'
              return $ Just evt
 
-pushEvent
+pushEvent :: Event -> EventQueue -> EventQueue
+pushEvent evt (MkEventQueue eq) = MkEventQueue $ eq |> evt
+
+pushEventM
   :: (HasEventQueue s, MonadState s m)
   => Event -> m ()
-pushEvent evt = eventQueue %= MkEventQueue . (flip (|>) evt) . unwrap
+pushEventM evt = eventQueue %= MkEventQueue . (flip (|>) evt) . unwrap
+
+pushEventsM
+  :: (HasEventQueue s, MonadState s m)
+  => EventQueue -> m ()
+pushEventsM evts = eventQueue %= MkEventQueue . ((><) (unwrap evts)) . unwrap

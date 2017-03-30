@@ -5,24 +5,26 @@ module Zwerg.Generator
   , assignUniformRandomStat
   ) where
 
-import Zwerg.Behavior as EXPORTED
 import Zwerg.Class as EXPORTED
 import Zwerg.Component as EXPORTED
 import Zwerg.Component.All as EXPORTED
 import Zwerg.Const as EXPORTED
 import Zwerg.Data.Color as EXPORTED
+import Zwerg.Data.Damage as EXPORTED
 import Zwerg.Data.Error as EXPORTED
-import Zwerg.Data.RanGen as EXPORTED
 import Zwerg.Data.UUIDSet as EXPORTED
 import Zwerg.Entity as EXPORTED
+import Zwerg.Event as EXPORTED
 import Zwerg.Prelude as EXPORTED
+import Zwerg.Random as EXPORTED
+import Zwerg.UI.Font as EXPORTED
 
+import Control.Lens as EXPORTED (makeClassy, view, (%=))
 import Control.Monad.Except as EXPORTED hiding ((<$!>))
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
 
 newtype Generator a = MkGenerator
   { generate :: forall s m. ( HasComponents s
-                            , HasBehaviors s
                             , HasUUIDGen s
                             , MonadError ZError m
                             , MonadRandom m

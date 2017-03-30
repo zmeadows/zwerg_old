@@ -1,4 +1,4 @@
-module Zwerg.Data.RanGen
+module Zwerg.Random.RanGen
   ( RanGen
   , RanChoice(..)
   , newPureRanGen

@@ -31,7 +31,7 @@ testSquareGenerator =
             setComp tileUUID blocked False
             setComp tileUUID glyph $ Glyph Normal '.' $ mkColor 255 255 255
     traceM "generating Goblins..."
-    replicateM_ 5 $ do
+    replicateM_ 50 $ do
       goblinUUID <- generate goblinGenerator
       addComp goblinUUID level testSquareLevelUUID
       goblinTileUUID <- getRandomTile testSquareLevelUUID

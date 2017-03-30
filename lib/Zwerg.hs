@@ -3,7 +3,6 @@ module Zwerg
   ) where
 
 import Zwerg.Data.Error
-import Zwerg.Data.RanGen
 import Zwerg.Game
 import Zwerg.Graphics.SDL
 import Zwerg.Graphics.SDL.Core
@@ -11,6 +10,7 @@ import Zwerg.Graphics.SDL.MainMenu
 import Zwerg.Graphics.SDL.MainScreen
 import Zwerg.Graphics.SDL.Util
 import Zwerg.Prelude
+import Zwerg.Random
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Port
 import Zwerg.Util

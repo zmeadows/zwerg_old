@@ -26,8 +26,8 @@ library
 
   exposed-modules:     Zwerg
                        Zwerg.Animation
-                       Zwerg.Behavior
                        Zwerg.Component
+                       Zwerg.Component.AIType
                        Zwerg.Component.EntityType
                        Zwerg.Component.Equipment
                        Zwerg.Component.Glyph
@@ -43,10 +43,12 @@ library
                        Zwerg.Data.Color
                        Zwerg.Data.Direction
                        Zwerg.Data.Error
-                       Zwerg.Data.RanGen
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
+                       Zwerg.Data.Damage
+                       Zwerg.Data.Target
                        Zwerg.Entity
+                       Zwerg.Entity.AI
                        Zwerg.Event
                        Zwerg.Game
                        Zwerg.Generator
@@ -63,6 +65,9 @@ library
                        Zwerg.Graphics.SDL.Util
                        Zwerg.Log
                        Zwerg.Options
+                       Zwerg.Random
+                       Zwerg.Random.Distribution
+                       Zwerg.Random.RanGen
                        Zwerg.Prelude
                        Zwerg.Sound
                        Zwerg.System
@@ -85,6 +90,7 @@ library
                        linear,
                        lens,
                        mersenne-random-pure64,
+                       random-fu,
                        text,
                        deepseq,
                        mtl,
@@ -115,7 +121,8 @@ library
                       OverloadedStrings,
                       RankNTypes,
                       StandaloneDeriving,
-                      Strict,
+                      -- Strict,
+                      ScopedTypeVariables,
                       TemplateHaskell,
                       TupleSections,
                       TypeFamilies
