@@ -18,10 +18,6 @@ assertfM
   => a -> (a -> m Bool) -> m ()
 assertfM x f = f x >>= flip assert (return ())
 
--- | Perform some operation on 'Just', given the field inside the 'Just'.
---
--- > whenJust Nothing  print == return ()
--- > whenJust (Just 1) print == print 1
 whenJust
   :: Applicative m
   => Maybe a -> (a -> m ()) -> m ()
@@ -43,12 +39,10 @@ fromJustErrM
   => Maybe a -> ZError -> m a
 fromJustErrM x err = maybe (throwError err) return x
 
-build :: ((a -> [a] -> [a]) -> [a] -> [a]) -> [a]
-build g = g (:) []
-
 chunksOf :: Int -> [e] -> [[e]]
 chunksOf i ls = map (take i) (build (splitter ls))
   where
     splitter :: [e] -> ([e] -> a -> a) -> a -> a
     splitter [] _ n = n
     splitter l c n = l `c` splitter (drop i l) c n
+    build g = g (:) []

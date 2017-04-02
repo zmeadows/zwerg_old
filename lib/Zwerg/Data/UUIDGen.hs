@@ -1,8 +1,7 @@
-module Zwerg.Component.UUID
+module Zwerg.Data.UUIDGen
   ( UUIDGen
   , HasUUIDGen(..)
   , initUUIDGen
-  , mkUUID
   , popUUID
   , pushUUID
   , getNewUUID
@@ -10,13 +9,9 @@ module Zwerg.Component.UUID
 
 import Zwerg.Prelude hiding (ceiling)
 
-import Control.Lens ((^.), (.=), over, use, to, makeLenses, Lens')
-import Data.Binary
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
        (insert, delete, lookupGT, singleton)
-import GHC.Generics (Generic)
-import System.Random
 
 data UUIDGen = UUIDGen
   { _graveyard :: IntSet
@@ -42,7 +37,7 @@ popUUID ug =
 
 {-# INLINABLE pushUUID #-}
 pushUUID :: UUID -> UUIDGen -> UUIDGen
-pushUUID (MkUUID uuid) = over graveyard (IS.insert uuid)
+pushUUID uuid = over graveyard (IS.insert $ unwrap uuid)
 
 {-# INLINABLE getNewUUID #-}
 getNewUUID

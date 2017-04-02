@@ -131,3 +131,19 @@ instance ZWrapped UUID Int where
 
 playerUUID :: UUID
 playerUUID = MkUUID 0
+
+data Parent
+  = Alive UUID
+  | Dead
+  deriving (Show, Read, Eq, Generic)
+
+instance Binary Parent
+
+data TileType
+  = Floor
+  | Wall
+  | Door
+  | Void
+  deriving (Show, Read, Eq, Generic)
+
+instance Binary TileType
