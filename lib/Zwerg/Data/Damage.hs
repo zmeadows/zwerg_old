@@ -1,10 +1,7 @@
 module Zwerg.Data.Damage where
 
-import Zwerg.Data.Target
 import Zwerg.Prelude
 import Zwerg.Random.Distribution
-
-import qualified Data.Set as S (fromList)
 
 data DamageAttribute
   = Fire

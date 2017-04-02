@@ -1,19 +1,12 @@
 module Zwerg.UI.GlyphMap where
 
-import Zwerg.Class
-import Zwerg.Component.Glyph (Glyph)
-import Zwerg.Component.Position (Position)
 import Zwerg.Component.Position
-import Zwerg.Const
 import Zwerg.Prelude
 import Zwerg.Util
 
-import Control.Lens (Lens', iforM_)
-import Data.Binary
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
        (empty, fromList, union, toList)
-import GHC.Generics (Generic)
 
 newtype GlyphMap =
   MkGlyphMap (Map Position Glyph)
@@ -34,16 +27,15 @@ mergeGlyphMaps :: GlyphMap -> GlyphMap -> GlyphMap
 mergeGlyphMaps (MkGlyphMap gmUpdated) (MkGlyphMap gmMain) =
   MkGlyphMap (M.union gmUpdated gmMain)
 
-forGlyphs
-  :: Monad m
-  => GlyphMap -> (Position -> Glyph -> m a) -> m ()
-forGlyphs (MkGlyphMap gm) = iforM_ gm
-
+-- forGlyphs
+--   :: Monad m
+--   => GlyphMap -> (Position -> Glyph -> m a) -> m ()
+-- forGlyphs (MkGlyphMap gm) = forM_ gm
 glyphMapToRows :: GlyphMap -> [[Glyph]]
 glyphMapToRows (MkGlyphMap gm) =
   let glyphList = M.toList gm
       sortedGlyphList = sortBy brickCmpPos glyphList
-  in chunksOf (round mapWidth) (map snd sortedGlyphList)
+  in chunksOf mapWidthINT (map snd sortedGlyphList)
 
 brickCmpPos :: (Position, Glyph) -> (Position, Glyph) -> Ordering
 brickCmpPos (p1, _) (p2, _) =

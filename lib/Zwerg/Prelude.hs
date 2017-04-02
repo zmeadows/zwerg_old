@@ -1,33 +1,55 @@
 module Zwerg.Prelude
   ( module EXPORTED
-  , UUID
   , ZConstructable(..)
   , ZWrapped(..)
-  , TargetType
+  , ZIsList(..)
+  , ZEmptiable(..)
+  , ZContainer(..)
+  , ZMapContainer(..)
+  , ZFilterable(..)
+  , ZErrorLevel(..)
+  , ZError(..)
+  , Direction(..)
+  , TargetType(..)
+  , Glyph(..)
+  , EntityType(..)
+  , UUID
+  , playerUUID
+  , Parent(..)
+  , TileType(..)
+  , Stat(..)
+  , Stats(..)
+  , zeroStats
+  , lookupStat
+  , replaceStat
+  , EquipmentSlot(..)
+  , Equipment(..)
+  , emptyEquipment
+  , AIType(..)
+  , mapWidthDOUBLE
+  , mapWidthINT
+  , mapHeightDOUBLE
+  , mapHeightINT
   ) where
 
+import Protolude as EXPORTED hiding (to, forM, (<>))
+
 import Control.Lens as EXPORTED
-       (makeClassy, makeLenses, (%=), (^.), (.=), over, use, view, to,
-        Lens')
+       (makeClassy, makeLenses, makeFields, (%=), (^.), (.=), over, use,
+        view, to, Lens', At(..), Ixed(..), Index, IxValue, (<&>))
 import Control.Monad.Random.Class as EXPORTED
 import Data.Binary as EXPORTED (Binary)
+import Data.Monoid as EXPORTED ((<>))
 import Data.Text as EXPORTED (Text, pack, unpack)
 import Data.Traversable as EXPORTED (forM)
 import GHC.Generics as EXPORTED (Generic)
-import Protolude as EXPORTED hiding (to, forM, (<>))
 
-mapWidthDOUBLE :: Double
-mapWidthDOUBLE = 100
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 
-mapHeightDOUBLE :: Double
-mapHeightDOUBLE = 25
-
-mapWidthINT :: Int
-mapWidthINT = round mapWidthDOUBLE
-
-mapHeightINT :: Int
-mapHeightINT = round mapHeightDOUBLE
-
+-------------
+-- CLASSES --
+-------------
 class ZConstructable a b | a -> b where
   zConstruct
     :: (MonadError ZError m)
@@ -129,6 +151,13 @@ instance Binary UUID
 instance ZWrapped UUID Int where
   unwrap (MkUUID uuid) = uuid
 
+instance ZConstructable UUID Int where
+  zConstruct x =
+    if | x > (unwrap playerUUID) -> return $ MkUUID x
+       | otherwise ->
+         throwError $
+         ZError __FILE__ __LINE__ Fatal "Attempted to construct UUID <= 0"
+
 playerUUID :: UUID
 playerUUID = MkUUID 0
 
@@ -147,3 +176,93 @@ data TileType
   deriving (Show, Read, Eq, Generic)
 
 instance Binary TileType
+
+data Stat
+  = STR
+  | DEX
+  | INT
+  | CHA
+  | CON
+  | WIS
+  deriving (Read, Show, Eq, Ord, Enum, Generic)
+
+instance Binary Stat
+
+newtype Stats =
+  MkStats (Map Stat Int)
+  deriving (Show, Read, Eq, Generic)
+
+instance Binary Stats
+
+zeroStats :: Stats
+zeroStats = MkStats $ M.fromList $ fmap (, 0) $ enumFrom $ toEnum 0
+
+lookupStat :: Stat -> Stats -> Int
+lookupStat s (MkStats m) = m M.! s
+
+replaceStat :: Stat -> Int -> Stats -> Stats
+replaceStat s v (MkStats m) = MkStats $ M.insert s v m
+
+data EquipmentSlot
+  = Gloves
+  | LeftHand
+  | RightHand
+  | Head
+  | Chest
+  | Legs
+  | Boots
+  deriving (Show, Read, Eq, Ord, Enum, Generic)
+
+instance Binary EquipmentSlot
+
+newtype Equipment =
+  MkEquipment (Map EquipmentSlot UUID)
+  deriving (Show, Read, Eq, Generic)
+
+instance Binary Equipment
+
+emptyEquipment :: Equipment
+emptyEquipment = MkEquipment M.empty
+
+data AIType
+  = SimpleMeleeCreature
+  | SimpleRangedCreature
+  deriving (Show, Read, Eq, Ord, Enum, Generic)
+
+instance Binary AIType
+
+-- {-# INLINABLE isHand #-}
+-- isHand :: EquipmentSlot -> Bool
+-- isHand LeftHand = True
+-- isHand RightHand = True
+-- isHand _ = False
+--
+-- {-# INLINABLE removeEquipment #-}
+-- removeEquipment :: EquipmentSlot -> Equipment -> Maybe (Equipment, UUID)
+-- removeEquipment slot (MkEquipment eqp) =
+--   M.lookup slot eqp >>= \uuid -> Just (MkEquipment $ M.delete slot eqp, uuid)
+--
+-- {-# INLINABLE replaceEquipment #-}
+-- replaceEquipment :: EquipmentSlot
+--                  -> UUID
+--                  -> Equipment
+--                  -> (Maybe UUID, Equipment)
+-- replaceEquipment slot eqid (MkEquipment eqp) =
+--   let newEqp = MkEquipment $ M.insert slot eqid eqp
+--   in case M.lookup slot eqp of
+--        Just oldEqID -> (Just oldEqID, newEqp)
+--        Nothing -> (Nothing, newEqp)
+------------
+-- CONSTS --
+------------
+mapWidthDOUBLE :: Double
+mapWidthDOUBLE = 100
+
+mapHeightDOUBLE :: Double
+mapHeightDOUBLE = 25
+
+mapWidthINT :: Int
+mapWidthINT = round mapWidthDOUBLE
+
+mapHeightINT :: Int
+mapHeightINT = round mapHeightDOUBLE

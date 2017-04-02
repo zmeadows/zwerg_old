@@ -1,16 +1,9 @@
 module Zwerg.Entity where
 
-import Zwerg.Class
 import Zwerg.Component
 import Zwerg.Component.All
-import qualified Zwerg.Data.Direction as Dir
-import Zwerg.Data.Error
-import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
-import qualified Zwerg.Data.UUIDSet as US
 import Zwerg.Prelude
-
-import Control.Lens ((%=))
 
 getEntityTileUUID
   :: (HasComponents s, MonadError ZError m, MonadState s m)
@@ -32,7 +25,7 @@ getPlayerTileUUID = do
 
 getAdjacentTileUUID
   :: (HasComponents s, MonadError ZError m, MonadState s m)
-  => Dir.Direction -> UUID -> m (Maybe UUID)
+  => Direction -> UUID -> m (Maybe UUID)
 getAdjacentTileUUID dir tileUUID = do
   tilePosition <- demandComp position tileUUID
   let adjacentPosition = movePosDir dir tilePosition

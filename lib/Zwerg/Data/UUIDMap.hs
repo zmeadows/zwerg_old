@@ -2,20 +2,13 @@ module Zwerg.Data.UUIDMap
   ( UUIDMap(..)
   , NamedUUIDMap(..)
   , HasNamedUUIDMap(..)
-  , Zwerg.Component.UUID.UUID
   , getMinimumUUIDs
   ) where
 
-import Zwerg.Class
-import Zwerg.Component.UUID
 import Zwerg.Prelude
 
-import Control.Lens
-       (makeClassy, At(..), Ixed(..), Index, IxValue, (<&>))
-import Data.Binary
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IM
-import GHC.Generics (Generic)
 
 newtype UUIDMap a =
   MkUUIDMap (IntMap a)
@@ -87,11 +80,11 @@ instance At (UUIDMap a) where
       mv = zLookup k m
 
 getMinimumUUIDs
-  :: (Ord a, Bounded a)
-  => UUIDMap a -> (a, [UUID])
+  :: (Ord a, Bounded a, MonadError ZError m)
+  => UUIDMap a -> m (a, [UUID])
 getMinimumUUIDs (MkUUIDMap um) =
   let (amin, ids) = IM.foldrWithKey f (minBound, []) um
-  in (amin, fmap mkUUID ids)
+  in mapM zConstruct ids >>= return . (amin, )
   where
     f uuid x (_, []) = (x, [uuid])
     f uuid x (xmin, uuids) =

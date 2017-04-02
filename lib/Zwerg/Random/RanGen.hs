@@ -6,13 +6,10 @@ module Zwerg.Random.RanGen
   ) where
 
 import Unsafe (unsafeIndex)
-import Zwerg.Class
-import Zwerg.Component.UUID
 import Zwerg.Data.UUIDSet
 import Zwerg.Prelude
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Random
 import qualified Data.Set as S
 import Data.Word (Word64)
 import System.Random.Mersenne.Pure64 (PureMT, pureMT, newPureMT)

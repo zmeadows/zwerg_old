@@ -1,31 +1,28 @@
-module Zwerg.Generator.Level (
-    module EXPORTED,
-    levelSkeletonGenerator,
-    ) where
+module Zwerg.Generator.Level
+  ( module EXPORTED
+  , levelSkeletonGenerator
+  ) where
 
-import Zwerg.Generator            as EXPORTED
+import Zwerg.Generator as EXPORTED
 
 levelSkeletonGenerator :: UUID -> Generator ()
-levelSkeletonGenerator levelUUID = MkGenerator $
-    let xs = [0..round mapWidth - 1]
-        ys = [0..round mapHeight - 1]
-    in do
-      tileList <- forM [(x,y) | x <- xs, y <- ys] $ \(x',y') -> do
-            uuid <- getNewUUID
+levelSkeletonGenerator levelUUID =
+  MkGenerator $
+  let xs = [0 .. mapWidthINT - 1]
+      ys = [0 .. mapHeightINT - 1]
+  in do tileList <-
+          forM [(x, y) | x <- xs, y <- ys] $ \(x', y') -> do
+            uuid <- popUUID
             addComp uuid entityType Tile
             addComp uuid tileType Void
-            let pos = mkPosition (x',y')
+            let pos = mkPosition (x', y')
             addComp uuid position pos
             addComp uuid occupants zEmpty
             addComp uuid blocked True
             addComp uuid needsRedraw True
             addComp uuid level levelUUID
-            return (pos,uuid)
-      zConstruct tileList >>= setComp levelUUID tileMap
-      setComp levelUUID tiles $ zFromList $ fmap snd tileList
-      setComp levelUUID entityType Level
-      setComp levelUUID name "Test Square Level"
-       
-
-
-
+            return (pos, uuid)
+        zConstruct tileList >>= setComp levelUUID tileMap
+        setComp levelUUID tiles $ zFromList $ fmap snd tileList
+        setComp levelUUID entityType Level
+        setComp levelUUID name "Test Square Level"

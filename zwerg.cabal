@@ -25,28 +25,13 @@ library
   hs-source-dirs:      lib/
 
   exposed-modules:     Zwerg
-                       Zwerg.Animation
                        Zwerg.Component
-                       Zwerg.Component.AIType
-                       Zwerg.Component.EntityType
-                       Zwerg.Component.Equipment
-                       Zwerg.Component.Glyph
                        Zwerg.Component.HP
-                       Zwerg.Component.Parent
                        Zwerg.Component.Position
-                       Zwerg.Component.Stats
-                       Zwerg.Component.TileType
                        Zwerg.Component.TileMap
-                       Zwerg.Component.UUID
-                       Zwerg.Const
-                       Zwerg.Class
-                       Zwerg.Data.Color
-                       Zwerg.Data.Direction
-                       Zwerg.Data.Error
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
                        Zwerg.Data.Damage
-                       Zwerg.Data.Target
                        Zwerg.Entity
                        Zwerg.Entity.AI
                        Zwerg.Event
@@ -63,9 +48,6 @@ library
                        Zwerg.Random.Distribution
                        Zwerg.Random.RanGen
                        Zwerg.Prelude
-                       Zwerg.Sound
-                       Zwerg.System
-                       Zwerg.UI.Font
                        Zwerg.UI.GlyphMap
                        Zwerg.UI.Input
                        Zwerg.UI.Menu

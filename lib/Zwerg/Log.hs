@@ -5,14 +5,10 @@ module Zwerg.Log
   , pushLogMsg
   ) where
 
-import Zwerg.Class
 import Zwerg.Prelude
 
 import Data.Sequence (Seq)
 import qualified Data.Sequence as S
-import Data.Text (Text)
-
-import Control.Lens (Lens', (%=))
 
 newtype Log =
   MkLog (Seq Text)

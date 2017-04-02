@@ -1,11 +1,9 @@
 module Zwerg.Util where
 
-import Zwerg.Data.Error
 import Zwerg.Prelude
 
 import Control.Exception.Base (assert)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Text (unpack, pack)
 import Paths_zwerg (getDataFileName)
 
 getAsset

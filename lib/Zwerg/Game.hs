@@ -2,8 +2,6 @@ module Zwerg.Game where
 
 import Zwerg.Component
 import qualified Zwerg.Component.TileMap as TM
-import qualified Zwerg.Data.Direction as Direction
-import Zwerg.Data.Error (ZError)
 import Zwerg.Data.UUIDMap
 import Zwerg.Entity
 import Zwerg.Event
@@ -23,10 +21,9 @@ import Unsafe (unsafeHead)
 
 data GameState = GameState
   { _gsComponents :: Components
-  , _gsUUIDGen :: UUIDGen
   , _gsLog :: Log
   , _gsPortal :: Portal
-  , _gsEventQueue :: EventQueue
+  , _gsEventQueue :: ZwergEventQueue
   }
 
 makeClassy ''GameState
@@ -35,7 +32,6 @@ emptyGameState :: GameState
 emptyGameState =
   GameState
   { _gsComponents = emptyComponents
-  , _gsUUIDGen = initUUIDGen
   , _gsLog = emptyLog
   , _gsPortal = [initMainMenu]
   , _gsEventQueue = zEmpty
@@ -44,16 +40,13 @@ emptyGameState =
 instance HasComponents GameState where
   components = gsComponents
 
-instance HasUUIDGen GameState where
-  uuidGen = gsUUIDGen
-
 instance HasLog GameState where
   userLog = gsLog
 
 instance HasPortal GameState where
   portal = gsPortal
 
-instance HasEventQueue GameState where
+instance HasZwergEventQueue GameState where
   eventQueue = gsEventQueue
 
 newtype Game a =
@@ -84,7 +77,7 @@ postEventHook = do
   case newPort of
     MainScreen _ -> do
       ts <- use (ticks . uuidMap)
-      let (minTick, uuids) = getMinimumUUIDs ts
+      (minTick, uuids) <- getMinimumUUIDs ts
       (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
       updateGlyphMap
     _ -> return ()
@@ -107,13 +100,13 @@ processUserInput' ((MainMenu m):ps) Return =
     "exit" -> portal .= [ExitScreen]
     _ -> return ()
 processUserInput' ((MainScreen _):_) (KeyChar 'h') =
-  processPlayerDirectionInput Direction.Left
+  processPlayerDirectionInput West
 processUserInput' ((MainScreen _):_) (KeyChar 'j') =
-  processPlayerDirectionInput Direction.Down
+  processPlayerDirectionInput South
 processUserInput' ((MainScreen _):_) (KeyChar 'k') =
-  processPlayerDirectionInput Direction.Up
+  processPlayerDirectionInput North
 processUserInput' ((MainScreen _):_) (KeyChar 'l') =
-  processPlayerDirectionInput Direction.Right
+  processPlayerDirectionInput East
 processUserInput' _ _ = return ()
 
 updateGlyphMap :: Game ()
@@ -131,18 +124,18 @@ processEvents = do
     processEvent nextEvent
     processEvents
 
-processEvent :: Event -> Game ()
+processEvent :: ZwergEvent -> Game ()
 processEvent (MoveEntityDirectionEvent ed) = do
   let uuid = moverUUID ed
       dir = direction ed
   (x, y) <- unPosition <$> demandComp position uuid
   let (x', y') =
-        if | dir == Direction.Left -> (x - 1, y)
-           | dir == Direction.Right -> (x + 1, y)
-           | dir == Direction.Up -> (x, y - 1)
-           | dir == Direction.Down -> (x, y + 1)
+        if | dir == West -> (x - 1, y)
+           | dir == East -> (x + 1, y)
+           | dir == North -> (x, y - 1)
+           | dir == South -> (x, y + 1)
       destinationOutsideMap =
-        x' < 0 || x' >= round mapWidth || y' < 0 || y' >= round mapHeight
+        x' < 0 || x' >= mapWidthINT || y' < 0 || y' >= mapHeightINT
   when (destinationOutsideMap && uuid /= playerUUID) $
     throwError $
     ZError __FILE__ __LINE__ Fatal "NPC Entity attempted to move outside of map"
@@ -196,7 +189,7 @@ getGlyphMapUpdates = do
       return (pos, gly)
   return $ mkGlyphMap updatedGlyphs
 
-processPlayerDirectionInput :: Direction.Direction -> Game ()
+processPlayerDirectionInput :: Direction -> Game ()
 processPlayerDirectionInput dir =
   let processPlayerMove =
         pushEventM $
@@ -210,7 +203,7 @@ processPlayerDirectionInput dir =
 
 getEntityPlayerAttacking
   :: (HasComponents s, MonadError ZError m, MonadState s m)
-  => Direction.Direction -> m (Maybe UUID)
+  => Direction -> m (Maybe UUID)
 getEntityPlayerAttacking dir = do
   attackedTileUUID <- getPlayerTileUUID >>= getAdjacentTileUUID dir
   case attackedTileUUID of

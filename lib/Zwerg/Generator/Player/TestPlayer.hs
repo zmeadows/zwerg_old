@@ -1,7 +1,6 @@
 module Zwerg.Generator.Player.TestPlayer where
 
 import Zwerg.Generator
-import Zwerg.UI.Font
 import Zwerg.Util
 
 testPlayerGenerator :: UUID -> Generator ()
@@ -11,7 +10,7 @@ testPlayerGenerator startLevelUUID =
     traceM "generating Player..."
     addPlayerComp name "Bob"
     addPlayerComp level startLevelUUID
-    addPlayerComp glyph $ Glyph Normal '@' $ mkColor 255 255 0
+    addPlayerComp glyph $ Glyph '@' 3 184 Nothing Nothing
     zConstruct (10, 10) >>= addPlayerComp hp
     addPlayerComp entityType Player
     addPlayerComp equipment emptyEquipment

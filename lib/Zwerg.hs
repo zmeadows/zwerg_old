@@ -3,10 +3,6 @@ module Zwerg
   ) where
 
 import Zwerg.Component
-import Zwerg.Component.Stats
-import Zwerg.Component.UUID
-import Zwerg.Const
-import Zwerg.Data.Error
 import Zwerg.Event
 import Zwerg.Game
 import Zwerg.Graphics.Brick
@@ -33,7 +29,6 @@ import Control.Lens (makeClassy, use, view, assign, set, (^.))
 import Control.Monad.Except
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Monoid ((<>))
-import Data.Text (unpack)
 import Data.Text.Markup ((@@))
 import qualified Data.Vector as Vec
 import qualified Graphics.Vty as VTY
@@ -94,7 +89,7 @@ buildPortUI (MainScreen gm) = do
   pHP <- demandViewComp playerUUID hp
   return $
     vLimit
-      (round mapHeight)
+      mapHeightINT
       (uiMap <+>
        BB.vBorder <+>
        ((markup $ (pName @@ fg VTY.yellow)) <=> makeHpWidget pHP <=>
@@ -114,7 +109,7 @@ customAttr :: AttrName
 customAttr = BL.listSelectedAttr <> "custom"
 
 handleEventZwerg :: ZwergState
-                 -> BT.BrickEvent () Event
+                 -> BT.BrickEvent () ZwergEvent
                  -> BT.EventM () (BT.Next ZwergState)
 handleEventZwerg zs (BT.VtyEvent ev) = do
   case (eventVTYtoZwergInput ev) of
@@ -143,7 +138,7 @@ theMap =
     , (customAttr, fg VTY.cyan)
     ]
 
-zwergApp :: BM.App ZwergState Event ()
+zwergApp :: BM.App ZwergState ZwergEvent ()
 zwergApp =
   BM.App
   { BM.appDraw = buildZwergUI

@@ -8,27 +8,22 @@ import Zwerg.Event
 import Zwerg.Prelude
 import Zwerg.Random
 
-data AIType
-  = SimpleMeleeCreature
-  | SimpleRangedCreature
-  deriving (Show, Read, Eq, Ord, Enum, Generic)
-
-instance Binary AIType
+import Control.Monad.Random (RandT, evalRandT)
 
 newtype AI a =
-  AI (ExceptT ZError (RandT RanGen (StateT EventQueue (Reader Components))) a)
+  AI (ExceptT ZError (RandT RanGen (StateT ZwergEventQueue (Reader Components))) a)
   deriving ( Functor
            , Applicative
            , Monad
            , MonadReader Components
            , MonadError ZError
-           , MonadState EventQueue
+           , MonadState ZwergEventQueue
            , MonadRandom
            )
 
 runAI
   :: ( HasComponents s
-     , HasEventQueue s
+     , HasZwergEventQueue s
      , MonadError ZError m
      , MonadState s m
      , MonadSplit RanGen m
@@ -43,7 +38,7 @@ runAI uuid = do
         runReader (runStateT (evalRandT (runExceptT a) gen) zEmpty) cmps
   case err of
     Left zErr -> throwError zErr
-    Right () -> pushEventsM evts
+    Right () -> mergeEventsM evts
 
 enact :: UUID -> AIType -> AI ()
 enact entityUUID SimpleMeleeCreature =

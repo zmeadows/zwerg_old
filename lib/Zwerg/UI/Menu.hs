@@ -1,18 +1,13 @@
 module Zwerg.UI.Menu where
 
-import Zwerg.Class
-import Zwerg.Data.Error
 import Zwerg.Prelude
 
-import Control.Lens (makeLenses, view)
 import Data.Foldable (minimumBy)
 import Data.Function (on)
 import Data.Sequence (Seq, (<|), (|>), ViewL(..), ViewR(..), (><))
 import qualified Data.Sequence as S
 import Data.Text (Text)
 import qualified Data.Text as T
-
-import Unsafe (unsafeHead)
 
 data MenuEntry a = MenuEntry
   { _shortcut :: Char

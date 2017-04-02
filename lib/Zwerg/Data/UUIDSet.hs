@@ -1,14 +1,10 @@
 module Zwerg.Data.UUIDSet where
 
-import Zwerg.Class
-import Zwerg.Component.UUID
 import Zwerg.Prelude hiding (toList, empty, filterM)
 
 import qualified Control.Monad as CM (filterM)
-import Data.Binary
 import Data.Set (Set)
 import qualified Data.Set as S
-import GHC.Generics (Generic)
 
 newtype UUIDSet =
   MkUUIDSet (Set UUID)

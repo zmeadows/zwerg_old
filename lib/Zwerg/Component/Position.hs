@@ -1,13 +1,8 @@
 module Zwerg.Component.Position where
 
-import Zwerg.Const (mapWidth, mapHeight)
-import qualified Zwerg.Data.Direction as Direction
 import Zwerg.Prelude
 
 import Control.Exception.Base (assert)
-
-import Data.Binary
-import GHC.Generics (Generic)
 
 newtype Position =
   MkPosition (Int, Int)
@@ -15,11 +10,6 @@ newtype Position =
 
 instance Binary Position
 
--- instance Ord Position where
---   compare (MkPosition (x1, y1)) (MkPosition (x2, y2)) =
---     if | y1 > y2 -> GT
---        | x1 > x2 -> GT
---        | otherwise -> LT
 data Metric
   = Euclidean
   | TaxiCab
@@ -33,7 +23,7 @@ unPosition (MkPosition t) = t
 to1DIndex :: Position -> Int
 to1DIndex pos =
   let (x, y) = unPosition pos
-  in y * round mapHeight + x
+  in y * mapHeightINT + x
 
 {-# INLINABLE mkPosition #-}
 mkPosition :: (Int, Int) -> Position
@@ -59,15 +49,15 @@ modifyPosition :: (Int -> Int, Int -> Int) -> Position -> Position
 modifyPosition (f, g) (MkPosition (x, y)) = mkPosition (f x, g y)
 
 {-# INLINABLE movePosDir #-}
-movePosDir :: Direction.Direction -> Position -> Position
+movePosDir :: Direction -> Position -> Position
 movePosDir dir (MkPosition (x, y)) =
   MkPosition $
-  if | dir == Direction.Left -> (x - 1, y)
-     | dir == Direction.Right -> (x + 1, y)
-     | dir == Direction.Up -> (x, y - 1)
-     | dir == Direction.Down -> (x, y + 1)
+  if | dir == West -> (x - 1, y)
+     | dir == East -> (x + 1, y)
+     | dir == North -> (x, y - 1)
+     | dir == South -> (x, y + 1)
 
 {-# INLINABLE isValidPosition #-}
 isValidPosition :: Position -> Bool
 isValidPosition (MkPosition (x, y)) =
-  x >= 0 && y >= 0 && x < round mapWidth && y < round mapHeight
+  x >= 0 && y >= 0 && x < mapWidthINT && y < mapHeightINT

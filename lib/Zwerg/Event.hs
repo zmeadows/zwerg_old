@@ -1,8 +1,6 @@
 module Zwerg.Event where
 
-import Zwerg.Class
 import Zwerg.Component.All
-import Zwerg.Component.UUID (UUID)
 import Zwerg.Data.Damage
 import Zwerg.Prelude
 
@@ -85,48 +83,49 @@ data MoveEntityEventData =
 
 data MoveEntityDirectionEventData = MoveEntityDirectionEventData
   { moverUUID :: UUID
-  , direction :: Dir.Direction
+  , direction :: Direction
   } deriving (Show, Eq)
 
 data TickEventData =
   TickEventData Int
   deriving (Show, Eq)
 
-newtype EventQueue =
-  MkEventQueue (Seq Event)
+newtype ZwergEventQueue =
+  MkZwergEventQueue (Seq ZwergEvent)
   deriving (Show, Eq)
 
-class HasEventQueue s where
-  eventQueue :: Lens' s EventQueue
+class HasZwergEventQueue s where
+  eventQueue :: Lens' s ZwergEventQueue
 
-instance ZWrapped EventQueue (Seq Event) where
-  unwrap (MkEventQueue eq) = eq
+instance ZWrapped ZwergEventQueue (Seq ZwergEvent) where
+  unwrap (MkZwergEventQueue eq) = eq
 
-instance ZEmptiable EventQueue where
-  zEmpty = MkEventQueue S.empty
+instance ZEmptiable ZwergEventQueue where
+  zEmpty = MkZwergEventQueue S.empty
   zIsNull = S.null . unwrap
   zSize = S.length . unwrap
 
 popEvent
-  :: (HasEventQueue s, MonadState s m)
-  => m (Maybe Event)
+  :: (HasZwergEventQueue s, MonadState s m)
+  => m (Maybe ZwergEvent)
 popEvent = do
   eq <- use eventQueue
   if | zIsNull eq -> return Nothing
      | otherwise ->
        let (evt :< eq') = S.viewl (unwrap eq)
-       in do eventQueue .= MkEventQueue eq'
+       in do eventQueue .= MkZwergEventQueue eq'
              return $ Just evt
 
-pushEvent :: Event -> EventQueue -> EventQueue
-pushEvent evt (MkEventQueue eq) = MkEventQueue $ eq |> evt
+pushEvent :: ZwergEvent -> ZwergEventQueue -> ZwergEventQueue
+pushEvent evt (MkZwergEventQueue eq) = MkZwergEventQueue $ eq |> evt
 
 pushEventM
-  :: (HasEventQueue s, MonadState s m)
-  => Event -> m ()
-pushEventM evt = eventQueue %= MkEventQueue . (flip (|>) evt) . unwrap
+  :: (HasZwergEventQueue s, MonadState s m)
+  => ZwergEvent -> m ()
+pushEventM evt = eventQueue %= MkZwergEventQueue . (flip (|>) evt) . unwrap
 
 mergeEventsM
-  :: (HasEventQueue s, MonadState s m)
-  => EventQueue -> m ()
-mergeEventsM evts = eventQueue %= MkEventQueue . ((><) (unwrap evts)) . unwrap
+  :: (HasZwergEventQueue s, MonadState s m)
+  => ZwergEventQueue -> m ()
+mergeEventsM evts =
+  eventQueue %= MkZwergEventQueue . ((><) (unwrap evts)) . unwrap

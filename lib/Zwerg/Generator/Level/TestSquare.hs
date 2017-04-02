@@ -4,7 +4,6 @@ import Zwerg.Entity
 import Zwerg.Generator
 import Zwerg.Generator.Enemy.Goblin
 import Zwerg.Generator.Level
-import Zwerg.UI.Font
 import Zwerg.Util
 
 import Data.Map.Strict (traverseWithKey)
@@ -13,23 +12,22 @@ testSquareGenerator :: Generator UUID
 testSquareGenerator =
   MkGenerator $ do
     traceM "generating Test Square..."
-    testSquareLevelUUID <- getNewUUID
+    testSquareLevelUUID <- popUUID
     generate $ levelSkeletonGenerator testSquareLevelUUID
     testSquareTiles <- demandComp tileMap testSquareLevelUUID
     _ <-
       flip traverseWithKey (unwrap testSquareTiles) $ \pos tileUUID -> do
         let (x, y) = unPosition pos
             isWallTile =
-              x == 0 ||
-              x == round mapWidth - 1 || y == 0 || y == round mapHeight - 1
+              x == 0 || x == mapWidthINT - 1 || y == 0 || y == mapHeightINT - 1
         if isWallTile
           then do
             setComp tileUUID tileType Wall
-            setComp tileUUID glyph $ Glyph Normal 'X' $ mkColor 255 255 255
+            setComp tileUUID glyph $ Glyph 'X' 15 248 Nothing Nothing
           else do
             setComp tileUUID tileType Floor
             setComp tileUUID blocked False
-            setComp tileUUID glyph $ Glyph Normal '·' $ mkColor 100 100 100
+            setComp tileUUID glyph $ Glyph '·' 15 48 Nothing Nothing
     traceM "generating Goblins..."
     replicateM_ 50 $ do
       goblinUUID <- generate goblinGenerator

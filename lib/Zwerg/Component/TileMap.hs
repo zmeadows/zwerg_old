@@ -4,17 +4,11 @@ module Zwerg.Component.TileMap (
     ) where
 
 import Zwerg.Prelude
-import Zwerg.Class
-import Zwerg.Const
 import Zwerg.Util
-import Zwerg.Component.UUID
 import Zwerg.Component.Position
-import Zwerg.Data.Error
+
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-
-import Data.Binary
-import GHC.Generics (Generic)
 
 newtype TileMap = MkTileMap (Map Position UUID)
     deriving (Eq, Show, Generic)
@@ -25,7 +19,7 @@ instance ZWrapped TileMap (Map Position UUID) where
 instance Binary TileMap
 
 instance ZConstructable TileMap [(Position,UUID)] where
-  zConstruct tl = if (length tl /= (round $ mapWidth * mapHeight))
+  zConstruct tl = if (length tl /= (mapWidthINT * mapHeightINT))
       then throwError $ ZError __FILE__ __LINE__ Fatal
            "Attempted to construct a TileMap with number of tiles \
            not equal to mapWidth * mapHeight"

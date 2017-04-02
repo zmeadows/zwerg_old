@@ -1,11 +1,8 @@
 module Zwerg.UI.Port where
 
-import Zwerg.Component.HP
 import Zwerg.Prelude
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Menu
-
-import Control.Lens (Lens', makeClassy)
 
 data Port
   = MainScreen GlyphMap

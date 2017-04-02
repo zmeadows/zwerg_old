@@ -1,15 +1,14 @@
 module Zwerg.Generator.Enemy.Goblin where
 
 import Data.Text (append)
-import Zwerg.Component.All
 import Zwerg.Generator
 
 goblinGenerator :: Generator UUID
 goblinGenerator =
   MkGenerator $ do
-    goblinUUID <- getNewUUID
+    goblinUUID <- popUUID
     generateGoblinName >>= addComp goblinUUID name
-    addComp goblinUUID glyph $ Glyph Normal 'g' $ mkColor 100 255 100
+    addComp goblinUUID glyph $ Glyph 'g' 42 40 Nothing Nothing
     goblinHP <- getRandomR (3, 7)
     zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
     getRandomR (1, 100) >>= addComp goblinUUID ticks

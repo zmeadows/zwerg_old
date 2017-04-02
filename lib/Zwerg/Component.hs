@@ -1,20 +1,14 @@
 module Zwerg.Component where
 
-import Zwerg.Class
 import Zwerg.Component.All
 import Zwerg.Data.Damage
-import Zwerg.Data.Error
 import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Prelude
 import Zwerg.Util
 
 import Control.Exception.Base (assert)
-import Data.Binary
-import Data.Text (Text, append)
-import GHC.Generics (Generic)
-
-import Control.Lens (makeClassy, Lens', at, use, to, (%=), view)
+import Data.Text (append)
 
 data Components = Components
   { _name :: NamedUUIDMap Text
@@ -39,6 +33,7 @@ data Components = Components
   , _aiType :: NamedUUIDMap AIType
   , _damageChain :: NamedUUIDMap DamageChain
   , _viewRange :: NamedUUIDMap Double
+  , _nextUUID :: UUID
   } deriving (Show, Eq, Generic)
 
 makeClassy ''Components
@@ -73,7 +68,16 @@ emptyComponents =
   , _aiType = NamedUUIDMap "aiType" zEmpty
   , _damageChain = NamedUUIDMap "damageChain" zEmpty
   , _viewRange = NamedUUIDMap "viewRange" zEmpty
+  , _nextUUID = playerUUID + 1
   }
+
+popUUID
+  :: (HasComponents s, MonadState s m)
+  => m UUID
+popUUID = do
+  newUUID <- use nextUUID
+  nextUUID %= (+ 1)
+  return newUUID
 
 {-- STATE --}
 getComp

@@ -1,12 +1,7 @@
 module Zwerg.Graphics.Brick where
 
-import Zwerg.Class
-import Zwerg.Component.Glyph
 import Zwerg.Component.HP
-import Zwerg.Component.Stats
-import Zwerg.Data.Color
 import Zwerg.Prelude hiding (on)
-import Zwerg.UI.Font
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
@@ -60,18 +55,8 @@ eventVTYtoZwergInput (VTY.EvKey VTY.KEnter []) = Just Return
 eventVTYtoZwergInput _ = Nothing
 
 glyphToVtyImage :: Glyph -> VTY.Image
-glyphToVtyImage (Glyph ft c col) =
-  VTY.char (vtyCol `on` VTY.rgbColor 10 10 10) c
-  where
-    fontTypeToVTYstyle Bold = VTY.bold
-    fontTypeToVTYstyle Standout = VTY.standout
-    fontTypeToVTYstyle Underline = VTY.underline
-    fontTypeToVTYstyle Dim = VTY.dim
-    fontTypeToVTYstyle Blink = VTY.blink
-    fontTypeToVTYstyle _ = VTY.dim -- VTY.defaultStyleMask
-    vtyCol =
-      let (r, g, b) = toRGB col
-      in VTY.rgbColor r g b
+glyphToVtyImage (Glyph c _ _ _ _) =
+  VTY.char (VTY.white `on` VTY.rgbColor 10 10 10) c
 
 glyphMapToVtyImage :: GlyphMap -> VTY.Image
 glyphMapToVtyImage gm =
