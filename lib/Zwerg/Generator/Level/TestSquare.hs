@@ -29,7 +29,7 @@ testSquareGenerator =
           else do
             setComp tileUUID tileType Floor
             setComp tileUUID blocked False
-            setComp tileUUID glyph $ Glyph Normal '.' $ mkColor 255 255 255
+            setComp tileUUID glyph $ Glyph Normal '·' $ mkColor 100 100 100
     traceM "generating Goblins..."
     replicateM_ 50 $ do
       goblinUUID <- generate goblinGenerator

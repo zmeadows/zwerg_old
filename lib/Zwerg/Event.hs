@@ -4,15 +4,12 @@ import Zwerg.Class
 import Zwerg.Component.All
 import Zwerg.Component.UUID (UUID)
 import Zwerg.Data.Damage
-import qualified Zwerg.Data.Direction as Dir
 import Zwerg.Prelude
 
-import Control.Lens
-       ((.=), (%=), over, use, to, makeClassy, makeFields, Lens')
 import Data.Sequence (Seq, (><), (<|), (|>), ViewL(..), ViewR(..))
 import qualified Data.Sequence as S
 
-class EventData a
+class ZwergEventData a
 
 data IncomingDamageEventData = IncomingDamageEventData
   { _incomingDamageEventDataAttackerUUID :: UUID
@@ -20,7 +17,7 @@ data IncomingDamageEventData = IncomingDamageEventData
   , _incomingDamageEventDataDamage :: DamageChain
   } deriving (Show, Eq)
 
-instance EventData IncomingDamageEventData
+instance ZwergEventData IncomingDamageEventData
 
 makeFields ''IncomingDamageEventData
 
@@ -30,7 +27,7 @@ data OutgoingDamageEventData = OutgoingDamageEventData
   , _outgoingDamageEventDataDamageAmount :: Int
   } deriving (Show, Eq)
 
-instance EventData OutgoingDamageEventData
+instance ZwergEventData OutgoingDamageEventData
 
 makeFields ''OutgoingDamageEventData
 
@@ -41,7 +38,7 @@ data WeaponAttackAttemptEventData = WeaponAttackAttemptEventData
 
 makeFields ''WeaponAttackAttemptEventData
 
-instance EventData WeaponAttackAttemptEventData
+instance ZwergEventData WeaponAttackAttemptEventData
 
 data WeaponAttackHitEventData = WeaponAttackHitEventData
   { _weaponAttackHitEventDataAttackerUUID :: UUID
@@ -50,7 +47,7 @@ data WeaponAttackHitEventData = WeaponAttackHitEventData
 
 makeFields ''WeaponAttackHitEventData
 
-instance EventData WeaponAttackHitEventData
+instance ZwergEventData WeaponAttackHitEventData
 
 data WeaponAttackMissEventData = WeaponAttackMissEventData
   { _weaponAttackMissEventDataAttackerUUID :: UUID
@@ -59,9 +56,9 @@ data WeaponAttackMissEventData = WeaponAttackMissEventData
 
 makeFields ''WeaponAttackMissEventData
 
-instance EventData WeaponAttackMissEventData
+instance ZwergEventData WeaponAttackMissEventData
 
-data Event
+data ZwergEvent
   = IncomingDamageEvent IncomingDamageEventData
   | OutgoingDamageEvent OutgoingDamageEventData
   | WeaponAttackAttemptEvent WeaponAttackAttemptEventData
@@ -129,7 +126,7 @@ pushEventM
   => Event -> m ()
 pushEventM evt = eventQueue %= MkEventQueue . (flip (|>) evt) . unwrap
 
-pushEventsM
+mergeEventsM
   :: (HasEventQueue s, MonadState s m)
   => EventQueue -> m ()
-pushEventsM evts = eventQueue %= MkEventQueue . ((><) (unwrap evts)) . unwrap
+mergeEventsM evts = eventQueue %= MkEventQueue . ((><) (unwrap evts)) . unwrap

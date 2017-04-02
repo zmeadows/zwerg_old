@@ -56,13 +56,7 @@ library
                        Zwerg.Generator.Level.TestSquare
                        Zwerg.Generator.Player.TestPlayer
                        Zwerg.Generator.Enemy.Goblin
-                       Zwerg.Graphics.SDL
-                       Zwerg.Graphics.SDL.Core
-                       Zwerg.Graphics.SDL.Glyph
-                       Zwerg.Graphics.SDL.Text
-                       Zwerg.Graphics.SDL.MainMenu
-                       Zwerg.Graphics.SDL.MainScreen
-                       Zwerg.Graphics.SDL.Util
+                       Zwerg.Graphics.Brick
                        Zwerg.Log
                        Zwerg.Options
                        Zwerg.Random
@@ -97,12 +91,13 @@ library
                        transformers,
                        MonadRandom,
                        random,
-                       sdl2,
-                       sdl2-ttf,
                        filepath,
                        binary,
                        xml,
                        vector-binary-instances,
+                       protolude,
+                       vty,
+                       brick,
                        protolude,
                        StateVar
 
@@ -121,7 +116,7 @@ library
                       OverloadedStrings,
                       RankNTypes,
                       StandaloneDeriving,
-                      -- Strict,
+                      Strict,
                       ScopedTypeVariables,
                       TemplateHaskell,
                       TupleSections,
@@ -137,7 +132,8 @@ executable zwerg
   ghc-options:         -Wall
                        -optc-O3
                        -optc-ffast-math
+                       -threaded
 
-  build-depends:       base >= 4.7 && < 5, zwerg
+  build-depends:       base >= 4.7 && < 5, zwerg, brick, vty
 
 

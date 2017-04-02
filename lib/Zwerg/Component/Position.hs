@@ -15,6 +15,11 @@ newtype Position =
 
 instance Binary Position
 
+-- instance Ord Position where
+--   compare (MkPosition (x1, y1)) (MkPosition (x2, y2)) =
+--     if | y1 > y2 -> GT
+--        | x1 > x2 -> GT
+--        | otherwise -> LT
 data Metric
   = Euclidean
   | TaxiCab

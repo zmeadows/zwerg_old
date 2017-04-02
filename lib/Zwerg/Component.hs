@@ -38,6 +38,7 @@ data Components = Components
   , _needsRedraw :: NamedUUIDMap Bool
   , _aiType :: NamedUUIDMap AIType
   , _damageChain :: NamedUUIDMap DamageChain
+  , _viewRange :: NamedUUIDMap Double
   } deriving (Show, Eq, Generic)
 
 makeClassy ''Components
@@ -71,6 +72,7 @@ emptyComponents =
   , _needsRedraw = NamedUUIDMap "needsRedraw" zEmpty
   , _aiType = NamedUUIDMap "aiType" zEmpty
   , _damageChain = NamedUUIDMap "damageChain" zEmpty
+  , _viewRange = NamedUUIDMap "viewRange" zEmpty
   }
 
 {-- STATE --}

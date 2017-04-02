@@ -2,18 +2,18 @@ module Zwerg.Entity.AI
   ( runAI
   ) where
 
-import Zwerg.Class
 import Zwerg.Component
 import Zwerg.Component.All
-import Zwerg.Data.Error
 import Zwerg.Event
 import Zwerg.Prelude
 import Zwerg.Random
 
-import Control.Lens (use)
-import Control.Monad.Random
-import Control.Monad.Random.Class (getSplit)
-import Control.Monad.State.Class (modify)
+data AIType
+  = SimpleMeleeCreature
+  | SimpleRangedCreature
+  deriving (Show, Read, Eq, Ord, Enum, Generic)
+
+instance Binary AIType
 
 newtype AI a =
   AI (ExceptT ZError (RandT RanGen (StateT EventQueue (Reader Components))) a)

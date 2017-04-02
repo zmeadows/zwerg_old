@@ -25,14 +25,12 @@ instance ZWrapped TileMap (Map Position UUID) where
 instance Binary TileMap
 
 instance ZConstructable TileMap [(Position,UUID)] where
-  {-# INLINABLE zConstruct #-}
   zConstruct tl = if (length tl /= (round $ mapWidth * mapHeight))
       then throwError $ ZError __FILE__ __LINE__ Fatal
            "Attempted to construct a TileMap with number of tiles \
            not equal to mapWidth * mapHeight"
       else return . MkTileMap $ M.fromList tl
 
-{-# INLINABLE tileUUIDatPosition #-}
 tileUUIDatPosition :: (MonadError ZError m)
                    => Position
                    -> TileMap

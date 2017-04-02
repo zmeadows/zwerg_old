@@ -25,8 +25,7 @@ data GameState = GameState
   { _gsComponents :: Components
   , _gsUUIDGen :: UUIDGen
   , _gsLog :: Log
-  , _gsPort :: Port
-  , _gsGlyphMap :: GlyphMap
+  , _gsPortal :: Portal
   , _gsEventQueue :: EventQueue
   }
 
@@ -38,8 +37,7 @@ emptyGameState =
   { _gsComponents = emptyComponents
   , _gsUUIDGen = initUUIDGen
   , _gsLog = emptyLog
-  , _gsPort = initMainMenu
-  , _gsGlyphMap = emptyGlyphMap
+  , _gsPortal = [initMainMenu]
   , _gsEventQueue = zEmpty
   }
 
@@ -52,16 +50,12 @@ instance HasUUIDGen GameState where
 instance HasLog GameState where
   userLog = gsLog
 
-instance HasPort GameState where
-  port = gsPort
-
-instance HasGlyphMap GameState where
-  glyphMap = gsGlyphMap
+instance HasPortal GameState where
+  portal = gsPortal
 
 instance HasEventQueue GameState where
   eventQueue = gsEventQueue
 
--- |test
 newtype Game a =
   Game (ExceptT ZError (RandT RanGen (State GameState)) a)
   deriving ( Functor
@@ -82,49 +76,54 @@ runGame (Game a) gen st =
 generateGame :: Game ()
 generateGame = do
   lid <- generate testSquareGenerator
-  _ <- generate testSquareGenerator
-  _ <- generate testSquareGenerator
-  _ <- generate testSquareGenerator
-  _ <- generate testSquareGenerator
-  _ <- generate testSquareGenerator
-  _ <- generate testSquareGenerator
   generate $ testPlayerGenerator lid
+
+postEventHook :: Game ()
+postEventHook = do
+  newPort:_ <- use portal
+  case newPort of
+    MainScreen _ -> do
+      ts <- use (ticks . uuidMap)
+      let (minTick, uuids) = getMinimumUUIDs ts
+      (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
+      updateGlyphMap
+    _ -> return ()
 
 processUserInput :: KeyCode -> Game ()
 processUserInput k = do
-  currentPort <- use port
-  processUserInput' currentPort k
+  p <- use portal
+  processUserInput' p k
   processEvents
-  newPort <- use port
-  when (newPort == MainScreen) $ do
-    ts <- use (ticks . uuidMap)
-    let (minTick, uuids) = getMinimumUUIDs ts
-    traceShowM uuids
-    (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
-    updateGlyphMap
+  postEventHook
 
-processUserInput' :: Port -> KeyCode -> Game ()
-processUserInput' (MainMenu m) (KeyChar 'j') = port .= (MainMenu $ next m)
-processUserInput' (MainMenu m) (KeyChar 'k') = port .= (MainMenu $ prev m)
-processUserInput' (MainMenu m) Return =
+processUserInput' :: Portal -> KeyCode -> Game ()
+processUserInput' ((MainMenu m):ps) (KeyChar 'j') =
+  portal .= (MainMenu $ next m) : ps
+processUserInput' ((MainMenu m):ps) (KeyChar 'k') =
+  portal .= [MainMenu $ prev m]
+processUserInput' ((MainMenu m):ps) Return =
   case (view label $ focus m) of
-    "new game" -> generateGame >> port .= MainScreen
-    "exit" -> port .= ExitScreen
+    "new game" -> generateGame >> portal .= [MainScreen emptyGlyphMap]
+    "exit" -> portal .= [ExitScreen]
     _ -> return ()
-processUserInput' MainScreen (KeyChar 'h') =
+processUserInput' ((MainScreen _):_) (KeyChar 'h') =
   processPlayerDirectionInput Direction.Left
-processUserInput' MainScreen (KeyChar 'j') =
+processUserInput' ((MainScreen _):_) (KeyChar 'j') =
   processPlayerDirectionInput Direction.Down
-processUserInput' MainScreen (KeyChar 'k') =
+processUserInput' ((MainScreen _):_) (KeyChar 'k') =
   processPlayerDirectionInput Direction.Up
-processUserInput' MainScreen (KeyChar 'l') =
+processUserInput' ((MainScreen _):_) (KeyChar 'l') =
   processPlayerDirectionInput Direction.Right
 processUserInput' _ _ = return ()
 
 updateGlyphMap :: Game ()
 updateGlyphMap = do
-  updatedGlyphs <- getGlyphMapUpdates
-  glyphMap %= mergeGlyphMaps updatedGlyphs
+  p:ps <- use portal
+  case p of
+    MainScreen gm -> do
+      updatedGlyphs <- getGlyphMapUpdates
+      portal .= (MainScreen $ mergeGlyphMaps updatedGlyphs gm) : ps
+    _ -> return ()
 
 processEvents :: Game ()
 processEvents = do
@@ -206,8 +205,8 @@ processPlayerDirectionInput dir =
         pushEventM $
           WeaponAttackAttemptEvent $
           WeaponAttackAttemptEventData playerUUID attackedUUID
-  in getEntityPlayerAttacking dir >>=
-     maybe processPlayerMove processPlayerAttack
+  in do attackedEntity <- getEntityPlayerAttacking dir
+        maybe processPlayerMove processPlayerAttack attackedEntity
 
 getEntityPlayerAttacking
   :: (HasComponents s, MonadError ZError m, MonadState s m)

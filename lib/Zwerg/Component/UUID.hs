@@ -1,7 +1,5 @@
 module Zwerg.Component.UUID
-  ( UUID
-  , playerUUID
-  , UUIDGen
+  ( UUIDGen
   , HasUUIDGen(..)
   , initUUIDGen
   , mkUUID
@@ -10,7 +8,6 @@ module Zwerg.Component.UUID
   , getNewUUID
   ) where
 
-import Zwerg.Class
 import Zwerg.Prelude hiding (ceiling)
 
 import Control.Lens ((^.), (.=), over, use, to, makeLenses, Lens')
@@ -20,20 +17,6 @@ import qualified Data.IntSet as IS
        (insert, delete, lookupGT, singleton)
 import GHC.Generics (Generic)
 import System.Random
-
-newtype UUID =
-  MkUUID Int
-  deriving (Show, Read, Eq, Bounded, Enum, Num, Ord, Generic, Random)
-
-instance Binary UUID
-
-instance ZWrapped UUID Int where
-  unwrap (MkUUID uuid) = uuid
-
-playerUUID :: UUID
-playerUUID = MkUUID 0
-
-mkUUID = MkUUID
 
 data UUIDGen = UUIDGen
   { _graveyard :: IntSet

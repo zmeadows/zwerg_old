@@ -7,10 +7,8 @@ import Zwerg.Prelude
 
 import qualified Control.Monad.Random as CMR
        (MonadRandom, getRandom)
-import Data.Binary
 import qualified Data.Random.Distribution.Uniform as RU
 import qualified Data.Random.RVar as RV
-import GHC.Generics (Generic)
 
 data Distribution
   = Uniform Double
@@ -29,7 +27,3 @@ sample (Uniform low high) =
   RV.runRVar (RU.uniform low high) (CMR.getRandom :: m Word64)
 sample (Normal low high) =
   RV.runRVar (RU.uniform low high) (CMR.getRandom :: m Word64)
--- uniform
---   :: RD.Distribution RU.Uniform a
---   => a -> a -> Distribution a
--- uniform low high = MkDistribution (uniform' low high)

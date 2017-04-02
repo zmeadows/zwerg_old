@@ -81,3 +81,6 @@ getMenuLabels (MkMenu ls x rs) =
       rightLabels = fmap (view label) rs
       focusLabel = view label x
   in toList $ (leftLabels |> focusLabel) >< rightLabels
+
+getMenuFocusIndex :: Menu a -> Int
+getMenuFocusIndex (MkMenu ls _ _) = S.length ls
