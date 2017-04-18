@@ -18,7 +18,7 @@ levelSkeletonGenerator levelUUID =
             let pos = mkPosition (x', y')
             addComp uuid position pos
             addComp uuid occupants zEmpty
-            addComp uuid blocked True
+            addComp uuid blocksPassage True
             addComp uuid needsRedraw True
             addComp uuid level levelUUID
             return (pos, uuid)

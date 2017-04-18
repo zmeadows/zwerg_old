@@ -11,6 +11,7 @@ module Zwerg.Prelude
   , ZError(..)
   , Direction(..)
   , TargetType(..)
+  , Color(..)
   , Glyph(..)
   , EntityType(..)
   , UUID
@@ -34,15 +35,17 @@ module Zwerg.Prelude
 
 import Protolude as EXPORTED hiding (to, forM, (<>))
 
-import Control.Lens as EXPORTED
-       (makeClassy, makeLenses, makeFields, (%=), (^.), (.=), over, use,
-        view, to, Lens', At(..), Ixed(..), Index, IxValue, (<&>))
 import Control.Monad.Random.Class as EXPORTED
 import Data.Binary as EXPORTED (Binary)
 import Data.Monoid as EXPORTED ((<>))
 import Data.Text as EXPORTED (Text, pack, unpack)
 import Data.Traversable as EXPORTED (forM)
 import GHC.Generics as EXPORTED (Generic)
+import Lens.Micro.Internal as EXPORTED
+       (At(..), Ixed(..), Index, IxValue)
+import Lens.Micro.Platform as EXPORTED
+       (makeClassy, makeLenses, makeFields, (%=), (^.), (.=), over, use,
+        view, to, set, Lens', (<&>))
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -121,12 +124,37 @@ data TargetType
 
 instance Binary TargetType
 
+data Color
+  = Green0
+  | Green1
+  | Green2
+  | Green3
+  | Blue0
+  | Blue1
+  | Blue2
+  | Blue3
+  | Red0
+  | Red1
+  | Red2
+  | Red3
+  | Black0
+  | Black1
+  | Black2
+  | Black3
+  | White0
+  | White1
+  | White2
+  | White3
+  deriving (Eq, Read, Show, Generic)
+
+instance Binary Color
+
 data Glyph = Glyph
   { char :: Char
-  , fgColorVIS :: Word8
-  , fgColorFOG :: Word8
-  , bgColorVIS :: Maybe Word8
-  , bgColorFOG :: Maybe Word8
+  , fgColorVIS :: Color
+  , fgColorFOG :: Color
+  , bgColorVIS :: Maybe Color
+  , bgColorFOG :: Maybe Color
   } deriving (Show, Read, Eq, Generic)
 
 instance Binary Glyph

@@ -1,10 +1,9 @@
 module Zwerg.Event where
 
-import Zwerg.Component.All
 import Zwerg.Data.Damage
 import Zwerg.Prelude
 
-import Data.Sequence (Seq, (><), (<|), (|>), ViewL(..), ViewR(..))
+import Data.Sequence (Seq, (><), (|>), ViewL(..))
 import qualified Data.Sequence as S
 
 class ZwergEventData a

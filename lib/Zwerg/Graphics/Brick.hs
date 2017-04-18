@@ -18,8 +18,6 @@ import Data.Foldable (foldl1)
 import qualified Data.Vector as Vec
 
 -- import Brick.Widgets.Core ((<=>), (<+>), padLeft)
-import Control.Lens (Lens', makeClassy, view)
-
 import Brick.Util (on, fg, bg)
 
 import Data.Text.Markup ((@@))
@@ -55,8 +53,8 @@ eventVTYtoZwergInput (VTY.EvKey VTY.KEnter []) = Just Return
 eventVTYtoZwergInput _ = Nothing
 
 glyphToVtyImage :: Glyph -> VTY.Image
-glyphToVtyImage (Glyph c _ _ _ _) =
-  VTY.char (VTY.white `on` VTY.rgbColor 10 10 10) c
+glyphToVtyImage (Glyph c fg _ bg _) =
+  VTY.char (zwergColorToVtyColor fg `on` (VTY.Color240 220)) c
 
 glyphMapToVtyImage :: GlyphMap -> VTY.Image
 glyphMapToVtyImage gm =
@@ -79,3 +77,29 @@ makeHpWidget h =
       hpLabel = show hpLeft ++ "/" ++ show maxHP
       hpRatio = (fromIntegral hpLeft :: Float) / (fromIntegral maxHP :: Float)
   in (str "HP: ") <+> hLimit 5 (BP.progressBar (Just hpLabel) hpRatio)
+
+zwergColorToVtyColor :: Color -> VTY.Color
+zwergColorToVtyColor zc =
+  let mkVTYcolor (r, g, b) = VTY.rgbColor r g b
+  in case zc of
+       Green0 -> mkVTYcolor (159, 255, 128)
+       Green1 -> mkVTYcolor (121, 255, 77)
+       Green2 -> mkVTYcolor (83, 255, 26)
+       Green3 -> mkVTYcolor (38, 153, 0)
+       Blue0 -> mkVTYcolor (153, 153, 255)
+       Blue1 -> mkVTYcolor (102, 102, 255)
+       Blue2 -> mkVTYcolor (51, 51, 255)
+       Blue3 -> mkVTYcolor (0, 0, 204)
+       Red0 -> mkVTYcolor (255, 102, 102)
+       Red1 -> mkVTYcolor (255, 51, 51)
+       Red2 -> mkVTYcolor (230, 0, 0)
+       Red3 -> mkVTYcolor (153, 0, 0)
+       White0 -> VTY.Color240 227
+       White1 -> VTY.Color240 230
+       White2 -> VTY.Color240 233
+       White3 -> VTY.Color240 236
+       Black0 -> VTY.Color240 0
+       Black1 -> VTY.Color240 217
+       Black2 -> VTY.Color240 220
+       Black3 -> VTY.Color240 223
+       _ -> VTY.white

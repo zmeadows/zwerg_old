@@ -15,7 +15,6 @@ import Zwerg.UI.Menu
 import Zwerg.UI.Port
 import Zwerg.Util
 
-import Control.Lens (makeClassy, use, (.=), (%=), view)
 import Control.Monad.Random (runRandT, RandT, MonadRandom)
 import Unsafe (unsafeHead)
 
@@ -119,7 +118,7 @@ updateGlyphMap = do
     _ -> return ()
 
 processEvents :: Game ()
-processEvents = do
+processEvents =
   whenJustM popEvent $ \nextEvent -> do
     processEvent nextEvent
     processEvents
@@ -128,7 +127,7 @@ processEvent :: ZwergEvent -> Game ()
 processEvent (MoveEntityDirectionEvent ed) = do
   let uuid = moverUUID ed
       dir = direction ed
-  (x, y) <- unPosition <$> demandComp position uuid
+  (x, y) <- unwrap <$> demandComp position uuid
   let (x', y') =
         if | dir == West -> (x - 1, y)
            | dir == East -> (x + 1, y)
@@ -147,7 +146,7 @@ processEvent (MoveEntityDirectionEvent ed) = do
   levelUUID <- demandComp level uuid
   levelTiles <- demandComp tileMap levelUUID
   newTileUUID <- TM.tileUUIDatPosition newPos levelTiles
-  newTileBlocked <- demandComp blocked newTileUUID
+  newTileBlocked <- demandComp blocksPassage newTileUUID
   when (newTileBlocked && uuid /= playerUUID) $
     throwError $
     ZError
@@ -165,9 +164,9 @@ processEvent (MoveEntityDirectionEvent ed) = do
   oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
   setComp uuid position newPos
   removeOccupant uuid oldTileUUID
-  setComp oldTileUUID blocked False
+  setComp oldTileUUID blocksPassage False
   addOccupant uuid newTileUUID
-  setComp newTileUUID blocked True
+  setComp newTileUUID blocksPassage True
   setComp oldTileUUID needsRedraw True
   setComp newTileUUID needsRedraw True
 processEvent (WeaponAttackAttemptEvent ed) = eraseEntity (view defenderUUID ed)
@@ -183,7 +182,7 @@ getGlyphMapUpdates = do
   updatedGlyphs <-
     forM (zToList tilesWithUpdatedNeeded) $ \tileUUID -> do
       pos <- demandComp position tileUUID
-      occUUID <- getPrimaryOccupant tileUUID
+      occUUID <- readC $ getPrimaryOccupant tileUUID
       gly <- demandComp glyph occUUID
       setComp tileUUID needsRedraw False
       return (pos, gly)
@@ -198,18 +197,15 @@ processPlayerDirectionInput dir =
         pushEventM $
           WeaponAttackAttemptEvent $
           WeaponAttackAttemptEventData playerUUID attackedUUID
-  in do attackedEntity <- getEntityPlayerAttacking dir
+  in do attackedEntity <- readC $ getEntityPlayerAttacking dir
         maybe processPlayerMove processPlayerAttack attackedEntity
 
-getEntityPlayerAttacking
-  :: (HasComponents s, MonadError ZError m, MonadState s m)
-  => Direction -> m (Maybe UUID)
+getEntityPlayerAttacking :: Direction -> MonadCompReader (Maybe UUID)
 getEntityPlayerAttacking dir = do
   attackedTileUUID <- getPlayerTileUUID >>= getAdjacentTileUUID dir
   case attackedTileUUID of
     Just attackedTileUUID' -> do
-      adjacentTileEnemyOccupants <-
-        getTileOccupantsOfType attackedTileUUID' Enemy
+      adjacentTileEnemyOccupants <- getOccupantsOfType attackedTileUUID' Enemy
       if | zIsNull adjacentTileEnemyOccupants -> return Nothing
          | zSize adjacentTileEnemyOccupants > 1 ->
            throwError $

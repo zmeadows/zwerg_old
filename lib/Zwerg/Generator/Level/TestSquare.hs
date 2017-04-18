@@ -17,17 +17,19 @@ testSquareGenerator =
     testSquareTiles <- demandComp tileMap testSquareLevelUUID
     _ <-
       flip traverseWithKey (unwrap testSquareTiles) $ \pos tileUUID -> do
-        let (x, y) = unPosition pos
+        let (x, y) = unwrap pos
             isWallTile =
               x == 0 || x == mapWidthINT - 1 || y == 0 || y == mapHeightINT - 1
         if isWallTile
           then do
             setComp tileUUID tileType Wall
-            setComp tileUUID glyph $ Glyph 'X' 15 248 Nothing Nothing
+            setComp tileUUID glyph $
+              Glyph 'X' White2 White0 (Just Black2) (Just Black0)
           else do
             setComp tileUUID tileType Floor
-            setComp tileUUID blocked False
-            setComp tileUUID glyph $ Glyph '·' 15 48 Nothing Nothing
+            setComp tileUUID blocksPassage False
+            setComp tileUUID glyph $
+              Glyph '·' White2 White0 (Just Black2) (Just Black0)
     traceM "generating Goblins..."
     replicateM_ 50 $ do
       goblinUUID <- generate goblinGenerator
@@ -42,5 +44,5 @@ testSquareGenerator =
           "Could not find an open tile to place Goblin"
       demandComp position goblinTileUUID' >>= addComp goblinUUID position
       addOccupant goblinUUID goblinTileUUID'
-      addComp goblinTileUUID' blocked True
+      addComp goblinTileUUID' blocksPassage True
     return testSquareLevelUUID

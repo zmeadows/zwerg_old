@@ -10,12 +10,12 @@ testPlayerGenerator startLevelUUID =
     traceM "generating Player..."
     addPlayerComp name "Bob"
     addPlayerComp level startLevelUUID
-    addPlayerComp glyph $ Glyph '@' 3 184 Nothing Nothing
+    addPlayerComp glyph $ Glyph '@' Red0 Red0 Nothing Nothing
     zConstruct (10, 10) >>= addPlayerComp hp
     addPlayerComp entityType Player
     addPlayerComp equipment emptyEquipment
     addPlayerComp stats zeroStats
-    addPlayerComp viewRange 7.0
+    addPlayerComp viewRange 5.0
     playerTileUUID <- getRandomTile startLevelUUID
     playerTileUUID' <-
       fromJustErrM

@@ -10,19 +10,18 @@ newtype Position =
 
 instance Binary Position
 
+instance ZWrapped Position (Int, Int) where
+  unwrap (MkPosition p) = p
+
 data Metric
   = Euclidean
   | TaxiCab
   deriving (Show, Read, Eq)
 
-{-# INLINABLE unPosition #-}
-unPosition :: Position -> (Int, Int)
-unPosition (MkPosition t) = t
-
 {-# INLINABLE to1DIndex #-}
 to1DIndex :: Position -> Int
 to1DIndex pos =
-  let (x, y) = unPosition pos
+  let (x, y) = unwrap pos
   in y * mapHeightINT + x
 
 {-# INLINABLE mkPosition #-}

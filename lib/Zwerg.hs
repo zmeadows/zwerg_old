@@ -25,7 +25,6 @@ import qualified Brick.Widgets.Center as BC
 import Brick.Widgets.Core
 import qualified Brick.Widgets.List as BL
 import Control.Concurrent
-import Control.Lens (makeClassy, use, view, assign, set, (^.))
 import Control.Monad.Except
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Monoid ((<>))
@@ -84,9 +83,9 @@ buildPortUI (MainMenu m) = return ui
     ui = BC.vCenter $ vBox [BC.hCenter $ str "zwerg", str " ", BC.hCenter box]
 buildPortUI (MainScreen gm) = do
   let uiMap = raw $ glyphMapToVtyImage gm
-  pName <- demandViewComp playerUUID name
-  pStats <- demandViewComp playerUUID stats
-  pHP <- demandViewComp playerUUID hp
+  pName <- demandViewComp name playerUUID
+  pStats <- demandViewComp stats playerUUID
+  pHP <- demandViewComp hp playerUUID
   return $
     vLimit
       mapHeightINT

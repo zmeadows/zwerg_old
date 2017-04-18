@@ -28,7 +28,8 @@ data Components = Components
   , _parent :: NamedUUIDMap Parent
   , _children :: NamedUUIDMap UUIDSet
   , _stats :: NamedUUIDMap Stats
-  , _blocked :: NamedUUIDMap Bool
+  , _blocksPassage :: NamedUUIDMap Bool
+  , _blocksVision :: NamedUUIDMap Bool
   , _needsRedraw :: NamedUUIDMap Bool
   , _aiType :: NamedUUIDMap AIType
   , _damageChain :: NamedUUIDMap DamageChain
@@ -40,8 +41,27 @@ makeClassy ''Components
 
 instance Binary Components
 
-type Component s a = HasComponents s =>
-                       Lens' s (NamedUUIDMap a)
+type MonadCompState a = forall s m. ( HasComponents s
+                                    , MonadError ZError m
+                                    , MonadState s m
+                                    ) =>
+                                      m a
+
+type MonadCompReader a = forall s m. ( HasComponents s
+                                     , MonadError ZError m
+                                     , MonadReader s m
+                                     ) =>
+                                       m a
+
+type Component a = forall s. HasComponents s =>
+                               Lens' s (NamedUUIDMap a)
+
+readC :: MonadCompReader a -> MonadCompState a
+readC x = do
+  cs <- use components
+  case (runReader (runExceptT x) cs) of
+    Left err -> throwError err
+    Right q -> return q
 
 emptyComponents :: Components
 emptyComponents =
@@ -63,7 +83,8 @@ emptyComponents =
   , _parent = NamedUUIDMap "parent" zEmpty
   , _children = NamedUUIDMap "children" zEmpty
   , _stats = NamedUUIDMap "stats" zEmpty
-  , _blocked = NamedUUIDMap "blocked" zEmpty
+  , _blocksPassage = NamedUUIDMap "blocksPassage" zEmpty
+  , _blocksVision = NamedUUIDMap "blocksVision" zEmpty
   , _needsRedraw = NamedUUIDMap "needsRedraw" zEmpty
   , _aiType = NamedUUIDMap "aiType" zEmpty
   , _damageChain = NamedUUIDMap "damageChain" zEmpty
@@ -71,78 +92,64 @@ emptyComponents =
   , _nextUUID = playerUUID + 1
   }
 
-popUUID
-  :: (HasComponents s, MonadState s m)
-  => m UUID
+popUUID :: MonadCompState UUID
 popUUID = do
   newUUID <- use nextUUID
   nextUUID %= (+ 1)
   return newUUID
 
 {-- STATE --}
-getComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component s a -> m (Maybe a)
+getComp :: UUID -> Component a -> MonadCompState (Maybe a)
 getComp uuid comp = use $ comp . uuidMap . at uuid
 
-hasComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component s a -> m Bool
+hasComp :: UUID -> Component a -> MonadCompState Bool
 hasComp uuid comp = use $ comp . uuidMap . to (zContains uuid)
 
 addComp
   :: (HasComponents s, MonadState s m)
-  => UUID -> Component s a -> a -> m ()
+  => UUID -> Component a -> a -> m ()
 addComp uuid comp dat = (comp . uuidMap) %= zInsert uuid dat
 
 setComp
   :: (HasComponents s, MonadState s m)
-  => UUID -> Component s a -> a -> m ()
+  => UUID -> Component a -> a -> m ()
 setComp = addComp
 
 modComp
   :: (HasComponents s, MonadState s m)
-  => UUID -> Component s a -> (a -> a) -> m ()
+  => UUID -> Component a -> (a -> a) -> m ()
 modComp uuid comp f = (comp . uuidMap) %= zAdjust f uuid
 
 deleteComp
   :: (HasComponents s, MonadState s m)
-  => UUID -> Component s a -> m ()
+  => UUID -> Component a -> m ()
 deleteComp uuid comp = (comp . uuidMap) %= (zRemoveAt uuid)
 
 filterComp
   :: (HasComponents s, MonadState s m)
-  => Component s a -> (a -> Bool) -> m ()
+  => Component a -> (a -> Bool) -> m ()
 filterComp comp f = (comp . uuidMap) %= zFilter (\(_, x) -> f x)
 
-demandComp
-  :: (HasComponents s, MonadError ZError m, MonadState s m)
-  => Component s a -> UUID -> m a
+demandComp :: Component a -> UUID -> MonadCompState a
 demandComp comp uuid = do
   result <- getComp uuid comp
   cn <- use (comp . componentName)
   whenJustErr
     result
-    (ZError __FILE__ __LINE__ Fatal $ append "Missing Component" cn)
+    (ZError __FILE__ __LINE__ Fatal $ append "Missing Component: " cn)
     return
 
-demandHasComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component s a -> m ()
+demandHasComp :: UUID -> Component a -> MonadCompState ()
 demandHasComp uuid comp = do
   result <- hasComp uuid comp
   assert result $ return ()
 
 {-- READER --}
-viewComp
-  :: (HasComponents r, MonadReader r m)
-  => UUID -> Component r a -> m (Maybe a)
+viewComp :: UUID -> Component a -> MonadCompReader (Maybe a)
 viewComp uuid comp = view (comp . uuidMap . at uuid)
 
-demandViewComp
-  :: (HasComponents r, MonadError ZError m, MonadReader r m)
-  => UUID -> Component r a -> m a
-demandViewComp uuid comp = do
+demandViewComp :: Component a -> UUID -> MonadCompReader a
+demandViewComp comp uuid = do
   result <- view (comp . uuidMap . at uuid)
   cn <- view (comp . componentName)
   whenJustErr

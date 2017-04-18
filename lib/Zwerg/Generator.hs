@@ -14,7 +14,6 @@ import Zwerg.Event as EXPORTED
 import Zwerg.Prelude as EXPORTED
 import Zwerg.Random as EXPORTED
 
-import Control.Lens as EXPORTED (makeClassy, view, (%=))
 import Control.Monad.Except as EXPORTED hiding ((<$!>))
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
 
@@ -32,7 +31,7 @@ getRandomTile
   => UUID -> m (Maybe UUID)
 getRandomTile levelUUID = do
   levelTiles <- demandComp tiles levelUUID
-  unoccupiedTiles <- zFilterM (fmap not . demandComp blocked) levelTiles
+  unoccupiedTiles <- zFilterM (fmap not . demandComp blocksPassage) levelTiles
   if (zIsNull unoccupiedTiles)
     then return Nothing
     else Just <$> pickRandom unoccupiedTiles

@@ -8,7 +8,7 @@ goblinGenerator =
   MkGenerator $ do
     goblinUUID <- popUUID
     generateGoblinName >>= addComp goblinUUID name
-    addComp goblinUUID glyph $ Glyph 'g' 42 40 Nothing Nothing
+    addComp goblinUUID glyph $ Glyph 'g' Green0 Green3 Nothing Nothing
     goblinHP <- getRandomR (3, 7)
     zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
     getRandomR (1, 100) >>= addComp goblinUUID ticks

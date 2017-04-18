@@ -41,6 +41,6 @@ runAI uuid = do
     Right () -> mergeEventsM evts
 
 enact :: UUID -> AIType -> AI ()
-enact entityUUID SimpleMeleeCreature =
-  modify . pushEvent $ MoveEntityEvent $ MoveEntityEventData 0
-enact entityUUID SimpleRangedCreature = return ()
+--enact entityUUID SimpleMeleeCreature =
+--  modify . pushEvent $ MoveEntityEvent $ MoveEntityEventData 0
+enact _ _ = return ()

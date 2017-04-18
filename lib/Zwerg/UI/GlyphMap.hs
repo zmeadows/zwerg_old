@@ -39,8 +39,8 @@ glyphMapToRows (MkGlyphMap gm) =
 
 brickCmpPos :: (Position, Glyph) -> (Position, Glyph) -> Ordering
 brickCmpPos (p1, _) (p2, _) =
-  let (x1, y1) = unPosition p1
-      (x2, y2) = unPosition p2
+  let (x1, y1) = unwrap p1
+      (x2, y2) = unwrap p2
   in if | y1 > y2 -> GT
         | x1 > x2 -> GT
         | otherwise -> LT
