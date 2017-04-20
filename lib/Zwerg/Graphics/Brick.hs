@@ -52,13 +52,15 @@ eventVTYtoZwergInput (VTY.EvKey (VTY.KChar ch) []) = Just $ KeyChar ch
 eventVTYtoZwergInput (VTY.EvKey VTY.KEnter []) = Just Return
 eventVTYtoZwergInput _ = Nothing
 
-glyphToVtyImage :: Glyph -> VTY.Image
-glyphToVtyImage (Glyph c fg _ bg _) =
-  VTY.char (zwergColorToVtyColor fg `on` (VTY.Color240 220)) c
+glyphToVtyImage :: (Glyph, Bool) -> VTY.Image
+glyphToVtyImage ((Glyph c fg _ bg _), isVis) =
+  if isVis
+    then VTY.char (zwergColorToVtyColor fg `on` VTY.Color240 220) c
+    else VTY.char (zwergColorToVtyColor fg `on` VTY.Color240 0) c
 
 glyphMapToVtyImage :: GlyphMap -> VTY.Image
 glyphMapToVtyImage gm =
-  let rows = glyphMapToRows gm :: [[Glyph]]
+  let rows = glyphMapToRows gm :: [[(Glyph, Bool)]]
       mkImageRow row = foldl1 (VTY.<|>) $ map glyphToVtyImage row
   in foldl1 (VTY.<->) $ map mkImageRow rows
 
@@ -76,7 +78,7 @@ makeHpWidget h =
   let (hpLeft, maxHP) = unwrap h
       hpLabel = show hpLeft ++ "/" ++ show maxHP
       hpRatio = (fromIntegral hpLeft :: Float) / (fromIntegral maxHP :: Float)
-  in (str "HP: ") <+> hLimit 5 (BP.progressBar (Just hpLabel) hpRatio)
+  in str "HP: " <+> hLimit 5 (BP.progressBar (Just hpLabel) hpRatio)
 
 zwergColorToVtyColor :: Color -> VTY.Color
 zwergColorToVtyColor zc =

@@ -60,10 +60,7 @@ library
   build-depends:       base >= 4.7 && < 5,
                        containers,
                        unordered-containers,
-                       hashable,
-                       hashtables,
                        vector,
-                       linear,
                        monad-loops,
                        microlens,
                        microlens-platform,
@@ -82,7 +79,6 @@ library
                        protolude,
                        vty,
                        brick,
-                       protolude,
                        StateVar
 
   default-extensions: CPP,
@@ -99,9 +95,9 @@ library
                       NoImplicitPrelude,
                       OverloadedStrings,
                       RankNTypes,
+                      ScopedTypeVariables,
                       StandaloneDeriving,
                       Strict,
-                      ScopedTypeVariables,
                       TemplateHaskell,
                       TupleSections,
                       TypeFamilies

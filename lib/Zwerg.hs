@@ -70,7 +70,7 @@ type UIBuilder a = ExceptT ZError (Reader ZwergState) a
 buildZwergUI :: ZwergState -> [BT.Widget ()]
 buildZwergUI zs =
   let ps = view (gameState . portal) zs
-  in case (runReader (runExceptT (mapM buildPortUI ps)) zs) of
+  in case runReader (runExceptT (mapM buildPortUI ps)) zs of
        Left _ -> []
        Right x -> x
 
@@ -93,7 +93,9 @@ buildPortUI (MainScreen gm) = do
        BB.vBorder <+>
        ((markup $ (pName @@ fg VTY.yellow)) <=> makeHpWidget pHP <=>
         makeStatsWidget pStats)) <=>
-    (BB.hBorder <=> (str "asdf"))
+    (BB.hBorder <=>
+     (str
+        "Last year, the average levelized cost or total cost of generating power from solar worldwide dropped 17% percent, onshore wind costs dropped 18% and offshore wind turbine power costs fell 28%, according t"))
 buildPortUI _ = return emptyWidget
 
 listDrawElement :: Bool -> Text -> BT.Widget ()

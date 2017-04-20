@@ -32,7 +32,7 @@ getRandomTile
 getRandomTile levelUUID = do
   levelTiles <- demandComp tiles levelUUID
   unoccupiedTiles <- zFilterM (fmap not . demandComp blocksPassage) levelTiles
-  if (zIsNull unoccupiedTiles)
+  if zIsNull unoccupiedTiles
     then return Nothing
     else Just <$> pickRandom unoccupiedTiles
 

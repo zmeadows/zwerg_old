@@ -79,6 +79,7 @@ postEventHook = do
       (minTick, uuids) <- getMinimumUUIDs ts
       (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
       updateGlyphMap
+      -- readC (getVisibleTiles playerUUID) >>= traceShowM
     _ -> return ()
 
 processUserInput :: KeyCode -> Game ()
@@ -89,22 +90,28 @@ processUserInput k = do
   postEventHook
 
 processUserInput' :: Portal -> KeyCode -> Game ()
-processUserInput' ((MainMenu m):ps) (KeyChar 'j') =
+processUserInput' (MainMenu m:ps) (KeyChar 'j') =
   portal .= (MainMenu $ next m) : ps
-processUserInput' ((MainMenu m):ps) (KeyChar 'k') =
-  portal .= [MainMenu $ prev m]
-processUserInput' ((MainMenu m):ps) Return =
+processUserInput' (MainMenu m:ps) (KeyChar 'k') = portal .= [MainMenu $ prev m]
+processUserInput' (MainMenu m:ps) Return =
   case (view label $ focus m) of
-    "new game" -> generateGame >> portal .= [MainScreen emptyGlyphMap]
+    "new game" -> do
+      generateGame
+      let xs = [0 .. mapWidthINT - 1]
+          ys = [0 .. mapHeightINT - 1]
+          emptyGlyph = Glyph ' ' Black0 Black0 (Just Black0) (Just Black0)
+      ts <- mapM zConstruct [(x, y) | x <- xs, y <- ys]
+      portal .=
+        [MainScreen $ mkGlyphMap $ map (\p -> (p, (emptyGlyph, False))) ts]
     "exit" -> portal .= [ExitScreen]
     _ -> return ()
-processUserInput' ((MainScreen _):_) (KeyChar 'h') =
+processUserInput' (MainScreen _:_) (KeyChar 'h') =
   processPlayerDirectionInput West
-processUserInput' ((MainScreen _):_) (KeyChar 'j') =
+processUserInput' (MainScreen _:_) (KeyChar 'j') =
   processPlayerDirectionInput South
-processUserInput' ((MainScreen _):_) (KeyChar 'k') =
+processUserInput' (MainScreen _:_) (KeyChar 'k') =
   processPlayerDirectionInput North
-processUserInput' ((MainScreen _):_) (KeyChar 'l') =
+processUserInput' (MainScreen _:_) (KeyChar 'l') =
   processPlayerDirectionInput East
 processUserInput' _ _ = return ()
 
@@ -141,8 +148,8 @@ processEvent (MoveEntityDirectionEvent ed) = do
   when (destinationOutsideMap && uuid == playerUUID) $
     throwError $
     ZError __FILE__ __LINE__ Warning "Player attempted to move outside of map"
-  let oldPos = mkPosition (x, y)
-      newPos = mkPosition (x', y')
+  oldPos <- zConstruct (x, y)
+  newPos <- zConstruct (x', y')
   levelUUID <- demandComp level uuid
   levelTiles <- demandComp tileMap levelUUID
   newTileUUID <- TM.tileUUIDatPosition newPos levelTiles
@@ -167,25 +174,20 @@ processEvent (MoveEntityDirectionEvent ed) = do
   setComp oldTileUUID blocksPassage False
   addOccupant uuid newTileUUID
   setComp newTileUUID blocksPassage True
-  setComp oldTileUUID needsRedraw True
-  setComp newTileUUID needsRedraw True
 processEvent (WeaponAttackAttemptEvent ed) = eraseEntity (view defenderUUID ed)
 processEvent _ = return ()
 
-getGlyphMapUpdates
-  :: (HasComponents s, MonadError ZError m, MonadState s m)
-  => m GlyphMap
+getGlyphMapUpdates :: MonadCompState GlyphMap
 getGlyphMapUpdates = do
   currentLevelUUID <- demandComp level playerUUID
   currentLevelTiles <- demandComp tiles currentLevelUUID
-  tilesWithUpdatedNeeded <- zFilterM (demandComp needsRedraw) currentLevelTiles
+  tilesWithUpdatedNeeded <- readC $ getVisibleTiles playerUUID
   updatedGlyphs <-
     forM (zToList tilesWithUpdatedNeeded) $ \tileUUID -> do
       pos <- demandComp position tileUUID
       occUUID <- readC $ getPrimaryOccupant tileUUID
       gly <- demandComp glyph occUUID
-      setComp tileUUID needsRedraw False
-      return (pos, gly)
+      return (pos, (gly, True))
   return $ mkGlyphMap updatedGlyphs
 
 processPlayerDirectionInput :: Direction -> Game ()

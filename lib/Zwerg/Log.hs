@@ -26,4 +26,4 @@ emptyLog = MkLog S.empty
 pushLogMsg
   :: (HasLog s, MonadState s m)
   => Text -> m ()
-pushLogMsg message = userLog %= \l -> MkLog $ (unwrap l) S.|> message
+pushLogMsg message = userLog %= \l -> MkLog $ unwrap l S.|> message

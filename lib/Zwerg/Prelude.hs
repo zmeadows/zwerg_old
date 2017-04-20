@@ -181,7 +181,7 @@ instance ZWrapped UUID Int where
 
 instance ZConstructable UUID Int where
   zConstruct x =
-    if | x > (unwrap playerUUID) -> return $ MkUUID x
+    if | x > unwrap playerUUID -> return $ MkUUID x
        | otherwise ->
          throwError $
          ZError __FILE__ __LINE__ Fatal "Attempted to construct UUID <= 0"

@@ -32,10 +32,10 @@ class RanChoice a b | a -> b where
 instance RanChoice UUIDSet UUID where
   pickRandom us =
     let uws = unwrap us
-        maxInd = (S.size uws) - 1
+        maxInd = S.size uws - 1
     in flip S.elemAt uws <$> getRandomR (0, maxInd)
 
 instance RanChoice [a] a where
   pickRandom xs =
-    let maxInd = (length xs) - 1
+    let maxInd = length xs - 1
     in unsafeIndex xs <$> getRandomR (0, maxInd)

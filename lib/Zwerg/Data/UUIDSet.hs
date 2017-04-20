@@ -23,7 +23,7 @@ instance ZContainer UUIDSet UUID where
 instance ZFilterable UUIDSet UUID where
   zFilter f (MkUUIDSet us) = MkUUIDSet $ S.filter f us
   zFilterM f (MkUUIDSet us) =
-    MkUUIDSet <$> S.fromAscList <$> CM.filterM f (S.toAscList us)
+    MkUUIDSet . S.fromAscList <$> CM.filterM f (S.toAscList us)
 
 instance ZEmptiable UUIDSet where
   zEmpty = MkUUIDSet S.empty

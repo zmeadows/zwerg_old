@@ -38,7 +38,7 @@ cycleMenu (MkMenu ls x rs) = MkMenu rs x ls
 next :: Menu a -> Menu a
 next m@(MkMenu ls x rs) =
   if | S.null rs && S.null ls -> m
-     | S.null rs && (not $ S.null ls) -> next $ cycleMenu m
+     | S.null rs && not (S.null ls) -> next $ cycleMenu m
      | otherwise ->
        let (a :< rs') = S.viewl rs
        in MkMenu (ls |> x) a rs'
@@ -46,7 +46,7 @@ next m@(MkMenu ls x rs) =
 prev :: Menu a -> Menu a
 prev m@(MkMenu ls x rs) =
   if | S.null ls && S.null rs -> m
-     | S.null ls && (not $ S.null rs) -> prev $ cycleMenu m
+     | S.null ls && not (S.null rs) -> prev $ cycleMenu m
      | otherwise ->
        let (ls' :> a) = S.viewr ls
        in MkMenu ls' a (x <| rs)
@@ -65,7 +65,7 @@ makeMenu' ((newLabel, newItem):remaining) entries =
           (\x -> (x, length $ filter (== x) alreadyUsedChars))
           (T.unpack newLabel)
       newChar = fst $ minimumBy (compare `on` snd) newCharCounts
-  in makeMenu' remaining $ (MenuEntry newChar newLabel newItem) : entries
+  in makeMenu' remaining $ MenuEntry newChar newLabel newItem : entries
 makeMenu' [] entries =
   let e:es = reverse entries
   in MkMenu S.empty e (S.fromList es)

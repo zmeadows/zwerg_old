@@ -6,15 +6,11 @@ import Zwerg.Prelude
 import Data.Sequence (Seq, (><), (|>), ViewL(..))
 import qualified Data.Sequence as S
 
-class ZwergEventData a
-
 data IncomingDamageEventData = IncomingDamageEventData
   { _incomingDamageEventDataAttackerUUID :: UUID
   , _incomingDamageEventDataDefenderUUID :: UUID
   , _incomingDamageEventDataDamage :: DamageChain
   } deriving (Show, Eq)
-
-instance ZwergEventData IncomingDamageEventData
 
 makeFields ''IncomingDamageEventData
 
@@ -23,8 +19,6 @@ data OutgoingDamageEventData = OutgoingDamageEventData
   , _outgoingDamageEventDataDefenderUUID :: UUID
   , _outgoingDamageEventDataDamageAmount :: Int
   } deriving (Show, Eq)
-
-instance ZwergEventData OutgoingDamageEventData
 
 makeFields ''OutgoingDamageEventData
 
@@ -35,8 +29,6 @@ data WeaponAttackAttemptEventData = WeaponAttackAttemptEventData
 
 makeFields ''WeaponAttackAttemptEventData
 
-instance ZwergEventData WeaponAttackAttemptEventData
-
 data WeaponAttackHitEventData = WeaponAttackHitEventData
   { _weaponAttackHitEventDataAttackerUUID :: UUID
   , _weaponAttackHitEventDataDefenderUUID :: UUID
@@ -44,29 +36,12 @@ data WeaponAttackHitEventData = WeaponAttackHitEventData
 
 makeFields ''WeaponAttackHitEventData
 
-instance ZwergEventData WeaponAttackHitEventData
-
 data WeaponAttackMissEventData = WeaponAttackMissEventData
   { _weaponAttackMissEventDataAttackerUUID :: UUID
   , _weaponAttackMissEventDataDefenderUUID :: UUID
   } deriving (Show, Eq)
 
 makeFields ''WeaponAttackMissEventData
-
-instance ZwergEventData WeaponAttackMissEventData
-
-data ZwergEvent
-  = IncomingDamageEvent IncomingDamageEventData
-  | OutgoingDamageEvent OutgoingDamageEventData
-  | WeaponAttackAttemptEvent WeaponAttackAttemptEventData
-  | WeaponAttackHitEvent WeaponAttackHitEventData
-  | WeaponAttackMissEvent WeaponAttackMissEventData
-  | DeathEvent DeathEventData
-  | GenerateEntityEvent GenerateEntityEventData
-  | MoveEntityEvent MoveEntityEventData
-  | MoveEntityDirectionEvent MoveEntityDirectionEventData
-  | TickEvent TickEventData
-  deriving (Show, Eq)
 
 data DeathEventData =
   DeathEventData Int
@@ -87,6 +62,19 @@ data MoveEntityDirectionEventData = MoveEntityDirectionEventData
 
 data TickEventData =
   TickEventData Int
+  deriving (Show, Eq)
+
+data ZwergEvent
+  = IncomingDamageEvent IncomingDamageEventData
+  | OutgoingDamageEvent OutgoingDamageEventData
+  | WeaponAttackAttemptEvent WeaponAttackAttemptEventData
+  | WeaponAttackHitEvent WeaponAttackHitEventData
+  | WeaponAttackMissEvent WeaponAttackMissEventData
+  | DeathEvent DeathEventData
+  | GenerateEntityEvent GenerateEntityEventData
+  | MoveEntityEvent MoveEntityEventData
+  | MoveEntityDirectionEvent MoveEntityDirectionEventData
+  | TickEvent TickEventData
   deriving (Show, Eq)
 
 newtype ZwergEventQueue =

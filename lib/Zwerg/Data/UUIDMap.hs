@@ -56,9 +56,9 @@ instance ZMapContainer (UUIDMap a) UUID a where
   zContains uuid (MkUUIDMap m) = IM.member (unwrap uuid) m
 
 instance ZFilterable (UUIDMap a) (Int, a) where
-  zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (\i x -> f (i, x)) m
+  zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (curry f) m
   zFilterM f (MkUUIDMap m) =
-    MkUUIDMap <$> IM.fromAscList <$> filterM f (IM.toAscList m)
+    MkUUIDMap . IM.fromAscList <$> filterM f (IM.toAscList m)
 
 type instance IxValue (UUIDMap a) = a
 

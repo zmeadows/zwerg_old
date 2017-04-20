@@ -30,7 +30,6 @@ data Components = Components
   , _stats :: NamedUUIDMap Stats
   , _blocksPassage :: NamedUUIDMap Bool
   , _blocksVision :: NamedUUIDMap Bool
-  , _needsRedraw :: NamedUUIDMap Bool
   , _aiType :: NamedUUIDMap AIType
   , _damageChain :: NamedUUIDMap DamageChain
   , _viewRange :: NamedUUIDMap Double
@@ -85,7 +84,6 @@ emptyComponents =
   , _stats = NamedUUIDMap "stats" zEmpty
   , _blocksPassage = NamedUUIDMap "blocksPassage" zEmpty
   , _blocksVision = NamedUUIDMap "blocksVision" zEmpty
-  , _needsRedraw = NamedUUIDMap "needsRedraw" zEmpty
   , _aiType = NamedUUIDMap "aiType" zEmpty
   , _damageChain = NamedUUIDMap "damageChain" zEmpty
   , _viewRange = NamedUUIDMap "viewRange" zEmpty

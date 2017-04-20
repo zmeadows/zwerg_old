@@ -1,3 +1,15 @@
+{-|
+Module      : Zwerg.Entity
+Description : Functions that operate at the level of entities.
+Copyright   : (c) Zac Meadows, 2016
+License     : GPL-3
+Maintainer  : zmeadows@gmail.com
+Stability   : experimental
+Portability : POSIX
+
+Here is a longer description of this module, containing some
+commentary with @some markup@.
+-}
 module Zwerg.Entity where
 
 import Zwerg.Component
@@ -14,19 +26,25 @@ getVisibleTiles :: UUID -> MonadCompReader UUIDSet
 getVisibleTiles uuid = do
   (playerX, playerY) <- unwrap <$> demandViewComp position uuid
   fov <- ceiling <$> demandViewComp viewRange uuid
-  levelTiles <- demandViewComp tileMap uuid
+  levelUUID <- demandViewComp level uuid
+  levelTiles <- demandViewComp tileMap levelUUID
   let minX = max (playerX - fov) 0
       minY = max (playerY - fov) 0
       maxX = min (playerX + fov) $ mapWidthINT - 1
       maxY = min (playerY + fov) $ mapHeightINT - 1
-      candidatePOSs =
-        M.fromList
-          [ ((x, y), True)
-          | x <- [minX .. maxX]
-          , y <- [minY .. maxY]
-          , sqrt ((fromIntegral x) ** 2 + (fromIntegral y) ** 2) <
-              fromIntegral fov
-          ]
+  -- traceShowM (minX, maxX, minX, maxY)
+  candidatePOSs <-
+    mapM
+      zConstruct
+      [ (x, y)
+      | x <- [minX .. maxX]
+      , y <- [minY .. maxY]
+      , sqrt
+          ((fromIntegral $ x - playerX) ** 2 + (fromIntegral $ y - playerY) ** 2) <
+          fromIntegral fov
+      ]
+  visTiles <-
+    zFromList <$> mapM (flip tileUUIDatPosition levelTiles) candidatePOSs
       -- fovEdges =
       --   map (minX, ) [minY + 1 .. maxY - 1] ++
       --   map (maxX, ) [minY + 1 .. maxY - 1] ++
@@ -39,7 +57,7 @@ getVisibleTiles uuid = do
   --     markTiles (l:ls) candidates = do
   --       let modifiedCandidates = M.adjust (\k _ -> True) candidates
   --       markTiles ls candidates
-  return zEmpty
+  return visTiles
 
 tileBlocksVision :: UUID -> MonadCompReader Bool
 tileBlocksVision tileUUID = return False
@@ -61,12 +79,12 @@ getPlayerTileUUID = do
 getAdjacentTileUUID :: Direction -> UUID -> MonadCompReader (Maybe UUID)
 getAdjacentTileUUID dir tileUUID = do
   tilePosition <- demandViewComp position tileUUID
-  let adjacentPosition = movePosDir dir tilePosition
-  if | isValidPosition adjacentPosition ->
-       do tileLevelUUID <- demandViewComp level tileUUID
-          levelTileMap <- demandViewComp tileMap tileLevelUUID
-          Just <$> tileUUIDatPosition adjacentPosition levelTileMap
-     | otherwise -> return Nothing
+  case movePosDir dir tilePosition of
+    Nothing -> return Nothing
+    Just adjPos -> do
+      tileLevelUUID <- demandViewComp level tileUUID
+      levelTileMap <- demandViewComp tileMap tileLevelUUID
+      Just <$> tileUUIDatPosition adjPos levelTileMap
 
 getPrimaryOccupant :: UUID -> MonadCompReader UUID
 getPrimaryOccupant tileUUID = do
@@ -108,12 +126,11 @@ addOccupant newOccupantUUID occupiedUUID = do
            "Attempted to add an occupant to an entity that doesn't support it"
     else modComp occupiedUUID occupants $ zAdd newOccupantUUID
 
--- | TODO: remove from level, occupants, etc
+-- | TODO: this is not at all complete
 eraseEntity :: UUID -> MonadCompState ()
 eraseEntity uuid = do
   entityTileUUID <- readC $ getEntityTileUUID uuid
   modComp entityTileUUID occupants (zDelete uuid)
-  setComp entityTileUUID needsRedraw True
   eType <- demandComp entityType uuid
   deleteComp uuid name
   deleteComp uuid glyph
@@ -133,4 +150,3 @@ eraseEntity uuid = do
   deleteComp uuid stats
   deleteComp uuid blocksPassage
   deleteComp uuid blocksVision
-  deleteComp uuid needsRedraw

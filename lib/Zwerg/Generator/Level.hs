@@ -15,11 +15,10 @@ levelSkeletonGenerator levelUUID =
             uuid <- popUUID
             addComp uuid entityType Tile
             addComp uuid tileType Void
-            let pos = mkPosition (x', y')
+            pos <- zConstruct (x', y')
             addComp uuid position pos
             addComp uuid occupants zEmpty
             addComp uuid blocksPassage True
-            addComp uuid needsRedraw True
             addComp uuid level levelUUID
             return (pos, uuid)
         zConstruct tileList >>= setComp levelUUID tileMap
