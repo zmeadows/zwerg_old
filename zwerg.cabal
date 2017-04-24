@@ -29,25 +29,26 @@ library
                        Zwerg.Component.HP
                        Zwerg.Component.Position
                        Zwerg.Component.TileMap
+                       Zwerg.Data.Damage
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
-                       Zwerg.Data.Damage
                        Zwerg.Entity
                        Zwerg.Entity.AI
                        Zwerg.Event
                        Zwerg.Game
                        Zwerg.Generator
+                       Zwerg.Generator.Enemy.Goblin
                        Zwerg.Generator.Level
                        Zwerg.Generator.Level.TestSquare
                        Zwerg.Generator.Player.TestPlayer
-                       Zwerg.Generator.Enemy.Goblin
+                       Zwerg.Generator.Item.Weapon
                        Zwerg.Graphics.Brick
                        Zwerg.Log
                        Zwerg.Options
+                       Zwerg.Prelude
                        Zwerg.Random
                        Zwerg.Random.Distribution
                        Zwerg.Random.RanGen
-                       Zwerg.Prelude
                        Zwerg.UI.GlyphMap
                        Zwerg.UI.Input
                        Zwerg.UI.Menu

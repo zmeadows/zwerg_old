@@ -86,6 +86,7 @@ buildPortUI (MainScreen gm) = do
   pName <- demandViewComp name playerUUID
   pStats <- demandViewComp stats playerUUID
   pHP <- demandViewComp hp playerUUID
+  uLog <- view userLog
   return $
     vLimit
       mapHeightINT
@@ -93,16 +94,17 @@ buildPortUI (MainScreen gm) = do
        BB.vBorder <+>
        ((markup $ (pName @@ fg VTY.yellow)) <=> makeHpWidget pHP <=>
         makeStatsWidget pStats)) <=>
-    (BB.hBorder <=>
-     (str
-        "Last year, the average levelized cost or total cost of generating power from solar worldwide dropped 17% percent, onshore wind costs dropped 18% and offshore wind turbine power costs fell 28%, according t"))
+    (BB.hBorder <=> makeLogWidget uLog)
 buildPortUI _ = return emptyWidget
+
+makeLogWidget :: Log -> BT.Widget ()
+makeLogWidget l = vBox $ (str . unpack) <$> (concat $ splitLog 50 15 l)
 
 listDrawElement :: Bool -> Text -> BT.Widget ()
 listDrawElement sel a =
   let selStr s =
         if sel
-          then withAttr customAttr (str $ "<" <> s <> ">")
+          then withAttr customAttr (str s)
           else str s
   in BC.hCenter $ selStr (unpack a)
 
@@ -136,7 +138,7 @@ theMap =
     VTY.defAttr
     [ ("keyword1", fg VTY.magenta)
     , ("keyword2", VTY.white `Brick.Util.on` VTY.blue)
-    , (customAttr, fg VTY.cyan)
+    , (customAttr, fg VTY.red)
     ]
 
 zwergApp :: BM.App ZwergState ZwergEvent ()

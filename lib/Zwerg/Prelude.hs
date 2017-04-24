@@ -23,10 +23,18 @@ module Zwerg.Prelude
   , zeroStats
   , lookupStat
   , replaceStat
-  , EquipmentSlot(..)
+  , EquipmentSlot
+  , WeaponSlot(..)
+  , ArmorSlot(..)
+  , EquippableSlot(..)
   , Equipment(..)
   , emptyEquipment
+  , equip
+  , unequip
+  , getEquippedInSlot
+  , getAllEquippedItems
   , AIType(..)
+  , ItemType(..)
   , mapWidthDOUBLE
   , mapWidthINT
   , mapHeightDOUBLE
@@ -181,7 +189,7 @@ instance ZWrapped UUID Int where
 
 instance ZConstructable UUID Int where
   zConstruct x =
-    if | x > unwrap playerUUID -> return $ MkUUID x
+    if | x >= 0 -> return $ MkUUID x
        | otherwise ->
          throwError $
          ZError __FILE__ __LINE__ Fatal "Attempted to construct UUID <= 0"
@@ -231,17 +239,34 @@ lookupStat s (MkStats m) = m M.! s
 replaceStat :: Stat -> Int -> Stats -> Stats
 replaceStat s v (MkStats m) = MkStats $ M.insert s v m
 
-data EquipmentSlot
+data ArmorSlot
   = Gloves
-  | LeftHand
-  | RightHand
   | Head
   | Chest
   | Legs
   | Boots
+  | Shoulders
+  | Belt
   deriving (Show, Read, Eq, Ord, Enum, Generic)
 
-instance Binary EquipmentSlot
+instance Binary ArmorSlot
+
+data WeaponSlot
+  = LeftHand
+  | RightHand
+  deriving (Show, Read, Eq, Ord, Enum, Generic)
+
+instance Binary WeaponSlot
+
+data EquippableSlot
+  = Body ArmorSlot
+  | SingleHand
+  | BothHands
+  deriving (Show, Read, Eq, Ord, Generic)
+
+instance Binary EquippableSlot
+
+type EquipmentSlot = Either ArmorSlot WeaponSlot
 
 newtype Equipment =
   MkEquipment (Map EquipmentSlot UUID)
@@ -251,6 +276,27 @@ instance Binary Equipment
 
 emptyEquipment :: Equipment
 emptyEquipment = MkEquipment M.empty
+
+equip :: EquipmentSlot -> UUID -> Equipment -> Equipment
+equip slot uuid (MkEquipment eq) = MkEquipment $ M.insert slot uuid eq
+
+unequip :: EquipmentSlot -> Equipment -> (Maybe UUID, Equipment)
+unequip slot (MkEquipment eq) =
+  (M.lookup slot eq, MkEquipment $ M.delete slot eq)
+
+getEquippedInSlot :: EquipmentSlot -> Equipment -> Maybe UUID
+getEquippedInSlot slot (MkEquipment eq) = M.lookup slot eq
+
+getAllEquippedItems :: Equipment -> [UUID]
+getAllEquippedItems (MkEquipment eq) = M.elems eq
+
+data ItemType
+  = Armor
+  | Weapon
+  | Potion
+  deriving (Show, Read, Eq, Ord, Enum, Generic)
+
+instance Binary ItemType
 
 data AIType
   = SimpleMeleeCreature

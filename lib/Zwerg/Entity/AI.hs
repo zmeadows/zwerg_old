@@ -4,6 +4,7 @@ module Zwerg.Entity.AI
 
 import Zwerg.Component
 import Zwerg.Component.All
+import Zwerg.Entity
 import Zwerg.Event
 import Zwerg.Prelude
 import Zwerg.Random
@@ -26,21 +27,32 @@ runAI
      , HasZwergEventQueue s
      , MonadError ZError m
      , MonadState s m
-     , MonadSplit RanGen m
+     , MonadRandom m
      )
   => UUID -> m ()
 runAI uuid = do
   cmps <- use components
   ait <- demandComp aiType uuid
-  gen <- getSplit
+  ranWord <- getRandom
   let (AI a) = enact uuid ait
       (err, evts) =
-        runReader (runStateT (evalRandT (runExceptT a) gen) zEmpty) cmps
+        runReader
+          (runStateT (evalRandT (runExceptT a) $ pureRanGen ranWord) zEmpty)
+          cmps
   case err of
     Left zErr -> throwError zErr
-    Right () -> mergeEventsM evts
+    Right () -> do
+      mergeEventsM evts
 
 enact :: UUID -> AIType -> AI ()
---enact entityUUID SimpleMeleeCreature =
---  modify . pushEvent $ MoveEntityEvent $ MoveEntityEventData 0
+enact entityUUID SimpleMeleeCreature = do
+  tileUUID <- getEntityTileUUID entityUUID
+  possTiles <-
+    catMaybes <$>
+    mapM (flip getAdjacentTileUUID tileUUID) [North, South, East, West]
+  openPossTiles <- filterM (\i -> not <$> tileBlocksPassage i) possTiles
+  when (length openPossTiles > 0) $ do
+    ranTileUUID <- pickRandom openPossTiles
+    newPos <- demandViewComp position ranTileUUID
+    modify . pushEvent $ MoveEntityEvent $ MoveEntityEventData entityUUID newPos
 enact _ _ = return ()

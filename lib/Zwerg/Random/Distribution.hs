@@ -1,5 +1,5 @@
 module Zwerg.Random.Distribution
-  ( Distribution
+  ( Distribution(..)
   , sample
   ) where
 

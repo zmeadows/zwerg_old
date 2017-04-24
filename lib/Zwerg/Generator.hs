@@ -1,7 +1,7 @@
 module Zwerg.Generator
   ( module EXPORTED
   , Generator(..)
-  , getRandomTile
+  , getRandomEmptyTile
   , assignUniformRandomStat
   ) where
 
@@ -26,10 +26,10 @@ newtype Generator a = MkGenerator
                               m a
   }
 
-getRandomTile
+getRandomEmptyTile
   :: (HasComponents s, MonadState s m, MonadError ZError m, MonadRandom m)
   => UUID -> m (Maybe UUID)
-getRandomTile levelUUID = do
+getRandomEmptyTile levelUUID = do
   levelTiles <- demandComp tiles levelUUID
   unoccupiedTiles <- zFilterM (fmap not . demandComp blocksPassage) levelTiles
   if zIsNull unoccupiedTiles

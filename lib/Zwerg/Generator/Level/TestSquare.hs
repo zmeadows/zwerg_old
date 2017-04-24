@@ -11,7 +11,6 @@ import Data.Map.Strict (traverseWithKey)
 testSquareGenerator :: Generator UUID
 testSquareGenerator =
   MkGenerator $ do
-    traceM "generating Test Square..."
     testSquareLevelUUID <- popUUID
     generate $ levelSkeletonGenerator testSquareLevelUUID
     testSquareTiles <- demandComp tileMap testSquareLevelUUID
@@ -23,6 +22,7 @@ testSquareGenerator =
         if isWallTile
           then do
             setComp tileUUID tileType Wall
+            setComp tileUUID blocksPassage True
             setComp tileUUID glyph $
               Glyph 'X' White2 White0 (Just Black2) (Just Black0)
           else do
@@ -30,11 +30,10 @@ testSquareGenerator =
             setComp tileUUID blocksPassage False
             setComp tileUUID glyph $
               Glyph '·' White2 White0 (Just Black2) (Just Black0)
-    traceM "generating Goblins..."
     replicateM_ 50 $ do
-      goblinUUID <- generate goblinGenerator
+      goblinUUID <- generate goblin
       addComp goblinUUID level testSquareLevelUUID
-      goblinTileUUID <- getRandomTile testSquareLevelUUID
+      goblinTileUUID <- getRandomEmptyTile testSquareLevelUUID
       goblinTileUUID' <-
         fromJustErrM goblinTileUUID $
         ZError
@@ -44,5 +43,4 @@ testSquareGenerator =
           "Could not find an open tile to place Goblin"
       demandComp position goblinTileUUID' >>= addComp goblinUUID position
       addOccupant goblinUUID goblinTileUUID'
-      addComp goblinTileUUID' blocksPassage True
     return testSquareLevelUUID

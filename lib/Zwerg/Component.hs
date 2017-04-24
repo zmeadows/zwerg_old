@@ -18,11 +18,11 @@ data Components = Components
   , _position :: NamedUUIDMap Position
   , _cooldown :: NamedUUIDMap Int
   , _equipment :: NamedUUIDMap Equipment
-  , _baseDamage :: NamedUUIDMap Int
   , _level :: NamedUUIDMap UUID
   , _tileMap :: NamedUUIDMap TileMap
   , _tiles :: NamedUUIDMap UUIDSet
   , _ticks :: NamedUUIDMap Int
+  , _tileOn :: NamedUUIDMap UUID
   , _tileType :: NamedUUIDMap TileType
   , _occupants :: NamedUUIDMap UUIDSet
   , _parent :: NamedUUIDMap Parent
@@ -33,6 +33,8 @@ data Components = Components
   , _aiType :: NamedUUIDMap AIType
   , _damageChain :: NamedUUIDMap DamageChain
   , _viewRange :: NamedUUIDMap Double
+  , _equippableSlot :: NamedUUIDMap EquippableSlot
+  , _itemType :: NamedUUIDMap ItemType
   , _nextUUID :: UUID
   } deriving (Show, Eq, Generic)
 
@@ -72,10 +74,10 @@ emptyComponents =
   , _position = NamedUUIDMap "position" zEmpty
   , _cooldown = NamedUUIDMap "cooldown" zEmpty
   , _equipment = NamedUUIDMap "equipment" zEmpty
-  , _baseDamage = NamedUUIDMap "baseDamage" zEmpty
   , _level = NamedUUIDMap "level" zEmpty
   , _tileMap = NamedUUIDMap "tileMap" zEmpty
   , _tiles = NamedUUIDMap "tiles" zEmpty
+  , _tileOn = NamedUUIDMap "tileOn" zEmpty
   , _ticks = NamedUUIDMap "ticks" zEmpty
   , _tileType = NamedUUIDMap "tileType" zEmpty
   , _occupants = NamedUUIDMap "occupants" zEmpty
@@ -87,6 +89,8 @@ emptyComponents =
   , _aiType = NamedUUIDMap "aiType" zEmpty
   , _damageChain = NamedUUIDMap "damageChain" zEmpty
   , _viewRange = NamedUUIDMap "viewRange" zEmpty
+  , _equippableSlot = NamedUUIDMap "equippableSlot" zEmpty
+  , _itemType = NamedUUIDMap "equippable" zEmpty
   , _nextUUID = playerUUID + 1
   }
 

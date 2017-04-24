@@ -1,16 +1,19 @@
 module Zwerg.Generator.Item.Weapon
-  ( swordGenerator
+  ( sword
   ) where
 
-import Zwerg.Event
 import Zwerg.Generator
 
-swordGenerator :: Generator UUID
-swordGenerator =
+sword :: Generator UUID
+sword =
   MkGenerator $ do
-    swordUUID <- getNewUUID
+    swordUUID <- popUUID
     addComp swordUUID name "Short Sword"
-    addComp swordUUID glyph $ Glyph Normal '/' $ mkColor 150 150 150
+    addComp swordUUID glyph $ Glyph '/' Black1 Black3 Nothing Nothing
     addComp swordUUID entityType Item
-    addComp swordUUID damageChain [DamageData SingleTarget Slash (Uniform 1 5)]
+    addComp swordUUID damageChain [DamageData SingleTarget Slash (Uniform 1 6)]
+    addComp swordUUID blocksPassage False
+    addComp swordUUID blocksVision False
+    addComp swordUUID equippableSlot $ SingleHand
+    addComp swordUUID itemType $ Weapon
     return swordUUID

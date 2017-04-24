@@ -1,5 +1,6 @@
 module Zwerg.Event where
 
+import Zwerg.Component.Position
 import Zwerg.Data.Damage
 import Zwerg.Prelude
 
@@ -43,22 +44,29 @@ data WeaponAttackMissEventData = WeaponAttackMissEventData
 
 makeFields ''WeaponAttackMissEventData
 
-data DeathEventData =
-  DeathEventData Int
-  deriving (Show, Eq)
+data DeathEventData = DeathEventData
+  { _deathEventDataDyingUUID :: UUID
+  } deriving (Show, Eq)
+
+makeFields ''DeathEventData
 
 data GenerateEntityEventData =
   GenerateEntityEventData Int
   deriving (Show, Eq)
 
-data MoveEntityEventData =
-  MoveEntityEventData Int
-  deriving (Show, Eq)
-
 data MoveEntityDirectionEventData = MoveEntityDirectionEventData
-  { moverUUID :: UUID
-  , direction :: Direction
+  { _moveEntityDirectionEventDataMoverUUID :: UUID
+  , _moveEntityDirectionEventDataDirection :: Direction
   } deriving (Show, Eq)
+
+makeFields ''MoveEntityDirectionEventData
+
+data MoveEntityEventData = MoveEntityEventData
+  { _moveEntityEventDataMoverUUID :: UUID
+  , _moveEntityEventDataNewPosition :: Position
+  } deriving (Show, Eq)
+
+makeFields ''MoveEntityEventData
 
 data TickEventData =
   TickEventData Int

@@ -1,14 +1,18 @@
 module Zwerg.Game where
 
 import Zwerg.Component
+import Zwerg.Component.Position
 import qualified Zwerg.Component.TileMap as TM
 import Zwerg.Data.UUIDMap
 import Zwerg.Entity
+import Zwerg.Entity.AI
 import Zwerg.Event
 import Zwerg.Generator
 import Zwerg.Generator.Level.TestSquare
 import Zwerg.Generator.Player.TestPlayer
-import Zwerg.Log (Log, HasLog(..), emptyLog)
+import Zwerg.Log
+import Zwerg.Prelude
+import Zwerg.Random.RanGen
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
@@ -16,7 +20,6 @@ import Zwerg.UI.Port
 import Zwerg.Util
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom)
-import Unsafe (unsafeHead)
 
 data GameState = GameState
   { _gsComponents :: Components
@@ -78,8 +81,13 @@ postEventHook = do
       ts <- use (ticks . uuidMap)
       (minTick, uuids) <- getMinimumUUIDs ts
       (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
+      if | (not $ elem playerUUID uuids) ->
+           forM_ uuids $ \i -> do
+             runAI i
+             processEvents
+             setComp i ticks 100
+         | otherwise -> return ()
       updateGlyphMap
-      -- readC (getVisibleTiles playerUUID) >>= traceShowM
     _ -> return ()
 
 processUserInput :: KeyCode -> Game ()
@@ -87,6 +95,7 @@ processUserInput k = do
   p <- use portal
   processUserInput' p k
   processEvents
+  setComp playerUUID ticks 50
   postEventHook
 
 processUserInput' :: Portal -> KeyCode -> Game ()
@@ -132,28 +141,23 @@ processEvents =
 
 processEvent :: ZwergEvent -> Game ()
 processEvent (MoveEntityDirectionEvent ed) = do
-  let uuid = moverUUID ed
-      dir = direction ed
-  (x, y) <- unwrap <$> demandComp position uuid
-  let (x', y') =
-        if | dir == West -> (x - 1, y)
-           | dir == East -> (x + 1, y)
-           | dir == North -> (x, y - 1)
-           | dir == South -> (x, y + 1)
-      destinationOutsideMap =
-        x' < 0 || x' >= mapWidthINT || y' < 0 || y' >= mapHeightINT
-  when (destinationOutsideMap && uuid /= playerUUID) $
-    throwError $
-    ZError __FILE__ __LINE__ Fatal "NPC Entity attempted to move outside of map"
-  when (destinationOutsideMap && uuid == playerUUID) $
-    throwError $
-    ZError __FILE__ __LINE__ Warning "Player attempted to move outside of map"
-  oldPos <- zConstruct (x, y)
-  newPos <- zConstruct (x', y')
+  let uuid = ed ^. moverUUID
+      dir = ed ^. direction
+  oldPosition <- demandComp position uuid
+  case movePosDir dir oldPosition
+    -- TODO: log message, player tried to move off map
+        of
+    Nothing -> return ()
+    Just newPos ->
+      pushEventM $ MoveEntityEvent $ MoveEntityEventData playerUUID newPos
+processEvent (MoveEntityEvent ed) = do
+  let uuid = ed ^. moverUUID
+      newPos = ed ^. newPosition
+  oldPos <- demandComp position uuid
   levelUUID <- demandComp level uuid
   levelTiles <- demandComp tileMap levelUUID
   newTileUUID <- TM.tileUUIDatPosition newPos levelTiles
-  newTileBlocked <- demandComp blocksPassage newTileUUID
+  newTileBlocked <- readC $ tileBlocksPassage newTileUUID
   when (newTileBlocked && uuid /= playerUUID) $
     throwError $
     ZError
@@ -169,18 +173,15 @@ processEvent (MoveEntityDirectionEvent ed) = do
       Warning
       "Player attempted to move to a blocked tile"
   oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
+  transferOccupant uuid oldTileUUID newTileUUID
   setComp uuid position newPos
-  removeOccupant uuid oldTileUUID
-  setComp oldTileUUID blocksPassage False
-  addOccupant uuid newTileUUID
-  setComp newTileUUID blocksPassage True
-processEvent (WeaponAttackAttemptEvent ed) = eraseEntity (view defenderUUID ed)
+processEvent (WeaponAttackAttemptEvent ed) =
+  pushEventM $ DeathEvent $ DeathEventData $ ed ^. defenderUUID
+processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
 processEvent _ = return ()
 
 getGlyphMapUpdates :: MonadCompState GlyphMap
 getGlyphMapUpdates = do
-  currentLevelUUID <- demandComp level playerUUID
-  currentLevelTiles <- demandComp tiles currentLevelUUID
   tilesWithUpdatedNeeded <- readC $ getVisibleTiles playerUUID
   updatedGlyphs <-
     forM (zToList tilesWithUpdatedNeeded) $ \tileUUID -> do
@@ -191,7 +192,13 @@ getGlyphMapUpdates = do
   return $ mkGlyphMap updatedGlyphs
 
 processPlayerDirectionInput :: Direction -> Game ()
-processPlayerDirectionInput dir =
+processPlayerDirectionInput dir = do
+  case dir of
+    North -> pushLogMsgM "player moved North"
+    South -> pushLogMsgM "player moved South"
+    East -> pushLogMsgM "player moved East"
+    West -> pushLogMsgM "player moved West"
+    _ -> return ()
   let processPlayerMove =
         pushEventM $
         MoveEntityDirectionEvent $ MoveEntityDirectionEventData playerUUID dir
@@ -199,19 +206,5 @@ processPlayerDirectionInput dir =
         pushEventM $
           WeaponAttackAttemptEvent $
           WeaponAttackAttemptEventData playerUUID attackedUUID
-  in do attackedEntity <- readC $ getEntityPlayerAttacking dir
-        maybe processPlayerMove processPlayerAttack attackedEntity
-
-getEntityPlayerAttacking :: Direction -> MonadCompReader (Maybe UUID)
-getEntityPlayerAttacking dir = do
-  attackedTileUUID <- getPlayerTileUUID >>= getAdjacentTileUUID dir
-  case attackedTileUUID of
-    Just attackedTileUUID' -> do
-      adjacentTileEnemyOccupants <- getOccupantsOfType attackedTileUUID' Enemy
-      if | zIsNull adjacentTileEnemyOccupants -> return Nothing
-         | zSize adjacentTileEnemyOccupants > 1 ->
-           throwError $
-           ZError __FILE__ __LINE__ Fatal "found multiple enemies on same tile"
-         | otherwise ->
-           return $ Just $ unsafeHead $ zToList adjacentTileEnemyOccupants
-    Nothing -> return Nothing
+  attackedEntity <- readC $ getPlayerAdjacentEnemy dir
+  maybe processPlayerMove processPlayerAttack attackedEntity

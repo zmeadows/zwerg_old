@@ -16,10 +16,12 @@ data DamageAttribute
 instance Binary DamageAttribute
 
 data DamageData = DamageData
-  { targetType :: TargetType
-  , attribute :: DamageAttribute
-  , distribution :: Distribution
+  { _damageDataTargetType :: TargetType
+  , _damageDataAttribute :: DamageAttribute
+  , _damageDataDistribution :: Distribution
   } deriving (Show, Read, Eq, Generic)
+
+makeFields ''DamageData
 
 instance Binary DamageData
 
