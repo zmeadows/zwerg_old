@@ -117,10 +117,10 @@ pushEvent evt (MkZwergEventQueue eq) = MkZwergEventQueue $ eq |> evt
 pushEventM
   :: (HasZwergEventQueue s, MonadState s m)
   => ZwergEvent -> m ()
-pushEventM evt = eventQueue %= MkZwergEventQueue . (flip (|>) evt) . unwrap
+pushEventM evt = eventQueue %= MkZwergEventQueue . (|> evt) . unwrap
 
 mergeEventsM
   :: (HasZwergEventQueue s, MonadState s m)
   => ZwergEventQueue -> m ()
 mergeEventsM evts =
-  eventQueue %= MkZwergEventQueue . ((><) (unwrap evts)) . unwrap
+  eventQueue %= MkZwergEventQueue . (><) (unwrap evts) . unwrap

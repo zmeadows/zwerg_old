@@ -26,7 +26,7 @@ import Unsafe (unsafeHead)
 unEquipItem :: UUID -> EquipmentSlot -> MonadCompState ()
 unEquipItem entityUUID slot = do
   eqp <- demandComp equipment entityUUID
-  let (unEquippedItemUUID, eqp') = unequip slot eqp
+  let (_, eqp') = unequip slot eqp
   setComp entityUUID equipment eqp'
   -- TODO: add unequipped item to inventory
   -- TODO: deal with single/two handedness
@@ -56,27 +56,21 @@ equipItem itemUUID entityUUID = do
 
 getVisibleTiles :: UUID -> MonadCompReader UUIDSet
 getVisibleTiles uuid = do
-  (playerX, playerY) <- unwrap <$> demandViewComp position uuid
-  fov <- ceiling <$> demandViewComp viewRange uuid
+  playerPOS <- demandViewComp position uuid
+  fov <- demandViewComp viewRange uuid
   levelUUID <- demandViewComp level uuid
   levelTiles <- demandViewComp tileMap levelUUID
-  let minX = max (playerX - fov) 0
-      minY = max (playerY - fov) 0
-      maxX = min (playerX + fov) $ mapWidthINT - 1
-      maxY = min (playerY + fov) $ mapHeightINT - 1
+  let (playerX, playerY) = unwrap playerPOS
+      minX, minY, maxX, maxY :: Int
+      minX = round $ max (fromIntegral playerX - fov) 0.0
+      minY = round $ max (fromIntegral playerY - fov) 0.0
+      maxX = round $ min (fromIntegral playerX + fov) $ mapWidthDOUBLE - 1.0
+      maxY = round $ min (fromIntegral playerY + fov) $ mapHeightDOUBLE - 1.0
   -- traceShowM (minX, maxX, minX, maxY)
   candidatePOSs <-
-    mapM
-      zConstruct
-      [ (x, y)
-      | x <- [minX .. maxX]
-      , y <- [minY .. maxY]
-      , sqrt
-          ((fromIntegral $ x - playerX) ** 2 + (fromIntegral $ y - playerY) ** 2) <
-          fromIntegral fov
-      ]
-  visTiles <-
-    zFromList <$> mapM (flip tileUUIDatPosition levelTiles) candidatePOSs
+    filter (\p -> distance Euclidean playerPOS p < fov) <$>
+    mapM zConstruct [(x, y) | x <- [minX .. maxX], y <- [minY .. maxY]]
+  zFromList <$> mapM (`tileUUIDatPosition` levelTiles) candidatePOSs
       -- fovEdges =
       --   map (minX, ) [minY + 1 .. maxY - 1] ++
       --   map (maxX, ) [minY + 1 .. maxY - 1] ++
@@ -89,7 +83,6 @@ getVisibleTiles uuid = do
   --     markTiles (l:ls) candidates = do
   --       let modifiedCandidates = M.adjust (\k _ -> True) candidates
   --       markTiles ls candidates
-  return visTiles
 
 tileBlocksVision :: UUID -> MonadCompReader Bool
 tileBlocksVision tileUUID = do
@@ -154,7 +147,7 @@ getAdjacentTileUUID dir tileUUID = do
 getPrimaryOccupant :: UUID -> MonadCompReader UUID
 getPrimaryOccupant occupiedUUID = do
   occs <- zToList <$> demandViewComp occupants occupiedUUID
-  if (length occs) == 0
+  if null occs
     then return occupiedUUID
     else do
       types <- forM occs (demandViewComp entityType)
@@ -165,12 +158,12 @@ getOccupantsOfType :: UUID -> EntityType -> MonadCompReader UUIDSet
 getOccupantsOfType containerUUID eType =
   demandViewComp occupants containerUUID >>= zFilterM isEtype
   where
-    isEtype uuid = ((==) eType) <$> demandViewComp entityType uuid
+    isEtype uuid = (eType ==) <$> demandViewComp entityType uuid
 
 removeOccupant :: UUID -> UUID -> MonadCompState ()
 removeOccupant oldOccupantUUID occupiedUUID = do
   occupiedType <- demandComp entityType occupiedUUID
-  if (not $ occupiedType `elem` [Tile, Container])
+  if occupiedType `notElem` [Tile, Container]
     then throwError $
          ZError
            __FILE__
@@ -182,7 +175,7 @@ removeOccupant oldOccupantUUID occupiedUUID = do
 addOccupant :: UUID -> UUID -> MonadCompState ()
 addOccupant newOccupantUUID occupiedUUID = do
   occupiedType <- demandComp entityType occupiedUUID
-  if (not $ occupiedType `elem` [Tile, Container])
+  if occupiedType `notElem` [Tile, Container]
     then throwError $
          ZError
            __FILE__

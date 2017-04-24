@@ -3,7 +3,6 @@ module Zwerg.Entity.AI
   ) where
 
 import Zwerg.Component
-import Zwerg.Component.All
 import Zwerg.Entity
 import Zwerg.Event
 import Zwerg.Prelude
@@ -41,17 +40,16 @@ runAI uuid = do
           cmps
   case err of
     Left zErr -> throwError zErr
-    Right () -> do
-      mergeEventsM evts
+    Right () -> mergeEventsM evts
 
 enact :: UUID -> AIType -> AI ()
 enact entityUUID SimpleMeleeCreature = do
   tileUUID <- getEntityTileUUID entityUUID
   possTiles <-
     catMaybes <$>
-    mapM (flip getAdjacentTileUUID tileUUID) [North, South, East, West]
+    mapM (`getAdjacentTileUUID` tileUUID) [North, South, East, West]
   openPossTiles <- filterM (\i -> not <$> tileBlocksPassage i) possTiles
-  when (length openPossTiles > 0) $ do
+  unless (null openPossTiles) $ do
     ranTileUUID <- pickRandom openPossTiles
     newPos <- demandViewComp position ranTileUUID
     modify . pushEvent $ MoveEntityEvent $ MoveEntityEventData entityUUID newPos

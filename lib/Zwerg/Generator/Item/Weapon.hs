@@ -14,6 +14,6 @@ sword =
     addComp swordUUID damageChain [DamageData SingleTarget Slash (Uniform 1 6)]
     addComp swordUUID blocksPassage False
     addComp swordUUID blocksVision False
-    addComp swordUUID equippableSlot $ SingleHand
-    addComp swordUUID itemType $ Weapon
+    addComp swordUUID equippableSlot SingleHand
+    addComp swordUUID itemType Weapon
     return swordUUID

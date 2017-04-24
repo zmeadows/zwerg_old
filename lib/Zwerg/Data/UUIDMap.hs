@@ -84,7 +84,7 @@ getMinimumUUIDs
   => UUIDMap a -> m (a, [UUID])
 getMinimumUUIDs (MkUUIDMap um) =
   let (amin, ids) = IM.foldrWithKey f (minBound, []) um
-  in mapM zConstruct ids >>= return . (amin, )
+  in liftM (amin, ) $ mapM zConstruct ids
   where
     f uuid x (_, []) = (x, [uuid])
     f uuid x (xmin, uuids) =

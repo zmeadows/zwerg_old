@@ -9,27 +9,21 @@ import Zwerg.Graphics.Brick
 import Zwerg.Log
 import Zwerg.Prelude
 import Zwerg.Random
-import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Port
-import Zwerg.Util
 
 import Brick.AttrMap
 import qualified Brick.Main as BM
-import Brick.Markup (markup, (@?))
+import Brick.Markup (markup)
 import qualified Brick.Types as BT
 import Brick.Util (on, fg)
 import qualified Brick.Widgets.Border as BB
-import qualified Brick.Widgets.Border.Style as BS
 import qualified Brick.Widgets.Center as BC
 import Brick.Widgets.Core
 import qualified Brick.Widgets.List as BL
-import Control.Concurrent
-import Control.Monad.Except
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Monoid ((<>))
 import Data.Text.Markup ((@@))
-import qualified Data.Vector as Vec
 import qualified Graphics.Vty as VTY
 
 data ZwergState = ZwergState
@@ -92,13 +86,13 @@ buildPortUI (MainScreen gm) = do
       mapHeightINT
       (uiMap <+>
        BB.vBorder <+>
-       ((markup $ (pName @@ fg VTY.yellow)) <=> makeHpWidget pHP <=>
+       (markup (pName @@ fg VTY.yellow) <=> makeHpWidget pHP <=>
         makeStatsWidget pStats)) <=>
     (BB.hBorder <=> makeLogWidget uLog)
 buildPortUI _ = return emptyWidget
 
 makeLogWidget :: Log -> BT.Widget ()
-makeLogWidget l = vBox $ (str . unpack) <$> (concat $ splitLog 50 15 l)
+makeLogWidget l = vBox $ (str . unpack) <$> concat (splitLog 50 15 l)
 
 listDrawElement :: Bool -> Text -> BT.Widget ()
 listDrawElement sel a =
@@ -114,8 +108,8 @@ customAttr = BL.listSelectedAttr <> "custom"
 handleEventZwerg :: ZwergState
                  -> BT.BrickEvent () ZwergEvent
                  -> BT.EventM () (BT.Next ZwergState)
-handleEventZwerg zs (BT.VtyEvent ev) = do
-  case (eventVTYtoZwergInput ev) of
+handleEventZwerg zs (BT.VtyEvent ev) =
+  case eventVTYtoZwergInput ev of
     Just Escape -> BM.halt zs
     Just kc -> do
       let st = view gameState zs
@@ -123,14 +117,12 @@ handleEventZwerg zs (BT.VtyEvent ev) = do
           (st', err, gen') = runGame (processUserInput kc) gen st
           zs' = set gameState st' $ set ranGen gen' zs
       case err of
-        Just err' -> do
-          traceShowM err'
+        Just _ -> do
           liftIO $ threadDelay 8000000
           BM.halt zs'
         Nothing -> BM.continue zs'
     _ -> BM.continue zs
-handleEventZwerg a b = do
-  BM.resizeOrQuit a b
+handleEventZwerg a b = BM.resizeOrQuit a b
 
 theMap :: AttrMap
 theMap =

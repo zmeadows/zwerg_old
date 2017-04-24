@@ -38,11 +38,11 @@ splitLog :: Int -> Int -> Log -> [[Text]]
 splitLog xMax yMax (MkLog l) = splitLog' xMax yMax (reverse $ toList l) []
 
 splitLog' :: Int -> Int -> [Text] -> [[Text]] -> [[Text]]
-splitLog' xMax yMax [] splitLogMsgs = splitLogMsgs
+splitLog' _ _ [] splitLogMsgs = splitLogMsgs
 splitLog' xMax yMax (l:ls) splitLogMsgs =
   let newSplitMsg = splitLogMsg xMax l
   in if | length (concat splitLogMsgs) + length newSplitMsg > yMax ->
-          reverse $ splitLogMsgs
+          reverse splitLogMsgs
         | length (concat splitLogMsgs) + length newSplitMsg == yMax ->
           reverse $ newSplitMsg : splitLogMsgs
         | otherwise -> splitLog' xMax yMax ls (newSplitMsg : splitLogMsgs)

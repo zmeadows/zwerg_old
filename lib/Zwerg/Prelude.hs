@@ -192,7 +192,7 @@ instance ZConstructable UUID Int where
     if | x >= 0 -> return $ MkUUID x
        | otherwise ->
          throwError $
-         ZError __FILE__ __LINE__ Fatal "Attempted to construct UUID <= 0"
+         ZError __FILE__ __LINE__ Fatal "Attempted to construct UUID < 0"
 
 playerUUID :: UUID
 playerUUID = MkUUID 0

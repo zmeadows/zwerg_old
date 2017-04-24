@@ -8,17 +8,13 @@ import Zwerg.UI.Menu
 
 import Brick.Widgets.Core
 
--- import Brick.AttrMap (attrMap, AttrMap)
--- import qualified Brick.Main as BM
-import Brick.Markup (markup, (@?))
+import Brick.Markup (markup)
 import qualified Brick.Types as BT
+import Brick.Util (on, fg)
 import qualified Brick.Widgets.List as BL
 import qualified Brick.Widgets.ProgressBar as BP
 import Data.Foldable (foldl1)
 import qualified Data.Vector as Vec
-
--- import Brick.Widgets.Core ((<=>), (<+>), padLeft)
-import Brick.Util (on, fg, bg)
 
 import Data.Text.Markup ((@@))
 import qualified Graphics.Vty as VTY
@@ -53,10 +49,10 @@ eventVTYtoZwergInput (VTY.EvKey VTY.KEnter []) = Just Return
 eventVTYtoZwergInput _ = Nothing
 
 glyphToVtyImage :: (Glyph, Bool) -> VTY.Image
-glyphToVtyImage ((Glyph c fg _ bg _), isVis) =
+glyphToVtyImage (Glyph c fgC _ _ _, isVis) =
   if isVis
-    then VTY.char (zwergColorToVtyColor fg `on` VTY.Color240 220) c
-    else VTY.char (zwergColorToVtyColor fg `on` VTY.Color240 0) c
+    then VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 220) c
+    else VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 0) c
 
 glyphMapToVtyImage :: GlyphMap -> VTY.Image
 glyphMapToVtyImage gm =
@@ -82,7 +78,8 @@ makeHpWidget h =
 
 zwergColorToVtyColor :: Color -> VTY.Color
 zwergColorToVtyColor zc =
-  let mkVTYcolor (r, g, b) = VTY.rgbColor r g b
+  let mkVTYcolor :: (Int, Int, Int) -> VTY.Color
+      mkVTYcolor (r, g, b) = VTY.rgbColor r g b
   in case zc of
        Green0 -> mkVTYcolor (159, 255, 128)
        Green1 -> mkVTYcolor (121, 255, 77)
@@ -104,4 +101,3 @@ zwergColorToVtyColor zc =
        Black1 -> VTY.Color240 217
        Black2 -> VTY.Color240 220
        Black3 -> VTY.Color240 223
-       _ -> VTY.white

@@ -31,7 +31,7 @@ to1DIndex pos =
 
 instance ZConstructable Position (Int, Int) where
   zConstruct pos =
-    if (isValidPosition pos)
+    if isValidPosition pos
       then return . MkPosition $ pos
       else throwError $
            ZError

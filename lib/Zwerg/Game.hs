@@ -11,8 +11,6 @@ import Zwerg.Generator
 import Zwerg.Generator.Level.TestSquare
 import Zwerg.Generator.Player.TestPlayer
 import Zwerg.Log
-import Zwerg.Prelude
-import Zwerg.Random.RanGen
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
@@ -81,7 +79,7 @@ postEventHook = do
       ts <- use (ticks . uuidMap)
       (minTick, uuids) <- getMinimumUUIDs ts
       (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
-      if | (not $ elem playerUUID uuids) ->
+      if | notElem playerUUID uuids ->
            forM_ uuids $ \i -> do
              runAI i
              processEvents
@@ -101,9 +99,9 @@ processUserInput k = do
 processUserInput' :: Portal -> KeyCode -> Game ()
 processUserInput' (MainMenu m:ps) (KeyChar 'j') =
   portal .= (MainMenu $ next m) : ps
-processUserInput' (MainMenu m:ps) (KeyChar 'k') = portal .= [MainMenu $ prev m]
-processUserInput' (MainMenu m:ps) Return =
-  case (view label $ focus m) of
+processUserInput' (MainMenu m:_) (KeyChar 'k') = portal .= [MainMenu $ prev m]
+processUserInput' (MainMenu m:_) Return =
+  case view label $ focus m of
     "new game" -> do
       generateGame
       let xs = [0 .. mapWidthINT - 1]
@@ -202,9 +200,9 @@ processPlayerDirectionInput dir = do
   let processPlayerMove =
         pushEventM $
         MoveEntityDirectionEvent $ MoveEntityDirectionEventData playerUUID dir
-      processPlayerAttack attackedUUID = do
+      processPlayerAttack attackedUUID =
         pushEventM $
-          WeaponAttackAttemptEvent $
-          WeaponAttackAttemptEventData playerUUID attackedUUID
+        WeaponAttackAttemptEvent $
+        WeaponAttackAttemptEventData playerUUID attackedUUID
   attackedEntity <- readC $ getPlayerAdjacentEnemy dir
   maybe processPlayerMove processPlayerAttack attackedEntity

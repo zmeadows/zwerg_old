@@ -60,7 +60,7 @@ type Component a = forall s. HasComponents s =>
 readC :: MonadCompReader a -> MonadCompState a
 readC x = do
   cs <- use components
-  case (runReader (runExceptT x) cs) of
+  case runReader (runExceptT x) cs of
     Left err -> throwError err
     Right q -> return q
 
@@ -125,7 +125,7 @@ modComp uuid comp f = (comp . uuidMap) %= zAdjust f uuid
 deleteComp
   :: (HasComponents s, MonadState s m)
   => UUID -> Component a -> m ()
-deleteComp uuid comp = (comp . uuidMap) %= (zRemoveAt uuid)
+deleteComp uuid comp = (comp . uuidMap) %= zRemoveAt uuid
 
 filterComp
   :: (HasComponents s, MonadState s m)
