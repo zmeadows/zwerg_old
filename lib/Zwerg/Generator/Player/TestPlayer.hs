@@ -29,4 +29,4 @@ testPlayerGenerator startLevelUUID =
     demandComp position playerTileUUID' >>= addPlayerComp position
     addOccupant playerUUID playerTileUUID'
     swordUUID <- generate sword
-    return ()
+    equipItem swordUUID playerUUID

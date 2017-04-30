@@ -3,12 +3,15 @@ module Zwerg.Entity.AI
   ) where
 
 import Zwerg.Component
+import Zwerg.Component.Position
 import Zwerg.Entity
 import Zwerg.Event
 import Zwerg.Prelude
 import Zwerg.Random
 
+import Control.Monad.Loops
 import Control.Monad.Random (RandT, evalRandT)
+import Data.Maybe (fromJust)
 
 newtype AI a =
   AI (ExceptT ZError (RandT RanGen (StateT ZwergEventQueue (Reader Components))) a)
@@ -49,8 +52,16 @@ enact entityUUID SimpleMeleeCreature = do
     catMaybes <$>
     mapM (`getAdjacentTileUUID` tileUUID) [North, South, East, West]
   openPossTiles <- filterM (\i -> not <$> tileBlocksPassage i) possTiles
+  playerPos <- demandViewComp position playerUUID
+  let distanceToPlayer e1UUID e2UUID = do
+        e1Pos <- demandViewComp position e1UUID
+        e2Pos <- demandViewComp position e2UUID
+        return $
+          compare
+            (distance Euclidean e1Pos playerPos)
+            (distance Euclidean e2Pos playerPos)
   unless (null openPossTiles) $ do
-    ranTileUUID <- pickRandom openPossTiles
-    newPos <- demandViewComp position ranTileUUID
+    newTileUUID <- fromJust <$> minimumByM distanceToPlayer openPossTiles
+    newPos <- demandViewComp position newTileUUID
     modify . pushEvent $ MoveEntityEvent $ MoveEntityEventData entityUUID newPos
 enact _ _ = return ()

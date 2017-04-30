@@ -17,7 +17,8 @@ import Zwerg.UI.Menu
 import Zwerg.UI.Port
 import Zwerg.Util
 
-import Control.Monad.Random (runRandT, RandT, MonadRandom)
+import Control.Monad.Random
+       (runRandT, RandT, MonadRandom, getRandomR)
 
 data GameState = GameState
   { _gsComponents :: Components
@@ -71,8 +72,8 @@ generateGame = do
   lid <- generate testSquareGenerator
   generate $ testPlayerGenerator lid
 
-postEventHook :: Game ()
-postEventHook = do
+processNonPlayerEvents :: Game ()
+processNonPlayerEvents = do
   newPort:_ <- use portal
   case newPort of
     MainScreen _ -> do
@@ -93,8 +94,8 @@ processUserInput k = do
   p <- use portal
   processUserInput' p k
   processEvents
-  setComp playerUUID ticks 50
-  postEventHook
+  resetTicks playerUUID
+  processNonPlayerEvents
 
 processUserInput' :: Portal -> KeyCode -> Game ()
 processUserInput' (MainMenu m:ps) (KeyChar 'j') =
@@ -173,9 +174,38 @@ processEvent (MoveEntityEvent ed) = do
   oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
   transferOccupant uuid oldTileUUID newTileUUID
   setComp uuid position newPos
-processEvent (WeaponAttackAttemptEvent ed) =
-  pushEventM $ DeathEvent $ DeathEventData $ ed ^. defenderUUID
+processEvent (WeaponAttackAttemptEvent ed)
+  -- TODO: explicitely calculate hit probability
+ = do
+  r <- getRandomR ((0.0, 1.0) :: (Double, Double))
+  when (r < 0.5) $ do
+    weaponUUID' <- readC $ getEquippedWeapon $ ed ^. attackerUUID
+    whenJust weaponUUID' $ \weaponUUID -> do
+      chain <- demandComp damageChain weaponUUID
+      forM_ chain $ \damageData -> do
+        targetedUUIDs <-
+          readC $
+          getTargetedUUIDs (damageData ^. targetType) (ed ^. defenderUUID)
+        forM_ targetedUUIDs $ \targetUUID -> do
+          pushEventM $
+            IncomingDamageEvent $
+            IncomingDamageEventData
+              (ed ^. attackerUUID)
+              targetUUID
+              (damageData ^. attribute)
+              (damageData ^. distribution)
+processEvent (WeaponAttackHitEvent ed) = do
+  return ()
 processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
+processEvent (IncomingDamageEvent ed) = do
+  d <- sample (ed ^. damageDistribution)
+  pushEventM $
+    OutgoingDamageEvent $
+    OutgoingDamageEventData (ed ^. attackerUUID) (ed ^. defenderUUID) (round d)
+processEvent (OutgoingDamageEvent ed) = do
+  modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
+  newHP <- demandComp hp (ed ^. defenderUUID)
+  when ((fst $ unwrap $ newHP) == 0) $ do eraseEntity $ ed ^. defenderUUID
 processEvent _ = return ()
 
 getGlyphMapUpdates :: MonadCompState GlyphMap

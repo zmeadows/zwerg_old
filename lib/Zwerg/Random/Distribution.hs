@@ -19,6 +19,7 @@ data Distribution
 
 instance Binary Distribution
 
+-- TODO: add more distributions and complete this function
 sample
   :: forall m.
      (CMR.MonadRandom m)

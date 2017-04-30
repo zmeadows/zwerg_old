@@ -17,10 +17,6 @@ import Zwerg.Component.All
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Prelude
 
--- import Zwerg.Util
--- import Control.Monad.Loops (takeWhileM)
--- import qualified Data.Map as M
--- import Data.Map.Strict (Map)
 import Unsafe (unsafeHead)
 
 unEquipItem :: UUID -> EquipmentSlot -> MonadCompState ()
@@ -53,6 +49,10 @@ equipItem itemUUID entityUUID = do
       unEquipItem entityUUID (Right LeftHand)
       modComp entityUUID equipment $ equip (Right LeftHand) itemUUID
       modComp entityUUID equipment $ equip (Right RightHand) itemUUID
+
+getEquippedWeapon :: UUID -> MonadCompReader (Maybe UUID)
+getEquippedWeapon entityUUID =
+  getEquippedInSlot (Right RightHand) <$> demandViewComp equipment entityUUID
 
 getVisibleTiles :: UUID -> MonadCompReader UUIDSet
 getVisibleTiles uuid = do
@@ -144,6 +144,7 @@ getAdjacentTileUUID dir tileUUID = do
       levelTileMap <- demandViewComp tileMap tileLevelUUID
       Just <$> tileUUIDatPosition adjPos levelTileMap
 
+-- TODO: if multiple of same max entity type, further sort somehow
 getPrimaryOccupant :: UUID -> MonadCompReader UUID
 getPrimaryOccupant occupiedUUID = do
   occs <- zToList <$> demandViewComp occupants occupiedUUID
@@ -215,3 +216,25 @@ eraseEntity uuid = do
   deleteComp uuid aiType
   deleteComp uuid damageChain
   deleteComp uuid viewRange
+
+--TODO: account for
+resetTicks :: UUID -> MonadCompState ()
+resetTicks entityUUID = setComp entityUUID ticks 50
+
+-- getNextEntityToTick :: MonadCompReader UUID
+-- getNextEntityToTick = do
+--   ts <- use (ticks . uuidMap)
+--   (minTick, uuids) <- getMinimumUUIDs ts
+--   (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
+--   if | notElem playerUUID uuids ->
+--        forM_ uuids $ \i -> do
+--          runAI i
+--          processEvents
+--          setComp i ticks 100
+--      | otherwise -> return ()
+--   return playerUUID
+getTargetedUUIDs :: TargetType -> UUID -> MonadCompReader [UUID]
+-- TODO: fix AOE/Line
+getTargetedUUIDs SingleTarget mainDefenderUUID = return [mainDefenderUUID]
+getTargetedUUIDs (AOE attackRange) mainDefenderUUID = return [mainDefenderUUID]
+getTargetedUUIDs (Line dir dist) mainDefenderUUID = return [mainDefenderUUID]

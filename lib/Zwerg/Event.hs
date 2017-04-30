@@ -3,6 +3,7 @@ module Zwerg.Event where
 import Zwerg.Component.Position
 import Zwerg.Data.Damage
 import Zwerg.Prelude
+import Zwerg.Random.Distribution
 
 import Data.Sequence (Seq, (><), (|>), ViewL(..))
 import qualified Data.Sequence as S
@@ -10,7 +11,8 @@ import qualified Data.Sequence as S
 data IncomingDamageEventData = IncomingDamageEventData
   { _incomingDamageEventDataAttackerUUID :: UUID
   , _incomingDamageEventDataDefenderUUID :: UUID
-  , _incomingDamageEventDataDamage :: DamageChain
+  , _incomingDamageEventDataDamageAttribute :: DamageAttribute
+  , _incomingDamageEventDataDamageDistribution :: Distribution
   } deriving (Show, Eq)
 
 makeFields ''IncomingDamageEventData
