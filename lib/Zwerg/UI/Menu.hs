@@ -13,17 +13,20 @@ data MenuEntry a = MenuEntry
   { _shortcut :: Char
   , _label :: Text
   , _item :: a
-  } deriving (Show, Eq, Functor)
+  } deriving (Show, Eq, Functor, Generic)
 
 makeLenses ''MenuEntry
+instance Binary a => Binary (MenuEntry a)
 
 data Menu a =
   MkMenu (Seq (MenuEntry a))
          (MenuEntry a)
          (Seq (MenuEntry a))
-  deriving (Show, Eq, Functor)
+  deriving (Show, Eq, Functor, Generic)
 
 type TextMenu = Menu ()
+
+instance Binary a => Binary (Menu a)
 
 instance ZConstructable (Menu a) [(Text, a)] where
   zConstruct xs =

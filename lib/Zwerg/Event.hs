@@ -20,56 +20,66 @@ data IncomingDamageEventData = IncomingDamageEventData
   , _incomingDamageEventDataDefenderUUID :: UUID
   , _incomingDamageEventDataDamageAttribute :: DamageAttribute
   , _incomingDamageEventDataDamageDistribution :: Distribution
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 makeFields ''IncomingDamageEventData
+instance Binary IncomingDamageEventData
 
 data OutgoingDamageEventData = OutgoingDamageEventData
   { _outgoingDamageEventDataAttackerUUID :: UUID
   , _outgoingDamageEventDataDefenderUUID :: UUID
   , _outgoingDamageEventDataDamageAmount :: Int
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 makeFields ''OutgoingDamageEventData
+instance Binary OutgoingDamageEventData
 
 data WeaponAttackAttemptEventData = WeaponAttackAttemptEventData
   { _weaponAttackAttemptEventDataAttackerUUID :: UUID
   , _weaponAttackAttemptEventDataDefenderUUID :: UUID
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 makeFields ''WeaponAttackAttemptEventData
+instance Binary WeaponAttackAttemptEventData
 
 data WeaponAttackHitEventData = WeaponAttackHitEventData
   { _weaponAttackHitEventDataAttackerUUID :: UUID
   , _weaponAttackHitEventDataDefenderUUID :: UUID
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 makeFields ''WeaponAttackHitEventData
+instance Binary WeaponAttackHitEventData
 
 data WeaponAttackMissEventData = WeaponAttackMissEventData
   { _weaponAttackMissEventDataAttackerUUID :: UUID
   , _weaponAttackMissEventDataDefenderUUID :: UUID
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 makeFields ''WeaponAttackMissEventData
+instance Binary WeaponAttackMissEventData
 
 data DeathEventData = DeathEventData
   { _deathEventDataDyingUUID :: UUID
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 makeFields ''DeathEventData
+instance Binary DeathEventData
 
 data GenerateEntityEventData = GenerateEntityEventData Int Int
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+instance Binary GenerateEntityEventData
 
 data MoveEntityDirectionEventData = MoveEntityDirectionEventData
   { _moveEntityDirectionEventDataMoverUUID :: UUID
   , _moveEntityDirectionEventDataDirection :: Direction
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 makeFields ''MoveEntityDirectionEventData
+instance Binary MoveEntityDirectionEventData
 
 data MoveEntityEventData = MoveEntityEventData
   { _moveEntityEventDataMoverUUID :: UUID
   , _moveEntityEventDataNewPosition :: Position
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 makeFields ''MoveEntityEventData
+instance Binary MoveEntityEventData
 
 data TickEventData = TickEventData Int
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+instance Binary TickEventData
 
 data ZwergEvent
   = IncomingDamageEvent IncomingDamageEventData
@@ -82,10 +92,14 @@ data ZwergEvent
   | MoveEntityEvent MoveEntityEventData
   | MoveEntityDirectionEvent MoveEntityDirectionEventData
   | TickEvent TickEventData
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+
+instance Binary ZwergEvent
 
 newtype ZwergEventQueue = MkZwergEventQueue (Seq ZwergEvent)
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+
+instance Binary ZwergEventQueue
 
 class HasZwergEventQueue s where
   eventQueue :: Lens' s ZwergEventQueue

@@ -25,8 +25,10 @@ data GameState = GameState
   , _gsLog        :: Log
   , _gsPortal     :: Portal
   , _gsEventQueue :: ZwergEventQueue
-  }
+  } deriving (Show, Eq, Generic)
 makeClassy ''GameState
+
+instance Binary GameState
 
 instance HasComponents GameState where
   components = gsComponents

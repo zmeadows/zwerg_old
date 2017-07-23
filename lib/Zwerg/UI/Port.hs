@@ -11,7 +11,9 @@ data Port
   | LoadingScreen
   | MainMenu TextMenu
   | ExitScreen
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+
+instance Binary Port
 
 type Portal = [Port]
 

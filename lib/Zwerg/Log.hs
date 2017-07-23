@@ -13,9 +13,10 @@ import Data.Sequence (Seq)
 import qualified Data.Sequence as S
 import qualified Data.Text as T (splitAt, empty)
 
-newtype Log =
-  MkLog (Seq Text)
-  deriving (Show, Read, Eq)
+newtype Log = MkLog (Seq Text)
+  deriving (Show, Read, Eq, Generic)
+
+instance Binary Log
 
 class HasLog s where
   userLog :: Lens' s Log
