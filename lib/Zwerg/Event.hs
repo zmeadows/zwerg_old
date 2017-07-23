@@ -1,12 +1,19 @@
 module Zwerg.Event where
+-- TODO: export properly only what is needed
 
 import Zwerg.Component.Position
 import Zwerg.Data.Damage
 import Zwerg.Prelude
 import Zwerg.Random.Distribution
+import Zwerg.Util
 
 import Data.Sequence (Seq, (><), (|>), ViewL(..))
 import qualified Data.Sequence as S
+
+import Language.Haskell.TH
+import Language.Haskell.TH.Quote
+import Language.Haskell.TH.Syntax
+import Language.Haskell.TH.Lib
 
 data IncomingDamageEventData = IncomingDamageEventData
   { _incomingDamageEventDataAttackerUUID :: UUID
@@ -14,7 +21,6 @@ data IncomingDamageEventData = IncomingDamageEventData
   , _incomingDamageEventDataDamageAttribute :: DamageAttribute
   , _incomingDamageEventDataDamageDistribution :: Distribution
   } deriving (Show, Eq)
-
 makeFields ''IncomingDamageEventData
 
 data OutgoingDamageEventData = OutgoingDamageEventData
@@ -22,56 +28,47 @@ data OutgoingDamageEventData = OutgoingDamageEventData
   , _outgoingDamageEventDataDefenderUUID :: UUID
   , _outgoingDamageEventDataDamageAmount :: Int
   } deriving (Show, Eq)
-
 makeFields ''OutgoingDamageEventData
 
 data WeaponAttackAttemptEventData = WeaponAttackAttemptEventData
   { _weaponAttackAttemptEventDataAttackerUUID :: UUID
   , _weaponAttackAttemptEventDataDefenderUUID :: UUID
   } deriving (Show, Eq)
-
 makeFields ''WeaponAttackAttemptEventData
 
 data WeaponAttackHitEventData = WeaponAttackHitEventData
   { _weaponAttackHitEventDataAttackerUUID :: UUID
   , _weaponAttackHitEventDataDefenderUUID :: UUID
   } deriving (Show, Eq)
-
 makeFields ''WeaponAttackHitEventData
 
 data WeaponAttackMissEventData = WeaponAttackMissEventData
   { _weaponAttackMissEventDataAttackerUUID :: UUID
   , _weaponAttackMissEventDataDefenderUUID :: UUID
   } deriving (Show, Eq)
-
 makeFields ''WeaponAttackMissEventData
 
 data DeathEventData = DeathEventData
   { _deathEventDataDyingUUID :: UUID
   } deriving (Show, Eq)
-
 makeFields ''DeathEventData
 
-data GenerateEntityEventData =
-  GenerateEntityEventData Int
+data GenerateEntityEventData = GenerateEntityEventData Int Int
   deriving (Show, Eq)
 
 data MoveEntityDirectionEventData = MoveEntityDirectionEventData
   { _moveEntityDirectionEventDataMoverUUID :: UUID
   , _moveEntityDirectionEventDataDirection :: Direction
   } deriving (Show, Eq)
-
 makeFields ''MoveEntityDirectionEventData
 
 data MoveEntityEventData = MoveEntityEventData
   { _moveEntityEventDataMoverUUID :: UUID
   , _moveEntityEventDataNewPosition :: Position
   } deriving (Show, Eq)
-
 makeFields ''MoveEntityEventData
 
-data TickEventData =
-  TickEventData Int
+data TickEventData = TickEventData Int
   deriving (Show, Eq)
 
 data ZwergEvent
@@ -87,8 +84,7 @@ data ZwergEvent
   | TickEvent TickEventData
   deriving (Show, Eq)
 
-newtype ZwergEventQueue =
-  MkZwergEventQueue (Seq ZwergEvent)
+newtype ZwergEventQueue = MkZwergEventQueue (Seq ZwergEvent)
   deriving (Show, Eq)
 
 class HasZwergEventQueue s where
@@ -98,13 +94,12 @@ instance ZWrapped ZwergEventQueue (Seq ZwergEvent) where
   unwrap (MkZwergEventQueue eq) = eq
 
 instance ZEmptiable ZwergEventQueue where
-  zEmpty = MkZwergEventQueue S.empty
+  zEmpty  = MkZwergEventQueue S.empty
   zIsNull = S.null . unwrap
-  zSize = S.length . unwrap
+  zSize   = S.length . unwrap
 
-popEvent
-  :: (HasZwergEventQueue s, MonadState s m)
-  => m (Maybe ZwergEvent)
+popEvent :: (HasZwergEventQueue s, MonadState s m)
+         => m (Maybe ZwergEvent)
 popEvent = do
   eq <- use eventQueue
   if | zIsNull eq -> return Nothing
@@ -116,13 +111,17 @@ popEvent = do
 pushEvent :: ZwergEvent -> ZwergEventQueue -> ZwergEventQueue
 pushEvent evt (MkZwergEventQueue eq) = MkZwergEventQueue $ eq |> evt
 
-pushEventM
-  :: (HasZwergEventQueue s, MonadState s m)
-  => ZwergEvent -> m ()
+pushEventM :: (HasZwergEventQueue s, MonadState s m) => ZwergEvent -> m ()
 pushEventM evt = eventQueue %= MkZwergEventQueue . (|> evt) . unwrap
 
-mergeEventsM
-  :: (HasZwergEventQueue s, MonadState s m)
-  => ZwergEventQueue -> m ()
-mergeEventsM evts =
-  eventQueue %= MkZwergEventQueue . (><) (unwrap evts) . unwrap
+-- | This template haskell is purely for avoiding boiler plate code.
+newEvent :: Language.Haskell.TH.Syntax.Quasi m => Text -> m Exp
+newEvent "MoveEntity" = runQ [| \a b -> pushEventM $ MoveEntityEvent $ MoveEntityEventData a b|]
+newEvent "IncomingDamage" = runQ [| \a b c d -> pushEventM $ IncomingDamageEvent $ IncomingDamageEventData a b c d|]
+newEvent "OutgoingDamage" = runQ [| \a b c -> pushEventM $ OutgoingDamageEvent $ OutgoingDamageEventData a b c|]
+newEvent _ = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION"|]
+
+-- TODO rewrite in less confusing looking way
+mergeEventsM :: (HasZwergEventQueue s, MonadState s m)
+             => ZwergEventQueue -> m ()
+mergeEventsM evts = eventQueue %= MkZwergEventQueue . (><) (unwrap evts) . unwrap
