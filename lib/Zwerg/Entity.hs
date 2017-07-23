@@ -1,6 +1,6 @@
 {-|
 Module      : Zwerg.Entity
-Description : Functions that operate at the level of entities.
+Description : Generic functions that operate at the level of entities.
 Copyright   : (c) Zac Meadows, 2016
 License     : GPL-3
 Maintainer  : zmeadows@gmail.com
@@ -14,23 +14,28 @@ module Zwerg.Entity where
 
 import Zwerg.Component
 import Zwerg.Component.All
+import Zwerg.Data.Equipment
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Prelude
+import Zwerg.Util
 
-import Unsafe (unsafeHead)
+import Control.Monad.Loops
+import Data.List (intersect)
+import Unsafe (unsafeHead, unsafeTail)
 
 unEquipItem :: UUID -> EquipmentSlot -> MonadCompState ()
 unEquipItem entityUUID slot = do
-  eqp <- demandComp equipment entityUUID
+-- TODO add unequipped item to inventory
+-- TODO deal with single/two handedness
+  eqp <- equipment <@> entityUUID
   let (_, eqp') = unequip slot eqp
   setComp entityUUID equipment eqp'
-  -- TODO: add unequipped item to inventory
-  -- TODO: deal with single/two handedness
 
 equipItem :: UUID -> UUID -> MonadCompState ()
 equipItem itemUUID entityUUID = do
-  slot <- demandComp equippableSlot itemUUID
-  iType <- demandComp itemType itemUUID
+  -- TODO lambdacase for slot/iType
+  slot <- equippableSlot <@> itemUUID
+  iType <- itemType <@> itemUUID
   case slot of
     Body x -> do
       unEquipItem entityUUID (Left x)
@@ -43,7 +48,7 @@ equipItem itemUUID entityUUID = do
         Armor -> do
           unEquipItem entityUUID (Right LeftHand)
           modComp entityUUID equipment $ equip (Right LeftHand) itemUUID
-        _ -> throwError $ ZError __FILE__ __LINE__ Fatal "invalid item type."
+        _ -> throwError $ ZError __FILE__ __LINE__ EngineFatal "invalid item type."
     BothHands -> do
       unEquipItem entityUUID (Right RightHand)
       unEquipItem entityUUID (Right LeftHand)
@@ -52,60 +57,65 @@ equipItem itemUUID entityUUID = do
 
 getEquippedWeapon :: UUID -> MonadCompReader (Maybe UUID)
 getEquippedWeapon entityUUID =
-  getEquippedInSlot (Right RightHand) <$> demandViewComp equipment entityUUID
+  -- TODO: handle two-handed weapons?
+  getEquippedInSlot (Right RightHand) <$> equipment <~> entityUUID
 
 getVisibleTiles :: UUID -> MonadCompReader UUIDSet
 getVisibleTiles uuid = do
-  playerPOS <- demandViewComp position uuid
-  fov <- demandViewComp viewRange uuid
-  levelUUID <- demandViewComp level uuid
-  levelTiles <- demandViewComp tileMap levelUUID
+  -- TODO: use ST monad to implement classic impreative mutable algorithm?
+  levelTiles <- level <~> uuid >>= demandViewComp tiles
+  playerPOS <- position <~> uuid
+  fov <- viewRange <~> uuid
+  levelTiles <- level <~> uuid >>= demandViewComp tileMap
   let (playerX, playerY) = unwrap playerPOS
       minX, minY, maxX, maxY :: Int
       minX = round $ max (fromIntegral playerX - fov) 0.0
       minY = round $ max (fromIntegral playerY - fov) 0.0
       maxX = round $ min (fromIntegral playerX + fov) $ mapWidthDOUBLE - 1.0
       maxY = round $ min (fromIntegral playerY + fov) $ mapHeightDOUBLE - 1.0
-  -- traceShowM (minX, maxX, minX, maxY)
+      -- fovEdges = circle (playerX, playerY) (round $ 1.5 * fov)
+      -- linesToFovEdges = map (unsafeTail . (line (playerX, playerY))) fovEdges
+  -- tileUUIDlinesToFovEdges <-
+  --   (mapM . mapM)
+  --     (zConstruct >=> flip tileUUIDatPosition levelTiles)
+  --     linesToFovEdges
+  -- visibleLines <-
+  --   forM tileUUIDlinesToFovEdges $
+  --   takeWhileM1 (tileBlocksPassage >=> return . not)
   candidatePOSs <-
     filter (\p -> distance Euclidean playerPOS p < fov) <$>
     mapM zConstruct [(x, y) | x <- [minX .. maxX], y <- [minY .. maxY]]
-  zFromList <$> mapM (`tileUUIDatPosition` levelTiles) candidatePOSs
-      -- fovEdges =
-      --   map (minX, ) [minY + 1 .. maxY - 1] ++
-      --   map (maxX, ) [minY + 1 .. maxY - 1] ++
-      --   map (, minY) [minY .. maxY] ++ map (, maxY) [minY .. maxY]
-      -- linesToFovEdges = map (line (playerX, playerY)) fovEdges
-  -- visibleLines <-
-  --   forM linesToFovEdges $ \sightLine -> do
-  --     (flip takeWhileM) sightLine $ \intPair -> return True
-  -- let markTiles [] candidates = return candidates
-  --     markTiles (l:ls) candidates = do
-  --       let modifiedCandidates = M.adjust (\k _ -> True) candidates
-  --       markTiles ls candidates
+  candidateTileUUIDs <- mapM (flip tileUUIDatPosition levelTiles) candidatePOSs
+  -- return $ zFromList $ intersect candidateTileUUIDs $ concat visibleLines
+  return $ zFromList candidateTileUUIDs
 
 tileBlocksVision :: UUID -> MonadCompReader Bool
 tileBlocksVision tileUUID = do
-  tileBlocks <- demandViewComp blocksVision tileUUID
+  -- The tile might iself block vision (ex: stone column)
+  tileBlocks <- blocksVision <~> tileUUID
   if tileBlocks
     then return True
     else do
-      occs <- demandViewComp occupants tileUUID
-      -- TODO: find first occurence rather than filter.
-      occsBlock <- zFilterM (demandViewComp blocksVision) occs
+      -- or one of the occupants might (ex: really fat goblin)
+      occs <- occupants <~> tileUUID
+      -- TODO: check if 'any' rather than filter.
+      occsBlock <- zFilterM ((<~>) blocksVision) occs
       return (zSize occsBlock > 0)
 
 tileBlocksPassage :: UUID -> MonadCompReader Bool
 tileBlocksPassage tileUUID = do
+  -- The tile might itself block passage
   tileBlocks <- demandViewComp blocksPassage tileUUID
   if tileBlocks
     then return True
     else do
+      -- or one the tiles occupants might block passage
       occs <- demandViewComp occupants tileUUID
       -- TODO: find first occurence rather than filter.
       occsBlock <- zFilterM (demandViewComp blocksPassage) occs
       return (zSize occsBlock > 0)
 
+-- DEPRECATED: use tileOn component instead
 getEntityTileUUID :: UUID -> MonadCompReader UUID
 getEntityTileUUID entityUUID = do
   entityLevelUUID <- demandViewComp level entityUUID
@@ -113,6 +123,7 @@ getEntityTileUUID entityUUID = do
   levelTileMap <- demandViewComp tileMap entityLevelUUID
   tileUUIDatPosition entityPos levelTileMap
 
+-- DEPRECATED: use tileOn component instead
 getPlayerTileUUID :: MonadCompReader UUID
 getPlayerTileUUID = do
   playerLevelUUID <- demandViewComp level playerUUID
@@ -127,11 +138,11 @@ getPlayerAdjacentEnemy dir = do
     Just attackedTileUUID' -> do
       adjacentTileEnemyOccupants <- getOccupantsOfType attackedTileUUID' Enemy
       if | zIsNull adjacentTileEnemyOccupants -> return Nothing
-         | zSize adjacentTileEnemyOccupants > 1 ->
-           throwError $
-           ZError __FILE__ __LINE__ Fatal "found multiple enemies on same tile"
-         | otherwise ->
+         | zSize adjacentTileEnemyOccupants == 1 ->
            return $ Just $ unsafeHead $ zToList adjacentTileEnemyOccupants
+         | otherwise ->
+           throwError $
+           ZError __FILE__ __LINE__ EngineFatal "found multiple enemies on same tile"
     Nothing -> return Nothing
 
 getAdjacentTileUUID :: Direction -> UUID -> MonadCompReader (Maybe UUID)
@@ -144,7 +155,6 @@ getAdjacentTileUUID dir tileUUID = do
       levelTileMap <- demandViewComp tileMap tileLevelUUID
       Just <$> tileUUIDatPosition adjPos levelTileMap
 
--- TODO: if multiple of same max entity type, further sort somehow
 getPrimaryOccupant :: UUID -> MonadCompReader UUID
 getPrimaryOccupant occupiedUUID = do
   occs <- zToList <$> demandViewComp occupants occupiedUUID
@@ -152,6 +162,7 @@ getPrimaryOccupant occupiedUUID = do
     then return occupiedUUID
     else do
       types <- forM occs (demandViewComp entityType)
+      -- TODO: if multiple of same max entity type, further sort somehow
       let maxUUID = fst $ maximumBy (comparing snd) $ zip occs types
       return maxUUID
 
@@ -165,13 +176,11 @@ removeOccupant :: UUID -> UUID -> MonadCompState ()
 removeOccupant oldOccupantUUID occupiedUUID = do
   occupiedType <- demandComp entityType occupiedUUID
   if occupiedType `notElem` [Tile, Container]
-    then throwError $
-         ZError
-           __FILE__
-           __LINE__
-           Fatal
-           "Attempted to remove an occupant from an entity that doesn't support it"
-    else modComp occupiedUUID occupants $ zDelete oldOccupantUUID
+    then throwError $ ZError __FILE__ __LINE__ EngineFatal
+         "Attempted to remove an occupant from an entity that doesn't support it"
+    else do
+      modComp occupiedUUID occupants $ zDelete oldOccupantUUID
+      setComp occupiedUUID needsRedraw True
 
 addOccupant :: UUID -> UUID -> MonadCompState ()
 addOccupant newOccupantUUID occupiedUUID = do
@@ -181,20 +190,25 @@ addOccupant newOccupantUUID occupiedUUID = do
          ZError
            __FILE__
            __LINE__
-           Fatal
+           EngineFatal
            "Attempted to add an occupant to an entity that doesn't support it"
-    else modComp occupiedUUID occupants $ zAdd newOccupantUUID
+    else do
+      modComp occupiedUUID occupants $ zAdd newOccupantUUID
+      setComp occupiedUUID needsRedraw True
 
 transferOccupant :: UUID -> UUID -> UUID -> MonadCompState ()
 transferOccupant transfereeUUID oldContainerUUID newContainerUUID = do
   removeOccupant transfereeUUID oldContainerUUID
   addOccupant transfereeUUID newContainerUUID
+  setComp oldContainerUUID needsRedraw True
+  setComp newContainerUUID needsRedraw True
 
 -- | TODO: this is not at all complete
 eraseEntity :: UUID -> MonadCompState ()
 eraseEntity uuid = do
   entityTileUUID <- readC $ getEntityTileUUID uuid
   modComp entityTileUUID occupants (zDelete uuid)
+  setComp entityTileUUID needsRedraw True
   deleteComp uuid name
   deleteComp uuid glyph
   deleteComp uuid hp
@@ -203,7 +217,6 @@ eraseEntity uuid = do
   deleteComp uuid cooldown
   deleteComp uuid equipment
   deleteComp uuid level
-  deleteComp uuid tileMap
   deleteComp uuid tiles
   deleteComp uuid ticks
   deleteComp uuid tileType
@@ -217,7 +230,7 @@ eraseEntity uuid = do
   deleteComp uuid damageChain
   deleteComp uuid viewRange
 
---TODO: account for
+--TODO: placeholder. Need to look at creatures Dex, etc.
 resetTicks :: UUID -> MonadCompState ()
 resetTicks entityUUID = setComp entityUUID ticks 50
 
@@ -233,8 +246,9 @@ resetTicks entityUUID = setComp entityUUID ticks 50
 --          setComp i ticks 100
 --      | otherwise -> return ()
 --   return playerUUID
+
 getTargetedUUIDs :: TargetType -> UUID -> MonadCompReader [UUID]
--- TODO: fix AOE/Line
+-- TODO: fix AOE/Line implementation (same as SingleTarget for now)
 getTargetedUUIDs SingleTarget mainDefenderUUID = return [mainDefenderUUID]
 getTargetedUUIDs (AOE attackRange) mainDefenderUUID = return [mainDefenderUUID]
 getTargetedUUIDs (Line dir dist) mainDefenderUUID = return [mainDefenderUUID]
