@@ -22,35 +22,23 @@ constrRecord x = rei ex where
     args         = words . show $ typeOf x
 -}
 
-getAsset
-  :: MonadIO m
-  => Text -> m Text
+getAsset :: MonadIO m => Text -> m Text
 getAsset path = pack <$> liftIO (getDataFileName $ "assets/" ++ unpack path)
 
-assertfM
-  :: Monad m
-  => a -> (a -> m Bool) -> m ()
+assertfM :: Monad m => a -> (a -> m Bool) -> m ()
 assertfM x f = f x >>= flip assert (return ())
 
-whenJust
-  :: Applicative m
-  => Maybe a -> (a -> m ()) -> m ()
+whenJust :: Applicative m => Maybe a -> (a -> m ()) -> m ()
 whenJust mg f = maybe (pure ()) f mg
 
-whenJustErr
-  :: (MonadError ZError m)
-  => Maybe a -> ZError -> (a -> m b) -> m b
+whenJustErr :: (MonadError ZError m) => Maybe a -> ZError -> (a -> m b) -> m b
 whenJustErr mg err f = maybe (throwError err) f mg
 
 -- | Like 'whenJust', but where the test can be monadic.
-whenJustM
-  :: Monad m
-  => m (Maybe a) -> (a -> m ()) -> m ()
+whenJustM :: Monad m => m (Maybe a) -> (a -> m ()) -> m ()
 whenJustM mg f = maybe (return ()) f =<< mg
 
-fromJustErrM
-  :: (MonadError ZError m)
-  => Maybe a -> ZError -> m a
+fromJustErrM :: (MonadError ZError m) => Maybe a -> ZError -> m a
 fromJustErrM x err = maybe (throwError err) return x
 
 chunksOf :: Int -> [e] -> [[e]]
@@ -61,12 +49,9 @@ chunksOf i ls = map (take i) (build (splitter ls))
     splitter [] _ n = n
     splitter l c n = l `c` splitter (drop i l) c n
 
-takeWhileM1
-  :: (Monad m)
-  => (a -> m Bool) -> [a] -> m [a]
+takeWhileM1 :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
 takeWhileM1 _ [] = return []
 takeWhileM1 p (x:xs) = do
   q <- p x
-  if q
-     then liftM ((:) x) (takeWhileM1 p xs)
-    else return [x]
+  if q then liftM ((:) x) (takeWhileM1 p xs)
+       else return [x]
