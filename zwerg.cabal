@@ -60,6 +60,7 @@ library
                        Zwerg.UI.Menu
                        Zwerg.UI.Port
                        Zwerg.Util
+                       Zwerg.Util.Geometry
                        Paths_zwerg
 
   other-modules:       Zwerg.Component.All
