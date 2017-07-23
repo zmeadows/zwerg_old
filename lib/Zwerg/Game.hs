@@ -67,11 +67,14 @@ runGame (Game a) gen st =
        Left err -> (st', Just err, gen')
        Right () -> (st', Nothing, gen')
 
+-- for now just generates the test level
 generateGame :: Game ()
 generateGame = do
   lid <- generate testSquareGenerator
   generate $ testPlayerGenerator lid
 
+-- after we process a player tick, go through all other entities
+-- and process their ticks, until the player is ready to tick again
 processNonPlayerEvents :: Game ()
 processNonPlayerEvents = do
   newPort:_ <- use portal
@@ -84,6 +87,7 @@ processNonPlayerEvents = do
            forM_ uuids $ \i -> do
              runAI i
              processEvents
+             -- TODO: set ticks according to DEX + other things
              setComp i ticks 100
          | otherwise -> return ()
       updateGlyphMap
@@ -107,6 +111,7 @@ processUserInput' (MainMenu m:_) Return =
   case view label $ focus m of
     "new game" -> do
       generateGame
+      -- TODO: factor out as empty glyph map function
       let xs = [0 .. mapWidthINT - 1]
           ys = [0 .. mapHeightINT - 1]
           emptyGlyph = Glyph ' ' Black0 Black0 (Just Black0) (Just Black0)
@@ -117,11 +122,8 @@ processUserInput' (MainMenu m:_) Return =
     _ -> return ()
 
 processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput West
-
 processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput South
-
 processUserInput' (MainScreen _:_) (KeyChar 'k') = processPlayerDirectionInput North
-
 processUserInput' (MainScreen _:_) (KeyChar 'l') = processPlayerDirectionInput East
 
 processUserInput' _ _ = return ()
@@ -215,6 +217,7 @@ getGlyphMapUpdates = do
       return (pos, (gly, True))
   return $ mkGlyphMap updatedGlyphs
 
+-- TODO: switch to HasEventQueue context since that is all we touch here
 processPlayerDirectionInput :: Direction -> Game ()
 processPlayerDirectionInput dir = do
   let processPlayerMove = do
