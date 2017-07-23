@@ -34,7 +34,7 @@ runAI
   => UUID -> m ()
 runAI uuid = do
   cmps <- use components
-  ait <- demandComp aiType uuid
+  ait <- aiType <@> uuid
   ranWord <- getRandom
   let (AI a) = enact uuid ait
       (err, evts) =
@@ -46,22 +46,22 @@ runAI uuid = do
     Right () -> mergeEventsM evts
 
 enact :: UUID -> AIType -> AI ()
+
 enact entityUUID SimpleMeleeCreature = do
   tileUUID <- getEntityTileUUID entityUUID
   possTiles <-
     catMaybes <$>
     mapM (`getAdjacentTileUUID` tileUUID) [North, South, East, West]
   openPossTiles <- filterM (\i -> not <$> tileBlocksPassage i) possTiles
-  playerPos <- demandViewComp position playerUUID
+  playerPos <- position <~> playerUUID
   let distanceToPlayer e1UUID e2UUID = do
-        e1Pos <- demandViewComp position e1UUID
-        e2Pos <- demandViewComp position e2UUID
-        return $
-          compare
-            (distance Euclidean e1Pos playerPos)
-            (distance Euclidean e2Pos playerPos)
+        e1Pos <- position <~> e1UUID
+        e2Pos <- position <~> e2UUID
+        return $ compare (distance Euclidean e1Pos playerPos)
+                         (distance Euclidean e2Pos playerPos)
   unless (null openPossTiles) $ do
     newTileUUID <- fromJust <$> minimumByM distanceToPlayer openPossTiles
-    newPos <- demandViewComp position newTileUUID
+    newPos <- position <~> newTileUUID
     modify . pushEvent $ MoveEntityEvent $ MoveEntityEventData entityUUID newPos
+
 enact _ _ = return ()

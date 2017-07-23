@@ -150,25 +150,17 @@ processEvent (MoveEntityDirectionEvent ed) = do
     Just newPos -> $(newEvent "MoveEntity") playerUUID newPos
 
 processEvent (MoveEntityEvent ed) = do
-  let uuid = ed ^. moverUUID
-      newPos = ed ^. newPosition
-  oldPos <- demandComp position uuid
-  levelUUID <- demandComp level uuid
-  levelTiles <- demandComp tileMap levelUUID
-  newTileUUID <- TM.tileUUIDatPosition newPos levelTiles
+  oldPos <- position <@> (ed ^. moverUUID)
+  levelTiles <- level <@> (ed ^. moverUUID) >>= (<@>) tileMap
+  newTileUUID <- TM.tileUUIDatPosition (ed ^. newPosition) levelTiles
   newTileBlocked <- readC $ tileBlocksPassage newTileUUID
-  when (newTileBlocked && uuid /= playerUUID) $
-    throwError $
-    ZError
-      __FILE__
-      __LINE__
-      EngineFatal
-      "NPC Entity attempted to move to blocked tile"
-  when (newTileBlocked && uuid == playerUUID) $
+  when (newTileBlocked && (ed ^. moverUUID) /= playerUUID) $
+    $(throw) EngineFatal "NPC Entity attempted to move to blocked tile"
+  when (newTileBlocked && (ed ^. moverUUID) == playerUUID) $
     $(throw) PlayerWarning "Player attempted to move to a blocked tile"
   oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
-  transferOccupant uuid oldTileUUID newTileUUID
-  setComp uuid position newPos
+  transferOccupant (ed ^. moverUUID) oldTileUUID newTileUUID
+  setComp (ed ^. moverUUID) position (ed ^. newPosition)
 
 processEvent (WeaponAttackAttemptEvent ed)
   -- TODO: explicitely calculate hit probability
@@ -178,7 +170,7 @@ processEvent (WeaponAttackAttemptEvent ed)
   when (r < 0.5) $ do
     weaponUUID' <- readC $ getEquippedWeapon $ ed ^. attackerUUID
     whenJust weaponUUID' $ \weaponUUID -> do
-      chain <- demandComp damageChain weaponUUID
+      chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do
         targetedUUIDs <-
           readC $
@@ -202,12 +194,13 @@ processEvent (IncomingDamageEvent ed) = do
 
 processEvent (OutgoingDamageEvent ed) = do
   modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
-  newHP <- demandComp hp (ed ^. defenderUUID)
+  newHP <- hp <@> (ed ^. defenderUUID)
   when (fst (unwrap newHP) == 0) $ eraseEntity $ ed ^. defenderUUID
 
 processEvent _ = return ()
 
 -- FIXME: need to make distinction between visible/needsRedraw tiles...
+-- FIXME: this should be MonadCompReader?
 getGlyphMapUpdates :: MonadCompState GlyphMap
 getGlyphMapUpdates = do
   visibleTiles <- readC $ getVisibleTiles playerUUID
@@ -215,9 +208,9 @@ getGlyphMapUpdates = do
 
   updatedGlyphs <-
     forM (zToList tilesWithUpdatedNeeded) $ \tileUUID -> do
-      pos <- demandComp position tileUUID
+      pos <- position <@> tileUUID
       occUUID <- readC $ getPrimaryOccupant tileUUID
-      gly <- demandComp glyph occUUID
+      gly <- glyph <@> occUUID
       --setComp tileUUID needsRedraw False
       return (pos, (gly, True))
   return $ mkGlyphMap updatedGlyphs

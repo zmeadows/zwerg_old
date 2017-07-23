@@ -12,7 +12,7 @@ testSquareGenerator :: Generator UUID
 testSquareGenerator = MkGenerator $ do
     testSquareLevelUUID <- popUUID
     generate $ levelSkeletonGenerator testSquareLevelUUID
-    testSquareTiles <- demandComp tileMap testSquareLevelUUID
+    testSquareTiles <- tileMap <@> testSquareLevelUUID
     void $ flip traverseWithKey (unwrap testSquareTiles) $ \pos tileUUID -> do
         let (x, y) = unwrap pos
             isWallTile = x == 0 || x == mapWidthINT - 1 || y == 0 || y == mapHeightINT - 1
@@ -38,7 +38,7 @@ testSquareGenerator = MkGenerator $ do
           __LINE__
           EngineFatal
           "Could not find an open tile to place Goblin"
-      demandComp position goblinTileUUID' >>= addComp goblinUUID position
+      position <@> goblinTileUUID' >>= addComp goblinUUID position
       addOccupant goblinUUID goblinTileUUID'
 
     return testSquareLevelUUID

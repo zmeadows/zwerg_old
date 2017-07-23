@@ -31,8 +31,8 @@ getRandomEmptyTile
   :: (HasComponents s, MonadState s m, MonadError ZError m, MonadRandom m)
   => UUID -> m (Maybe UUID)
 getRandomEmptyTile levelUUID = do
-  levelTiles <- demandComp tiles levelUUID
-  unoccupiedTiles <- zFilterM (fmap not . demandComp blocksPassage) levelTiles
+  levelTiles <- tiles <@> levelUUID
+  unoccupiedTiles <- zFilterM (fmap not . (<@>) blocksPassage) levelTiles
   if zIsNull unoccupiedTiles
     then return Nothing
     else Just <$> pickRandom unoccupiedTiles

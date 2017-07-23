@@ -27,7 +27,7 @@ testPlayerGenerator startLevelUUID =
         __LINE__
         EngineFatal
         "Could not find an open tile to place Player"
-    demandComp position playerTileUUID' >>= addPlayerComp position
+    position <@> playerTileUUID' >>= addPlayerComp position
     addOccupant playerUUID playerTileUUID'
     swordUUID <- generate sword
     equipItem swordUUID playerUUID

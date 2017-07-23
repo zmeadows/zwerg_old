@@ -75,9 +75,9 @@ buildPortUI (MainMenu m) = return ui
     ui = BC.vCenter $ vBox [BC.hCenter $ str "zwerg", str " ", BC.hCenter box]
 buildPortUI (MainScreen gm) = do
   let uiMap = raw $ glyphMapToVtyImage gm
-  pName <- demandViewComp name playerUUID
-  pStats <- demandViewComp stats playerUUID
-  pHP <- demandViewComp hp playerUUID
+  pName <- name <~> playerUUID
+  pStats <- stats <~> playerUUID
+  pHP <- hp <~> playerUUID
   uLog <- view userLog
   return $
     vLimit

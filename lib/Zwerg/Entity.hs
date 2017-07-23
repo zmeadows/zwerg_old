@@ -60,10 +60,10 @@ getEquippedWeapon entityUUID =
 getVisibleTiles :: UUID -> MonadCompReader UUIDSet
 getVisibleTiles uuid = do
   -- TODO: use ST monad to implement classic impreative mutable algorithm?
-  -- levelTiles <- level <~> uuid >>= demandViewComp tiles
+  -- levelTiles <- level <~> uuid >>= (<~>) tiles
   playerPOS <- position <~> uuid
   fov <- viewRange <~> uuid
-  levelTiles <- level <~> uuid >>= demandViewComp tileMap
+  levelTiles <- level <~> uuid >>= (<~>) tileMap
   let (playerX, playerY) = unwrap playerPOS
       minX, minY, maxX, maxY :: Int
       minX = round $ max (fromIntegral playerX - fov) 0.0
@@ -102,12 +102,12 @@ tileBlocksVision tileUUID = do
 tileBlocksPassage :: UUID -> MonadCompReader Bool
 tileBlocksPassage tileUUID = do
   -- The tile might itself block passage
-  tileBlocks <- demandViewComp blocksPassage tileUUID
+  tileBlocks <- blocksPassage <~> tileUUID
   if tileBlocks
     then return True
     else do
       -- or one the tiles occupants might block passage
-      occs <- demandViewComp occupants tileUUID
+      occs <- occupants <~> tileUUID
       -- TODO: find first occurence rather than filter.
       occsBlock <- zFilterM (blocksPassage <~>) occs
       return (zSize occsBlock > 0)
@@ -115,17 +115,17 @@ tileBlocksPassage tileUUID = do
 -- DEPRECATED: use tileOn component instead
 getEntityTileUUID :: UUID -> MonadCompReader UUID
 getEntityTileUUID entityUUID = do
-  entityLevelUUID <- demandViewComp level entityUUID
-  entityPos <- demandViewComp position entityUUID
-  levelTileMap <- demandViewComp tileMap entityLevelUUID
+  entityLevelUUID <- level <~> entityUUID
+  entityPos <- position <~> entityUUID
+  levelTileMap <- tileMap <~> entityLevelUUID
   tileUUIDatPosition entityPos levelTileMap
 
 -- DEPRECATED: use tileOn component instead
 getPlayerTileUUID :: MonadCompReader UUID
 getPlayerTileUUID = do
-  playerLevelUUID <- demandViewComp level playerUUID
-  playerPos <- demandViewComp position playerUUID
-  levelTileMap <- demandViewComp tileMap playerLevelUUID
+  playerLevelUUID <- level <~> playerUUID
+  playerPos <- position <~> playerUUID
+  levelTileMap <- tileMap <~> playerLevelUUID
   tileUUIDatPosition playerPos levelTileMap
 
 getPlayerAdjacentEnemy :: Direction -> MonadCompReader (Maybe UUID)
@@ -144,34 +144,34 @@ getPlayerAdjacentEnemy dir = do
 
 getAdjacentTileUUID :: Direction -> UUID -> MonadCompReader (Maybe UUID)
 getAdjacentTileUUID dir tileUUID = do
-  tilePosition <- demandViewComp position tileUUID
+  tilePosition <- position <~> tileUUID
   case movePosDir dir tilePosition of
     Nothing -> return Nothing
     Just adjPos -> do
-      tileLevelUUID <- demandViewComp level tileUUID
-      levelTileMap <- demandViewComp tileMap tileLevelUUID
+      tileLevelUUID <- level <~> tileUUID
+      levelTileMap <- tileMap <~> tileLevelUUID
       Just <$> tileUUIDatPosition adjPos levelTileMap
 
 getPrimaryOccupant :: UUID -> MonadCompReader UUID
 getPrimaryOccupant occupiedUUID = do
-  occs <- zToList <$> demandViewComp occupants occupiedUUID
+  occs <- zToList <$> occupants <~> occupiedUUID
   if null occs
     then return occupiedUUID
     else do
-      types <- forM occs (demandViewComp entityType)
+      types <- forM occs ((<~>) entityType)
       -- TODO: if multiple of same max entity type, further sort somehow
       let maxUUID = fst $ maximumBy (comparing snd) $ zip occs types
       return maxUUID
 
 getOccupantsOfType :: UUID -> EntityType -> MonadCompReader UUIDSet
 getOccupantsOfType containerUUID eType =
-  demandViewComp occupants containerUUID >>= zFilterM isEtype
+  occupants <~> containerUUID >>= zFilterM isEtype
   where
-    isEtype uuid = (eType ==) <$> demandViewComp entityType uuid
+    isEtype uuid = (eType ==) <$> entityType <~> uuid
 
 removeOccupant :: UUID -> UUID -> MonadCompState ()
 removeOccupant oldOccupantUUID occupiedUUID = do
-  occupiedType <- demandComp entityType occupiedUUID
+  occupiedType <- entityType <@> occupiedUUID
   if occupiedType `notElem` [Tile, Container]
     then throwError $ ZError __FILE__ __LINE__ EngineFatal
          "Attempted to remove an occupant from an entity that doesn't support it"
@@ -181,7 +181,7 @@ removeOccupant oldOccupantUUID occupiedUUID = do
 
 addOccupant :: UUID -> UUID -> MonadCompState ()
 addOccupant newOccupantUUID occupiedUUID = do
-  occupiedType <- demandComp entityType occupiedUUID
+  occupiedType <- entityType <@> occupiedUUID
   if occupiedType `notElem` [Tile, Container]
     then throwError $
          ZError
