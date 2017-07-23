@@ -32,8 +32,10 @@ library
                        Zwerg.Component.Position
                        Zwerg.Component.TileMap
                        Zwerg.Data.Damage
+                       Zwerg.Data.Equipment
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
+                       Zwerg.Data.ZError
                        Zwerg.Entity
                        Zwerg.Entity.AI
                        Zwerg.Event
@@ -48,6 +50,8 @@ library
                        Zwerg.Log
                        Zwerg.Options
                        Zwerg.Prelude
+                       Zwerg.Prelude.Class
+                       Zwerg.Prelude.Primitives
                        Zwerg.Random
                        Zwerg.Random.Distribution
                        Zwerg.Random.RanGen
@@ -70,6 +74,7 @@ library
                        mersenne-random-pure64,
                        random-fu,
                        text,
+                       template-haskell,
                        deepseq,
                        mtl,
                        transformers,
@@ -100,10 +105,10 @@ library
                       RankNTypes,
                       ScopedTypeVariables,
                       StandaloneDeriving,
-                      Strict,
                       TemplateHaskell,
                       TupleSections,
-                      TypeFamilies
+                      TypeFamilies,
+                      TypeOperators
 
 executable zwerg
   hs-source-dirs:      src/
