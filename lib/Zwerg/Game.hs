@@ -22,34 +22,32 @@ import Control.Monad.Random
 
 data GameState = GameState
   { _gsComponents :: Components
-  , _gsLog :: Log
-  , _gsPortal :: Portal
+  , _gsLog        :: Log
+  , _gsPortal     :: Portal
   , _gsEventQueue :: ZwergEventQueue
   }
-
 makeClassy ''GameState
+
+instance HasComponents GameState where
+  components = gsComponents
+instance HasLog GameState where
+  userLog = gsLog
+instance HasPortal GameState where
+  portal = gsPortal
+instance HasZwergEventQueue GameState where
+  eventQueue = gsEventQueue
 
 emptyGameState :: GameState
 emptyGameState =
   GameState
   { _gsComponents = emptyComponents
-  , _gsLog = emptyLog
-  , _gsPortal = [initMainMenu]
+  , _gsLog        = emptyLog
+  , _gsPortal     = [initMainMenu]
   , _gsEventQueue = zEmpty
   }
 
-instance HasComponents GameState where
-  components = gsComponents
-
-instance HasLog GameState where
-  userLog = gsLog
-
-instance HasPortal GameState where
-  portal = gsPortal
-
-instance HasZwergEventQueue GameState where
-  eventQueue = gsEventQueue
-
+-- Highest level purely-functional context which encapsulates
+-- all game logic/state/error handling
 newtype Game a =
   Game (ExceptT ZError (RandT RanGen (State GameState)) a)
   deriving ( Functor
@@ -98,9 +96,11 @@ processUserInput k = do
   processNonPlayerEvents
 
 processUserInput' :: Portal -> KeyCode -> Game ()
-processUserInput' (MainMenu m:ps) (KeyChar 'j') =
-  portal .= (MainMenu $ next m) : ps
+
+processUserInput' (MainMenu m:ps) (KeyChar 'j') = portal .= (MainMenu $ next m) : ps
+
 processUserInput' (MainMenu m:_) (KeyChar 'k') = portal .= [MainMenu $ prev m]
+
 processUserInput' (MainMenu m:_) Return =
   case view label $ focus m of
     "new game" -> do
@@ -113,14 +113,15 @@ processUserInput' (MainMenu m:_) Return =
         [MainScreen $ mkGlyphMap $ map (\p -> (p, (emptyGlyph, False))) ts]
     "exit" -> portal .= [ExitScreen]
     _ -> return ()
-processUserInput' (MainScreen _:_) (KeyChar 'h') =
-  processPlayerDirectionInput West
-processUserInput' (MainScreen _:_) (KeyChar 'j') =
-  processPlayerDirectionInput South
-processUserInput' (MainScreen _:_) (KeyChar 'k') =
-  processPlayerDirectionInput North
-processUserInput' (MainScreen _:_) (KeyChar 'l') =
-  processPlayerDirectionInput East
+
+processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput West
+
+processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput South
+
+processUserInput' (MainScreen _:_) (KeyChar 'k') = processPlayerDirectionInput North
+
+processUserInput' (MainScreen _:_) (KeyChar 'l') = processPlayerDirectionInput East
+
 processUserInput' _ _ = return ()
 
 updateGlyphMap :: Game ()
@@ -139,16 +140,13 @@ processEvents =
     processEvents
 
 processEvent :: ZwergEvent -> Game ()
+
 processEvent (MoveEntityDirectionEvent ed) = do
-  let uuid = ed ^. moverUUID
-      dir = ed ^. direction
-  oldPosition <- demandComp position uuid
-  case movePosDir dir oldPosition
-    -- TODO: log message, player tried to move off map
-        of
-    Nothing -> return ()
-    Just newPos ->
-      pushEventM $ MoveEntityEvent $ MoveEntityEventData playerUUID newPos
+  oldPosition <- position <@> (ed ^. moverUUID)
+  case movePosDir (ed ^. direction) oldPosition of
+    Nothing -> return () -- TODO: log message, player tried to move off map
+    Just newPos -> $(newEvent "MoveEntity") playerUUID newPos
+
 processEvent (MoveEntityEvent ed) = do
   let uuid = ed ^. moverUUID
       newPos = ed ^. newPosition
@@ -162,18 +160,14 @@ processEvent (MoveEntityEvent ed) = do
     ZError
       __FILE__
       __LINE__
-      Fatal
+      EngineFatal
       "NPC Entity attempted to move to blocked tile"
   when (newTileBlocked && uuid == playerUUID) $
-    throwError $
-    ZError
-      __FILE__
-      __LINE__
-      Warning
-      "Player attempted to move to a blocked tile"
+    $(throw) PlayerWarning "Player attempted to move to a blocked tile"
   oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
   transferOccupant uuid oldTileUUID newTileUUID
   setComp uuid position newPos
+
 processEvent (WeaponAttackAttemptEvent ed)
   -- TODO: explicitely calculate hit probability
  = do
@@ -194,42 +188,49 @@ processEvent (WeaponAttackAttemptEvent ed)
               targetUUID
               (damageData ^. attribute)
               (damageData ^. distribution)
-processEvent (WeaponAttackHitEvent ed) = do
-  return ()
+
+processEvent (WeaponAttackHitEvent ed) = return ()
+
 processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
+
 processEvent (IncomingDamageEvent ed) = do
-  d <- sample (ed ^. damageDistribution)
-  pushEventM $
-    OutgoingDamageEvent $
-    OutgoingDamageEventData (ed ^. attackerUUID) (ed ^. defenderUUID) (round d)
+  damageDone <- round <$> sample (ed ^. damageDistribution)
+  $(newEvent "OutgoingDamage") (ed ^. attackerUUID) (ed ^. defenderUUID) damageDone
+
 processEvent (OutgoingDamageEvent ed) = do
   modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
   newHP <- demandComp hp (ed ^. defenderUUID)
   when ((fst $ unwrap $ newHP) == 0) $ do eraseEntity $ ed ^. defenderUUID
+
 processEvent _ = return ()
 
+-- FIXME: need to make distinction between visible/needsRedraw tiles...
 getGlyphMapUpdates :: MonadCompState GlyphMap
 getGlyphMapUpdates = do
-  tilesWithUpdatedNeeded <- readC $ getVisibleTiles playerUUID
+  visibleTiles <- readC $ getVisibleTiles playerUUID
+  tilesWithUpdatedNeeded <- zFilterM ( (<@>) needsRedraw) visibleTiles
+
   updatedGlyphs <-
     forM (zToList tilesWithUpdatedNeeded) $ \tileUUID -> do
       pos <- demandComp position tileUUID
       occUUID <- readC $ getPrimaryOccupant tileUUID
       gly <- demandComp glyph occUUID
+      --setComp tileUUID needsRedraw False
       return (pos, (gly, True))
   return $ mkGlyphMap updatedGlyphs
 
 processPlayerDirectionInput :: Direction -> Game ()
 processPlayerDirectionInput dir = do
-  case dir of
-    North -> pushLogMsgM "player moved North"
-    South -> pushLogMsgM "player moved South"
-    East -> pushLogMsgM "player moved East"
-    West -> pushLogMsgM "player moved West"
-    _ -> return ()
-  let processPlayerMove =
+  let processPlayerMove = do
+        case dir of
+          North -> pushLogMsgM "player moved North"
+          South -> pushLogMsgM "player moved South"
+          East  -> pushLogMsgM "player moved East"
+          West  -> pushLogMsgM "player moved West"
+          _     -> return ()
         pushEventM $
-        MoveEntityDirectionEvent $ MoveEntityDirectionEventData playerUUID dir
+          MoveEntityDirectionEvent $ MoveEntityDirectionEventData playerUUID dir
+        -- $(newEvent "MoveEntity") playerUUID dir
       processPlayerAttack attackedUUID =
         pushEventM $
         WeaponAttackAttemptEvent $
