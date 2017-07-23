@@ -2,29 +2,29 @@ module Zwerg.Data.UUIDSet where
 
 import Zwerg.Prelude
 
-import qualified Control.Monad as CM (filterM)
+import qualified Control.Monad as CM (filterM, liftM)
 import qualified Data.List as L (delete)
 
 newtype UUIDSet =
-  MkUUIDSet ([UUID])
+  MkUUIDSet [UUID]
   deriving (Eq, Ord, Read, Show, Monoid, Generic)
 
 instance Binary UUIDSet
 
-instance ZWrapped UUIDSet ([UUID]) where
+instance ZWrapped UUIDSet [UUID] where
   unwrap (MkUUIDSet us) = us
 
 instance ZContainer UUIDSet UUID where
   zAdd uuid (MkUUIDSet us) =
-    if (elem uuid us)
+    if uuid `elem` us
        then MkUUIDSet us
        else MkUUIDSet (uuid:us)
   zDelete uuid (MkUUIDSet us) = MkUUIDSet $ L.delete uuid us
-  zMember uuid (MkUUIDSet us) = elem uuid us
+  zMember uuid (MkUUIDSet us) = uuid `elem` us
 
 instance ZFilterable UUIDSet UUID where
   zFilter f (MkUUIDSet us) = MkUUIDSet $ filter f us
-  zFilterM f (MkUUIDSet us) = CM.filterM f us >>= return . MkUUIDSet
+  zFilterM f (MkUUIDSet us) = CM.liftM MkUUIDSet $ CM.filterM f us
 
 instance ZEmptiable UUIDSet where
   zEmpty = MkUUIDSet []

@@ -19,10 +19,9 @@ instance ZWrapped TileMap (Map Position UUID) where
 instance Binary TileMap
 
 instance ZConstructable TileMap [(Position,UUID)] where
-  zConstruct tl = if (length tl /= (mapWidthINT * mapHeightINT))
+  zConstruct tl = if length tl /= (mapWidthINT * mapHeightINT)
       then throwError $ ZError __FILE__ __LINE__ EngineFatal
-           "Attempted to construct a TileMap with number of tiles \
-           not equal to mapWidth * mapHeight"
+           "Attempted to construct a TileMap with number of tiles not equal to mapWidth * mapHeight"
       else return . MkTileMap $ M.fromList tl
 
 tileUUIDatPosition :: (MonadError ZError m)

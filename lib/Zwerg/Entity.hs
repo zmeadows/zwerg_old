@@ -82,7 +82,7 @@ getVisibleTiles uuid = do
   candidatePOSs <-
     filter (\p -> distance Euclidean playerPOS p < fov) <$>
     mapM zConstruct [(x, y) | x <- [minX .. maxX], y <- [minY .. maxY]]
-  candidateTileUUIDs <- mapM (flip tileUUIDatPosition levelTiles) candidatePOSs
+  candidateTileUUIDs <- mapM (`tileUUIDatPosition` levelTiles) candidatePOSs
   -- return $ zFromList $ intersect candidateTileUUIDs $ concat visibleLines
   return $ zFromList candidateTileUUIDs
 
@@ -96,7 +96,7 @@ tileBlocksVision tileUUID = do
       -- or one of the occupants might (ex: really fat goblin)
       occs <- occupants <~> tileUUID
       -- TODO: check if 'any' rather than filter.
-      occsBlock <- zFilterM ((<~>) blocksVision) occs
+      occsBlock <- zFilterM (blocksVision <~>) occs
       return (zSize occsBlock > 0)
 
 tileBlocksPassage :: UUID -> MonadCompReader Bool
@@ -109,7 +109,7 @@ tileBlocksPassage tileUUID = do
       -- or one the tiles occupants might block passage
       occs <- demandViewComp occupants tileUUID
       -- TODO: find first occurence rather than filter.
-      occsBlock <- zFilterM ((<~>) blocksPassage) occs
+      occsBlock <- zFilterM (blocksPassage <~>) occs
       return (zSize occsBlock > 0)
 
 -- DEPRECATED: use tileOn component instead

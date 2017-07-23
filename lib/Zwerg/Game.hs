@@ -172,6 +172,7 @@ processEvent (MoveEntityEvent ed) = do
 
 processEvent (WeaponAttackAttemptEvent ed)
   -- TODO: explicitely calculate hit probability
+  -- TODO: Factor some of this out
  = do
   r <- getRandomR ((0.0, 1.0) :: (Double, Double))
   when (r < 0.5) $ do
@@ -182,7 +183,7 @@ processEvent (WeaponAttackAttemptEvent ed)
         targetedUUIDs <-
           readC $
           getTargetedUUIDs (damageData ^. targetType) (ed ^. defenderUUID)
-        forM_ targetedUUIDs $ \targetUUID -> do
+        forM_ targetedUUIDs $ \targetUUID ->
           pushEventM $
             IncomingDamageEvent $
             IncomingDamageEventData
@@ -202,7 +203,7 @@ processEvent (IncomingDamageEvent ed) = do
 processEvent (OutgoingDamageEvent ed) = do
   modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
   newHP <- demandComp hp (ed ^. defenderUUID)
-  when ((fst $ unwrap $ newHP) == 0) $ do eraseEntity $ ed ^. defenderUUID
+  when (fst (unwrap newHP) == 0) $ eraseEntity $ ed ^. defenderUUID
 
 processEvent _ = return ()
 
@@ -210,7 +211,7 @@ processEvent _ = return ()
 getGlyphMapUpdates :: MonadCompState GlyphMap
 getGlyphMapUpdates = do
   visibleTiles <- readC $ getVisibleTiles playerUUID
-  tilesWithUpdatedNeeded <- zFilterM ( (<@>) needsRedraw) visibleTiles
+  tilesWithUpdatedNeeded <- zFilterM (needsRedraw <@>) visibleTiles
 
   updatedGlyphs <-
     forM (zToList tilesWithUpdatedNeeded) $ \tileUUID -> do

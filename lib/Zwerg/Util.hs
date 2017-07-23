@@ -5,6 +5,8 @@ import Paths_zwerg (getDataFileName)
 
 import Control.Exception.Base (assert)
 import Control.Monad.IO.Class (MonadIO, liftIO)
+
+{-
 import Data.List (words)
 import Data.Typeable (typeOf)
 import Language.Haskell.TH
@@ -12,12 +14,13 @@ import Unsafe (unsafeLast)
 
 constrRecord :: Typeable a => a -> ExpQ
 constrRecord x = rei ex where
-    rei   = \(Just r) -> appE r $ conE $ mkName $ unsafeLast args
-    ex     = foldl (dot) uncur $ replicate terms uncur
-    terms   = ((length args) `div` 2) - 2
-    dot a b = (Just $ infixE a (varE $ mkName ".") b)
-    uncur   = (Just [|uncurry|])
-    args    = words . show $ typeOf x
+    rei (Just r) = appE r $ conE $ mkName $ unsafeLast args
+    ex           = foldl dot uncur $ replicate terms uncur
+    terms        = (length args `div` 2) - 2
+    dot a b      = Just $ infixE a (varE $ mkName ".") b
+    uncur        = Just [|uncurry|]
+    args         = words . show $ typeOf x
+-}
 
 getAsset
   :: MonadIO m
@@ -65,5 +68,5 @@ takeWhileM1 _ [] = return []
 takeWhileM1 p (x:xs) = do
   q <- p x
   if q
-    then (takeWhileM1 p xs) >>= (return . (:) x)
+     then liftM ((:) x) (takeWhileM1 p xs)
     else return [x]

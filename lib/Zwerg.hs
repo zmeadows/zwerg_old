@@ -115,11 +115,9 @@ handleEventZwerg zs (BT.VtyEvent ev) =
           (st', err, gen') = runGame (processUserInput kc) gen st
           zs' = set gameState st' $ set ranGen gen' zs
       case err of
-        Just _ -> do
-          BM.halt zs'
-        Nothing -> do
+        Just _ -> BM.halt zs'
+        Nothing -> BM.continue zs'
           -- liftIO $ encodeFile "binary_components.dat" (zs' ^. components)
-          BM.continue zs'
     _ -> BM.continue zs
 handleEventZwerg a b = BM.resizeOrQuit a b
 
