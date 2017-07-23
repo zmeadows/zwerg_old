@@ -29,7 +29,7 @@ instance ZConstructable (Menu a) [(Text, a)] where
   zConstruct xs =
     if | null xs ->
          throwError $
-         ZError __FILE__ __LINE__ Fatal "Tried to construct empty menu"
+         ZError __FILE__ __LINE__ EngineFatal "Tried to construct empty menu"
        | otherwise -> return $ makeMenu xs
 
 cycleMenu :: Menu a -> Menu a

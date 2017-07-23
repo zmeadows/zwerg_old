@@ -37,7 +37,7 @@ instance ZConstructable Position (Int, Int) where
            ZError
              __FILE__
              __LINE__
-             Fatal
+             EngineFatal
              "Attempted to construct an invalid Position"
 
 {-# INLINABLE distance #-}

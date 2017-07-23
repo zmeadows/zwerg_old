@@ -22,7 +22,7 @@ instance ZConstructable HP (Int, Int) where
          ZError
            __FILE__
            __LINE__
-           Fatal
+           EngineFatal
            "Attempted to create an invalid HP object"
 
 instance ZWrapped HP (Int, Int) where
