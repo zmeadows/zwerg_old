@@ -1,5 +1,5 @@
 name:                zwerg
-version:             0.0.1.0
+version:             0.0.1
 synopsis:            A roguelike game.
 description:         see README.md
 homepage:            http://github.com/zmeadows/zwerg
@@ -7,7 +7,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Zac Meadows
 maintainer:          zmeadows@gmail.com
-copyright:           2015 Zachary Meadows
+copyright:           Copyright 2015-2017 Zachary Meadows
 category:            Game
 build-type:          Simple
 cabal-version:       >=1.10
@@ -120,9 +120,10 @@ executable zwerg
   default-language:    Haskell2010
 
   ghc-options:         -Wall
+                       -Werror
                        -optc-O3
                        -optc-ffast-math
-                       -threaded
+                       -funbox-strict-fields
                        -O1
                        -funfolding-use-threshold=16
 
