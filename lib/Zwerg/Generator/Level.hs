@@ -19,6 +19,7 @@ levelSkeletonGenerator levelUUID =
             addComp uuid position pos
             addComp uuid occupants zEmpty
             addComp uuid blocksPassage True
+            addComp uuid needsRedraw True
             addComp uuid level levelUUID
             return (pos, uuid)
         zConstruct tileList >>= setComp levelUUID tileMap
