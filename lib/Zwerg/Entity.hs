@@ -17,11 +17,8 @@ import Zwerg.Component.All
 import Zwerg.Data.Equipment
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Prelude
-import Zwerg.Util
 
-import Control.Monad.Loops
-import Data.List (intersect)
-import Unsafe (unsafeHead, unsafeTail)
+import Unsafe (unsafeHead)
 
 unEquipItem :: UUID -> EquipmentSlot -> MonadCompState ()
 unEquipItem entityUUID slot = do
@@ -63,7 +60,7 @@ getEquippedWeapon entityUUID =
 getVisibleTiles :: UUID -> MonadCompReader UUIDSet
 getVisibleTiles uuid = do
   -- TODO: use ST monad to implement classic impreative mutable algorithm?
-  levelTiles <- level <~> uuid >>= demandViewComp tiles
+  -- levelTiles <- level <~> uuid >>= demandViewComp tiles
   playerPOS <- position <~> uuid
   fov <- viewRange <~> uuid
   levelTiles <- level <~> uuid >>= demandViewComp tileMap
@@ -112,7 +109,7 @@ tileBlocksPassage tileUUID = do
       -- or one the tiles occupants might block passage
       occs <- demandViewComp occupants tileUUID
       -- TODO: find first occurence rather than filter.
-      occsBlock <- zFilterM (demandViewComp blocksPassage) occs
+      occsBlock <- zFilterM ((<~>) blocksPassage) occs
       return (zSize occsBlock > 0)
 
 -- DEPRECATED: use tileOn component instead
@@ -250,5 +247,5 @@ resetTicks entityUUID = setComp entityUUID ticks 50
 getTargetedUUIDs :: TargetType -> UUID -> MonadCompReader [UUID]
 -- TODO: fix AOE/Line implementation (same as SingleTarget for now)
 getTargetedUUIDs SingleTarget mainDefenderUUID = return [mainDefenderUUID]
-getTargetedUUIDs (AOE attackRange) mainDefenderUUID = return [mainDefenderUUID]
-getTargetedUUIDs (Line dir dist) mainDefenderUUID = return [mainDefenderUUID]
+getTargetedUUIDs (AOE _) mainDefenderUUID = return [mainDefenderUUID]
+getTargetedUUIDs (Line _ _) mainDefenderUUID = return [mainDefenderUUID]

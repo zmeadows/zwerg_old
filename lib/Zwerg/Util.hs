@@ -1,25 +1,21 @@
 module Zwerg.Util where
 
 import Zwerg.Prelude
+import Paths_zwerg (getDataFileName)
 
 import Control.Exception.Base (assert)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Paths_zwerg (getDataFileName)
-
-import Unsafe (unsafeLast)
-import Data.Typeable (typeOf)
 import Data.List (words)
+import Data.Typeable (typeOf)
 import Language.Haskell.TH
-import Language.Haskell.TH.Quote
-import Language.Haskell.TH.Syntax
-import Language.Haskell.TH.Lib
+import Unsafe (unsafeLast)
 
 constrRecord :: Typeable a => a -> ExpQ
-constrRecord x = reify exp where
-    reify   = \(Just r) -> appE r $ conE $ mkName $ unsafeLast args
-    exp     = foldl (dot) uncur $ replicate terms uncur
+constrRecord x = rei ex where
+    rei   = \(Just r) -> appE r $ conE $ mkName $ unsafeLast args
+    ex     = foldl (dot) uncur $ replicate terms uncur
     terms   = ((length args) `div` 2) - 2
-    dot x y = (Just $ infixE x (varE $ mkName ".") y)
+    dot a b = (Just $ infixE a (varE $ mkName ".") b)
     uncur   = (Just [|uncurry|])
     args    = words . show $ typeOf x
 

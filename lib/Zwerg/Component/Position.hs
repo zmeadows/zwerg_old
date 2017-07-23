@@ -41,9 +41,7 @@ instance ZConstructable Position (Int, Int) where
              "Attempted to construct an invalid Position"
 
 {-# INLINABLE distance #-}
-distance
-  :: Floating a
-  => Metric -> Position -> Position -> a
+distance :: Metric -> Position -> Position -> Double
 distance metric (MkPosition (x1, y1)) (MkPosition (x2, y2)) =
   let x1' = fromIntegral x1
       y1' = fromIntegral y1

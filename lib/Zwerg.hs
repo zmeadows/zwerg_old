@@ -1,6 +1,4 @@
-module Zwerg
-  ( zwerg
-  ) where
+module Zwerg (zwerg) where
 
 import Zwerg.Component
 import Zwerg.Event
@@ -118,9 +116,10 @@ handleEventZwerg zs (BT.VtyEvent ev) =
           zs' = set gameState st' $ set ranGen gen' zs
       case err of
         Just _ -> do
-          liftIO $ threadDelay 8000000
           BM.halt zs'
-        Nothing -> BM.continue zs'
+        Nothing -> do
+          -- liftIO $ encodeFile "binary_components.dat" (zs' ^. components)
+          BM.continue zs'
     _ -> BM.continue zs
 handleEventZwerg a b = BM.resizeOrQuit a b
 

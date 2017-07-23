@@ -191,7 +191,7 @@ processEvent (WeaponAttackAttemptEvent ed)
               (damageData ^. attribute)
               (damageData ^. distribution)
 
-processEvent (WeaponAttackHitEvent ed) = return ()
+processEvent (WeaponAttackHitEvent _) = return ()
 
 processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
 

@@ -9,7 +9,7 @@ import Zwerg.Event
 import Zwerg.Prelude
 import Zwerg.Random
 
-import Control.Monad.Loops
+import Control.Monad.Loops (minimumByM)
 import Control.Monad.Random (RandT, evalRandT)
 import Data.Maybe (fromJust)
 

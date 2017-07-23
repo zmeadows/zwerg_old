@@ -3,16 +3,9 @@ module Zwerg.Util.Geometry
   , circle
   ) where
 
-import Zwerg.Component
-import Zwerg.Data.UUIDSet
 import Zwerg.Prelude
 
 import Unsafe
-
-import qualified Data.Map as M
-import Data.Map.Lazy (Map)
-import Data.Set (Set)
-import qualified Data.Set as S
 
 circle :: (Int, Int) -> Int -> [(Int, Int)]
 circle p0 r = circle' p0 (r, 0) 0 []
@@ -64,20 +57,20 @@ balancedWord p q eps
   | eps + p < q = 0 : balancedWord p q (eps + p)
   | otherwise = 1 : balancedWord p q (eps + p - q)
 
-data FOVContext = FOVContext
-  { _fovRange :: Double
-  , _tileMap :: Map (Int, Int) (Bool, UUID)
-  , _playerPos :: (Int, Int)
-  }
-
-type FOVAlgorithm = StateT UUIDSet (Reader FOVContext) ()
-
-makeTileMap :: MonadCompReader (Map (Int, Int) (Bool, UUID))
-makeTileMap = return M.empty
-
-runFOValg :: FOVAlgorithm -> MonadCompReader UUIDSet
-runFOValg _ = return zEmpty
-
--- FOV --
-simpleFOV :: FOVAlgorithm
-simpleFOV = return ()
+-- data FOVContext = FOVContext
+--   { _fovRange :: Double
+--   , _tileMap :: Map (Int, Int) (Bool, UUID)
+--   , _playerPos :: (Int, Int)
+--   }
+-- 
+-- type FOVAlgorithm = StateT UUIDSet (Reader FOVContext) ()
+-- 
+-- makeTileMap :: MonadCompReader (Map (Int, Int) (Bool, UUID))
+-- makeTileMap = return M.empty
+-- 
+-- runFOValg :: FOVAlgorithm -> MonadCompReader UUIDSet
+-- runFOValg _ = return zEmpty
+-- 
+-- -- FOV --
+-- simpleFOV :: FOVAlgorithm
+-- simpleFOV = return ()
