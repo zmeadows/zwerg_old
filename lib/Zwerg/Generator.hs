@@ -9,6 +9,7 @@ import Zwerg.Component as EXPORTED
 import Zwerg.Component.All as EXPORTED
 import Zwerg.Data.Damage as EXPORTED
 import Zwerg.Data.UUIDSet as EXPORTED
+import Zwerg.Data.Equipment as EXPORTED
 import Zwerg.Entity as EXPORTED
 import Zwerg.Event as EXPORTED
 import Zwerg.Prelude as EXPORTED
