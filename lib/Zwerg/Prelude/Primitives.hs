@@ -51,9 +51,7 @@ instance ZWrapped UUID Int where
 instance ZConstructable UUID Int where
   zConstruct x =
     if | x >= 0 -> return $ MkUUID x
-       | otherwise ->
-         throwError $
-         ZError __FILE__ __LINE__ EngineFatal "Attempted to construct UUID < 0"
+       | otherwise -> $(throw) EngineFatal "Attempted to construct UUID < 0"
 
 playerUUID :: UUID
 playerUUID = MkUUID 0

@@ -18,12 +18,7 @@ instance ZConstructable HP (Int, Int) where
     if | curHP >= 0 && curHP <= maxHP && maxHP > 0 ->
          return $ MkHP (curHP, maxHP)
        | otherwise ->
-         throwError $
-         ZError
-           __FILE__
-           __LINE__
-           EngineFatal
-           "Attempted to create an invalid HP object"
+         $(throw) EngineFatal "Attempted to create an invalid HP object"
 
 instance ZWrapped HP (Int, Int) where
   unwrap (MkHP hp) = hp

@@ -45,7 +45,7 @@ equipItem itemUUID entityUUID = do
         Armor -> do
           unEquipItem entityUUID (Right LeftHand)
           modComp entityUUID equipment $ equip (Right LeftHand) itemUUID
-        _ -> throwError $ ZError __FILE__ __LINE__ EngineFatal "invalid item type."
+        _ -> $(throw) EngineFatal "invalid tem type."
     BothHands -> do
       unEquipItem entityUUID (Right RightHand)
       unEquipItem entityUUID (Right LeftHand)
@@ -138,8 +138,7 @@ getPlayerAdjacentEnemy dir = do
          | zSize adjacentTileEnemyOccupants == 1 ->
            return $ Just $ unsafeHead $ zToList adjacentTileEnemyOccupants
          | otherwise ->
-           throwError $
-           ZError __FILE__ __LINE__ EngineFatal "found multiple enemies on same tile"
+           $(throw) EngineFatal "found multiple enemies on same tile"
     Nothing -> return Nothing
 
 getAdjacentTileUUID :: Direction -> UUID -> MonadCompReader (Maybe UUID)
@@ -173,7 +172,7 @@ removeOccupant :: UUID -> UUID -> MonadCompState ()
 removeOccupant oldOccupantUUID occupiedUUID = do
   occupiedType <- entityType <@> occupiedUUID
   if occupiedType `notElem` [Tile, Container]
-    then throwError $ ZError __FILE__ __LINE__ EngineFatal
+    then $(throw) EngineFatal
          "Attempted to remove an occupant from an entity that doesn't support it"
     else do
       modComp occupiedUUID occupants $ zDelete oldOccupantUUID
@@ -183,12 +182,7 @@ addOccupant :: UUID -> UUID -> MonadCompState ()
 addOccupant newOccupantUUID occupiedUUID = do
   occupiedType <- entityType <@> occupiedUUID
   if occupiedType `notElem` [Tile, Container]
-    then throwError $
-         ZError
-           __FILE__
-           __LINE__
-           EngineFatal
-           "Attempted to add an occupant to an entity that doesn't support it"
+    then $(throw) EngineFatal "Attempted to add an occupant to an entity that doesn't support it"
     else do
       modComp occupiedUUID occupants $ zAdd newOccupantUUID
       setComp occupiedUUID needsRedraw True

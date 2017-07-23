@@ -33,12 +33,7 @@ instance ZConstructable Position (Int, Int) where
   zConstruct pos =
     if isValidPosition pos
       then return . MkPosition $ pos
-      else throwError $
-           ZError
-             __FILE__
-             __LINE__
-             EngineFatal
-             "Attempted to construct an invalid Position"
+      else $(throw) EngineFatal "Attempted to construct an invalid Position"
 
 {-# INLINABLE distance #-}
 distance :: Metric -> Position -> Position -> Double

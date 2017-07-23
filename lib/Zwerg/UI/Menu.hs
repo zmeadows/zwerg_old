@@ -30,9 +30,7 @@ instance Binary a => Binary (Menu a)
 
 instance ZConstructable (Menu a) [(Text, a)] where
   zConstruct xs =
-    if | null xs ->
-         throwError $
-         ZError __FILE__ __LINE__ EngineFatal "Tried to construct empty menu"
+    if | null xs -> $(throw) EngineFatal "Tried to construct empty menu"
        | otherwise -> return $ makeMenu xs
 
 cycleMenu :: Menu a -> Menu a
