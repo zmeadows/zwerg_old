@@ -109,13 +109,8 @@ processUserInput' (MainMenu m:_) Return =
   case view label $ focus m of
     "new game" -> do
       generateGame
-      -- TODO: factor out as empty glyph map function
-      let xs = [0 .. mapWidthINT - 1]
-          ys = [0 .. mapHeightINT - 1]
-          emptyGlyph = Glyph ' ' Black0 Black0 (Just Black0) (Just Black0)
-      ts <- mapM zConstruct [(x, y) | x <- xs, y <- ys]
-      portal .=
-        [MainScreen $ mkGlyphMap $ map (\p -> (p, (emptyGlyph, False))) ts]
+      gm <- blankGlyphMap
+      portal .= [MainScreen gm]
     "exit" -> portal .= [ExitScreen]
     _ -> return ()
 
@@ -154,17 +149,20 @@ processEvent (MoveEntityEvent ed) = do
   levelTiles <- level <@> (ed ^. moverUUID) >>= (<@>) tileMap
   newTileUUID <- TM.tileUUIDatPosition (ed ^. newPosition) levelTiles
   newTileBlocked <- readC $ tileBlocksPassage newTileUUID
+
   when (newTileBlocked && (ed ^. moverUUID) /= playerUUID) $
     $(throw) EngineFatal "NPC Entity attempted to move to blocked tile"
+
   when (newTileBlocked && (ed ^. moverUUID) == playerUUID) $
     $(throw) PlayerWarning "Player attempted to move to a blocked tile"
+
   oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
   transferOccupant (ed ^. moverUUID) oldTileUUID newTileUUID
   setComp (ed ^. moverUUID) position (ed ^. newPosition)
 
 processEvent (WeaponAttackAttemptEvent ed)
   -- TODO: explicitely calculate hit probability
-  -- TODO: Factor some of this out
+  -- FIXME: refactor this ugly shit.
  = do
   r <- getRandomR ((0.0, 1.0) :: (Double, Double))
   when (r < 0.5) $ do
