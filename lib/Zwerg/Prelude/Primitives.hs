@@ -25,24 +25,13 @@ import Protolude
 import Zwerg.Prelude.Class
 import Zwerg.Data.ZError
 
--- import Control.Monad.Random.Class as EXPORTED
 import Data.Binary as EXPORTED (Binary)
--- import Data.Monoid as EXPORTED ((<>))
--- import Data.Text as EXPORTED (Text, pack, unpack)
--- import Data.Traversable as EXPORTED (forM)
--- import GHC.Generics as EXPORTED (Generic)
--- import Lens.Micro.Internal as EXPORTED
---        (At(..), Ixed(..), Index, IxValue)
--- import Lens.Micro.Platform as EXPORTED
---        (makeClassy, makeLenses, makeFields, (%=), (^.), (.=), over, use,
---         view, to, set, Lens', (<&>))
---
+
 import Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as M
 
 newtype UUID = MkUUID Int
   deriving (Show, Read, Eq, Bounded, Enum, Num, Ord, Generic)
-
 instance Binary UUID
 
 instance ZWrapped UUID Int where
@@ -66,40 +55,25 @@ data Direction
   | SouthWest
   | SouthEast
   deriving (Show, Read, Eq, Generic)
-
 instance Binary Direction
+
+cardinalDirections :: [Direction]
+cardinalDirections = [North,South,East,West]
 
 data TargetType
   = SingleTarget
   | AOE Double
   | Line Direction Int
   deriving (Show, Read, Eq, Generic)
-
 instance Binary TargetType
 
 data Color
-  = Green0
-  | Green1
-  | Green2
-  | Green3
-  | Blue0
-  | Blue1
-  | Blue2
-  | Blue3
-  | Red0
-  | Red1
-  | Red2
-  | Red3
-  | Black0
-  | Black1
-  | Black2
-  | Black3
-  | White0
-  | White1
-  | White2
-  | White3
+  = Green0 | Green1 | Green2 | Green3
+  | Blue0  | Blue1  | Blue2  | Blue3
+  | Red0   | Red1   | Red2   | Red3
+  | Black0 | Black1 | Black2 | Black3
+  | White0 | White1 | White2 | White3
   deriving (Eq, Read, Show, Generic)
-
 instance Binary Color
 
 data Glyph = Glyph
@@ -109,7 +83,6 @@ data Glyph = Glyph
   , bgColorVIS :: Maybe Color
   , bgColorFOG :: Maybe Color
   } deriving (Show, Read, Eq, Generic)
-
 instance Binary Glyph
 
 data EntityType
@@ -120,28 +93,22 @@ data EntityType
   | Level
   | Container
   deriving (Show, Read, Eq, Ord, Enum, Generic)
-
 instance Binary EntityType
-
 
 data Parent = Alive UUID | Dead
   deriving (Show, Read, Eq, Generic)
-
 instance Binary Parent
 
 data TileType = Floor | Wall | Door | Void
   deriving (Show, Read, Eq, Generic)
-
 instance Binary TileType
 
 data Stat = STR | DEX | INT | CHA | CON | WIS
   deriving (Read, Show, Eq, Ord, Enum, Generic)
-
 instance Binary Stat
 
 newtype Stats = MkStats (Map Stat Int)
   deriving (Show, Read, Eq, Generic)
-
 instance Binary Stats
 
 zeroStats :: Stats
@@ -157,12 +124,10 @@ replaceStat s v (MkStats m) = MkStats $ M.insert s v m
 
 data ItemType = Armor | Weapon | Potion | Scroll
   deriving (Show, Read, Eq, Ord, Enum, Generic)
-
 instance Binary ItemType
 
 data AIType = SimpleMeleeCreature | SimpleRangedCreature
   deriving (Show, Read, Eq, Ord, Enum, Generic)
-
 instance Binary AIType
 
 ------------

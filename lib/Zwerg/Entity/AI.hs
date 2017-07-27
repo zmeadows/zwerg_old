@@ -49,9 +49,8 @@ enact :: UUID -> AIType -> AI ()
 
 enact entityUUID SimpleMeleeCreature = do
   tileUUID <- getEntityTileUUID entityUUID
-  possTiles <-
-    catMaybes <$>
-    mapM (`getAdjacentTileUUID` tileUUID) [North, South, East, West]
+  --TODO: enum from the Directions
+  possTiles <- catMaybes <$> mapM (`getAdjacentTileUUID` tileUUID) cardinalDirections
   openPossTiles <- filterM (\i -> not <$> tileBlocksPassage i) possTiles
   playerPos <- position <~> playerUUID
   let distanceToPlayer e1UUID e2UUID = do
