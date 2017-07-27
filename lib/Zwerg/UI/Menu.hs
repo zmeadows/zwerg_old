@@ -1,4 +1,17 @@
-module Zwerg.UI.Menu where
+module Zwerg.UI.Menu (
+  MenuEntry,
+  Menu,
+  next,
+  prev,
+  makeMenu,
+  label,
+  shortcut,
+  item,
+  focus,
+  getMenuLabels,
+  getMenuFocusIndex,
+  TextMenu
+  ) where
 
 import Zwerg.Prelude
 
@@ -33,13 +46,12 @@ instance ZConstructable (Menu a) [(Text, a)] where
     if | null xs -> $(throw) EngineFatal "Tried to construct empty menu"
        | otherwise -> return $ makeMenu xs
 
-cycleMenu :: Menu a -> Menu a
-cycleMenu (MkMenu ls x rs) = MkMenu rs x ls
-
 next :: Menu a -> Menu a
 next m@(MkMenu ls x rs) =
   if | S.null rs && S.null ls -> m
-     | S.null rs && not (S.null ls) -> next $ cycleMenu m
+     | S.null rs && not (S.null ls) ->
+       let (a :< ls') = S.viewl ls
+        in MkMenu S.empty a (ls' |> x)
      | otherwise ->
        let (a :< rs') = S.viewl rs
        in MkMenu (ls |> x) a rs'
@@ -47,7 +59,9 @@ next m@(MkMenu ls x rs) =
 prev :: Menu a -> Menu a
 prev m@(MkMenu ls x rs) =
   if | S.null ls && S.null rs -> m
-     | S.null ls && not (S.null rs) -> prev $ cycleMenu m
+     | S.null ls && not (S.null rs) ->
+       let (rs' :> a) = S.viewr rs
+       in MkMenu (x <| rs') a S.empty
      | otherwise ->
        let (ls' :> a) = S.viewr ls
        in MkMenu ls' a (x <| rs)
