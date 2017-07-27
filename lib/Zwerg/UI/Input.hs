@@ -8,4 +8,8 @@ data KeyCode =
     | Escape
     | Backspace
     | Tab
+    | UpArrow
+    | DownArrow
+    | LeftArrow
+    | RightArrow
     deriving (Show, Read, Eq)
