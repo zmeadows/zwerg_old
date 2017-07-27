@@ -10,31 +10,16 @@ import Zwerg.Prelude
 import Data.IntMap.Lazy (IntMap)
 import qualified Data.IntMap.Lazy as IM
 
-newtype UUIDMap a =
-  MkUUIDMap (IntMap a)
-  deriving ( Show
-           , Read
-           , Eq
-           , Ord
-           , Functor
-           , Foldable
-           , Traversable
-           , Monoid
-           , Generic
-           )
-
-instance Binary a =>
-         Binary (UUIDMap a)
+newtype UUIDMap a = MkUUIDMap (IntMap a)
+  deriving (Show, Read, Eq, Ord, Functor, Foldable, Traversable, Monoid, Generic)
+instance Binary a => Binary (UUIDMap a)
 
 data NamedUUIDMap a = NamedUUIDMap
   { _componentName :: Text
   , _uuidMap :: UUIDMap a
   } deriving (Show, Read, Eq, Ord, Functor, Foldable, Traversable, Generic)
-
 makeClassy ''NamedUUIDMap
-
-instance Binary a =>
-         Binary (NamedUUIDMap a)
+instance Binary a => Binary (NamedUUIDMap a)
 
 instance ZEmptiable (UUIDMap a) where
   zEmpty = MkUUIDMap IM.empty
@@ -48,6 +33,7 @@ instance ZIsList (UUIDMap a) (Int, a) where
   zToList (MkUUIDMap um) = IM.toList um
   zFromList = MkUUIDMap . IM.fromList
 
+-- TODO: remove these classes... they dillute the point of newtype?
 instance ZMapContainer (UUIDMap a) UUID a where
   zLookup uuid (MkUUIDMap m) = IM.lookup (unwrap uuid) m
   zAdjust f uuid (MkUUIDMap m) = MkUUIDMap $ IM.adjust f (unwrap uuid) m
@@ -57,11 +43,11 @@ instance ZMapContainer (UUIDMap a) UUID a where
 
 instance ZFilterable (UUIDMap a) (Int, a) where
   zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (curry f) m
-  zFilterM f (MkUUIDMap m) =
-    MkUUIDMap . IM.fromAscList <$> filterM f (IM.toAscList m)
+  zFilterM f (MkUUIDMap m) = MkUUIDMap . IM.fromAscList <$> filterM f (IM.toAscList m)
 
 type instance IxValue (UUIDMap a) = a
 
+-- TODO: just reference IntMap implementation?
 instance Ixed (UUIDMap a) where
   ix k f m =
     case zLookup k m of
@@ -70,6 +56,7 @@ instance Ixed (UUIDMap a) where
 
 type instance Index (UUIDMap a) = UUID
 
+-- TODO: just reference IntMap implementation?
 instance At (UUIDMap a) where
   at k f m =
     f mv <&> \r ->
@@ -79,9 +66,8 @@ instance At (UUIDMap a) where
     where
       mv = zLookup k m
 
-getMinimumUUIDs
-  :: (Ord a, Bounded a, MonadError ZError m)
-  => UUIDMap a -> m (a, [UUID])
+getMinimumUUIDs :: (Ord a, Bounded a, MonadError ZError m)
+                => UUIDMap a -> m (a, [UUID])
 getMinimumUUIDs (MkUUIDMap um) =
   let (amin, ids) = IM.foldrWithKey f (minBound, []) um
   in liftM (amin, ) $ mapM zConstruct ids
