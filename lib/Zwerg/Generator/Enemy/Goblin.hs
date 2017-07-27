@@ -4,9 +4,8 @@ import Data.Text (append)
 import Zwerg.Generator
 import Zwerg.Generator.Item.Weapon
 
-goblin :: Generator UUID
-goblin =
-  MkGenerator $ do
+goblin :: Generator
+goblin = MkGenerator $ do
     goblinUUID <- popUUID
     generateGoblinName >>= addComp goblinUUID name
     goblinHP <- getRandomR (3, 7)

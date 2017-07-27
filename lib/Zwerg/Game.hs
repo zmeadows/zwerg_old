@@ -15,7 +15,6 @@ import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
 import Zwerg.UI.Port
-import Zwerg.Util
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
 
@@ -106,7 +105,7 @@ processUserInput' (MainMenu m:ps) (KeyChar 'j') = portal .= (MainMenu $ next m) 
 processUserInput' (MainMenu m:ps) (KeyChar 'k') = portal .= (MainMenu $ prev m) : ps
 
 processUserInput' (MainMenu m:_) Return =
-  case view label $ focus m of
+  case focus m ^. label of
     "new game" -> do
       generateGame
       gm <- blankGlyphMap

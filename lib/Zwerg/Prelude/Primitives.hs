@@ -2,6 +2,7 @@ module Zwerg.Prelude.Primitives
   ( UUID
   , playerUUID
   , Direction(..)
+  , cardinalDirections
   , TargetType(..)
   , Color(..)
   , Glyph(..)

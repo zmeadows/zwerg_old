@@ -50,7 +50,7 @@ next :: Menu a -> Menu a
 next m@(MkMenu ls x rs) =
   if | S.null rs && S.null ls -> m
      | S.null rs && not (S.null ls) ->
-       let (a :< ls') = S.viewl ls
+        let (a :< ls') = S.viewl ls
         in MkMenu S.empty a (ls' |> x)
      | otherwise ->
        let (a :< rs') = S.viewl rs

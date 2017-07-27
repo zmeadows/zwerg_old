@@ -10,9 +10,7 @@ import Data.Sequence (Seq, (><), (|>), ViewL(..))
 import qualified Data.Sequence as S
 
 import Language.Haskell.TH
--- import Language.Haskell.TH.Quote
 import Language.Haskell.TH.Syntax
--- import Language.Haskell.TH.Lib
 
 data IncomingDamageEventData = IncomingDamageEventData
   { _incomingDamageEventDataAttackerUUID :: UUID
@@ -111,8 +109,7 @@ instance ZEmptiable ZwergEventQueue where
   zIsNull = S.null . unwrap
   zSize   = S.length . unwrap
 
-popEvent :: (HasZwergEventQueue s, MonadState s m)
-         => m (Maybe ZwergEvent)
+popEvent :: (HasZwergEventQueue s, MonadState s m) => m (Maybe ZwergEvent)
 popEvent = do
   eq <- use eventQueue
   if | zIsNull eq -> return Nothing

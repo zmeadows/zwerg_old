@@ -2,11 +2,9 @@ module Zwerg.Generator.Player.TestPlayer where
 
 import Zwerg.Generator
 import Zwerg.Generator.Item.Weapon
-import Zwerg.Util
 
-testPlayerGenerator :: UUID -> Generator ()
-testPlayerGenerator startLevelUUID =
-  MkGenerator $ do
+testPlayerGenerator :: UUID -> Generator' ()
+testPlayerGenerator startLevelUUID = MkGenerator $ do
     let addPlayerComp = addComp playerUUID
     addPlayerComp name "Bob"
     addPlayerComp level startLevelUUID

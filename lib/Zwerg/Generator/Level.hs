@@ -5,7 +5,7 @@ module Zwerg.Generator.Level
 
 import Zwerg.Generator as EXPORTED
 
-levelSkeletonGenerator :: UUID -> Generator ()
+levelSkeletonGenerator :: UUID -> Generator' ()
 levelSkeletonGenerator levelUUID =
   MkGenerator $
   let xs = [0 .. mapWidthINT - 1]

@@ -4,9 +4,8 @@ module Zwerg.Generator.Item.Weapon
 
 import Zwerg.Generator
 
-sword :: Generator UUID
-sword =
-  MkGenerator $ do
+sword :: Generator
+sword = MkGenerator $ do
     swordUUID <- popUUID
     addComp swordUUID name "Short Sword"
     addComp swordUUID glyph $ Glyph '/' Black1 Black3 Nothing Nothing

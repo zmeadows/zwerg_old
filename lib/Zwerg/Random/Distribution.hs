@@ -5,25 +5,19 @@ module Zwerg.Random.Distribution
 
 import Zwerg.Prelude
 
-import qualified Control.Monad.Random as CMR
-       (MonadRandom, getRandom)
+import qualified Control.Monad.Random as CMR (MonadRandom, getRandom)
 import qualified Data.Random.Distribution.Uniform as RU
 import qualified Data.Random.RVar as RV
 
 data Distribution
-  = Uniform Double
-            Double
-  | Normal Double
-           Double
+  = Uniform Double Double
+  | Normal Double Double
   deriving (Show, Read, Eq, Ord, Generic)
 
 instance Binary Distribution
 
 -- TODO: add more distributions and complete this function
-sample
-  :: forall m.
-     (CMR.MonadRandom m)
-  => Distribution -> m Double
+sample :: forall m.  (CMR.MonadRandom m) => Distribution -> m Double
 sample (Uniform low high) =
   RV.runRVar (RU.uniform low high) (CMR.getRandom :: m Word64)
 sample (Normal low high) =

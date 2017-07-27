@@ -25,11 +25,11 @@ mkGlyphMap = MkGlyphMap . M.fromList
 
 blankGlyphMap :: MonadError ZError m => m GlyphMap
 blankGlyphMap = do
- let xs = [0 .. mapWidthINT - 1]
-     ys = [0 .. mapHeightINT - 1]
-     emptyGlyph = Glyph ' ' Black0 Black0 (Just Black0) (Just Black0)
- ts <- mapM zConstruct [(x, y) | x <- xs, y <- ys]
- return $ mkGlyphMap $ map (\p -> (p, (emptyGlyph, False))) ts
+  let xs = [0 .. mapWidthINT - 1]
+      ys = [0 .. mapHeightINT - 1]
+      emptyGlyph = Glyph ' ' Black0 Black0 (Just Black0) (Just Black0)
+  ts <- mapM zConstruct [(x, y) | x <- xs, y <- ys]
+  return $ mkGlyphMap $ map (\p -> (p, (emptyGlyph, False))) ts
 
 mergeGlyphMaps :: GlyphMap -> GlyphMap -> GlyphMap
 mergeGlyphMaps (MkGlyphMap gmUpdated) (MkGlyphMap gmMain) =
