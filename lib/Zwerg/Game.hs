@@ -17,8 +17,7 @@ import Zwerg.UI.Menu
 import Zwerg.UI.Port
 import Zwerg.Util
 
-import Control.Monad.Random
-       (runRandT, RandT, MonadRandom, getRandomR)
+import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
 
 data GameState = GameState
   { _gsComponents :: Components
@@ -104,8 +103,7 @@ processUserInput k = do
 processUserInput' :: Portal -> KeyCode -> Game ()
 
 processUserInput' (MainMenu m:ps) (KeyChar 'j') = portal .= (MainMenu $ next m) : ps
-
-processUserInput' (MainMenu m:_) (KeyChar 'k') = portal .= [MainMenu $ prev m]
+processUserInput' (MainMenu m:ps) (KeyChar 'k') = portal .= (MainMenu $ prev m) : ps
 
 processUserInput' (MainMenu m:_) Return =
   case view label $ focus m of
