@@ -1,4 +1,4 @@
-module Zwerg.Generator.Enemy.Goblin where
+module Zwerg.Generator.Enemy.Goblin (goblin) where
 
 import Data.Text (append)
 import Zwerg.Generator
@@ -9,10 +9,10 @@ goblin =
   MkGenerator $ do
     goblinUUID <- popUUID
     generateGoblinName >>= addComp goblinUUID name
-    addComp goblinUUID glyph $ Glyph 'g' Green0 Green3 Nothing Nothing
     goblinHP <- getRandomR (3, 7)
     zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
-    -- getRandomR (1, 100) >>= addComp goblinUUID ticks
+    -- TODO: initial ticks random
+    addComp goblinUUID glyph $ Glyph 'g' Green0 Green3 Nothing Nothing
     addComp goblinUUID ticks 1
     addComp goblinUUID entityType Enemy
     addComp goblinUUID equipment emptyEquipment
