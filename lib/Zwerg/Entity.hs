@@ -20,42 +20,37 @@ import Zwerg.Prelude
 
 import Unsafe (unsafeHead)
 
+-- dropItem entityUUID droppedItemUUID
+
 unEquipItem :: UUID -> EquipmentSlot -> MonadCompState ()
-unEquipItem entityUUID slot = do
+unEquipItem entityUUID islot = do
 -- TODO add unequipped item to inventory
--- TODO deal with single/two handedness
-  eqp <- equipment <@> entityUUID
-  let (_, eqp') = unequip slot eqp
-  setComp entityUUID equipment eqp'
+  (_, newEquipment) <- unequip islot <$> equipment <@> entityUUID
+  setComp entityUUID equipment newEquipment
 
 equipItem :: UUID -> UUID -> MonadCompState ()
 equipItem itemUUID entityUUID = do
-  -- TODO lambdacase for slot/iType
-  slot <- equippableSlot <@> itemUUID
-  iType <- itemType <@> itemUUID
-  case slot of
-    Body x -> do
-      unEquipItem entityUUID (Left x)
-      modComp entityUUID equipment $ equip (Left x) itemUUID
-    SingleHand ->
-      case iType of
-        Weapon -> do
-          unEquipItem entityUUID (Right RightHand)
-          modComp entityUUID equipment $ equip (Right RightHand) itemUUID
-        Armor -> do
-          unEquipItem entityUUID (Right LeftHand)
-          modComp entityUUID equipment $ equip (Right LeftHand) itemUUID
-        _ -> $(throw) EngineFatal "invalid tem type."
-    BothHands -> do
-      unEquipItem entityUUID (Right RightHand)
-      unEquipItem entityUUID (Right LeftHand)
-      modComp entityUUID equipment $ equip (Right LeftHand) itemUUID
-      modComp entityUUID equipment $ equip (Right RightHand) itemUUID
+  islot <- slot <@> itemUUID
+  -- TODO add unequipped item to inventory
+  (_, newEquipment) <- equip islot itemUUID <$> equipment <@> entityUUID
+  setComp entityUUID equipment newEquipment
 
 getEquippedWeapon :: UUID -> MonadCompReader (Maybe UUID)
-getEquippedWeapon entityUUID =
-  -- TODO: handle two-handed weapons?
-  getEquippedInSlot (Right RightHand) <$> equipment <~> entityUUID
+getEquippedWeapon entityUUID = do
+  uuids <- getEquippedInSlot (SingleHand RightHand) <$> equipment <~> entityUUID
+  filterM (isItemType Weapon) uuids >>= \case
+    [] -> return Nothing
+    [x] -> return $ Just x
+    _ -> $(throw) EngineFatal "Entity has multiple weapons equipped, and dual-wielding is not yet implemented."
+
+isItemType :: ItemType -> UUID -> MonadCompReader Bool
+isItemType itypetest uuid =
+  entityType <~> uuid >>= \case
+    Item -> do
+      itype <- itemType <~> uuid
+      return (itype == itypetest)
+    _ -> $(throw) EngineFatal "attempted to compare ItemType for non-Item entity."
+
 
 getVisibleTiles :: UUID -> MonadCompReader UUIDSet
 getVisibleTiles uuid = do
@@ -163,17 +158,14 @@ getPrimaryOccupant occupiedUUID = do
       return maxUUID
 
 getOccupantsOfType :: UUID -> EntityType -> MonadCompReader UUIDSet
-getOccupantsOfType containerUUID eType =
-  occupants <~> containerUUID >>= zFilterM isEtype
-  where
-    isEtype uuid = (eType ==) <$> entityType <~> uuid
+getOccupantsOfType containerUUID eType = occupants <~> containerUUID >>= zFilterM isEtype
+  where isEtype uuid = (eType ==) <$> entityType <~> uuid
 
 removeOccupant :: UUID -> UUID -> MonadCompState ()
 removeOccupant oldOccupantUUID occupiedUUID = do
   occupiedType <- entityType <@> occupiedUUID
   if occupiedType `notElem` [Tile, Container]
-    then $(throw) EngineFatal
-         "Attempted to remove an occupant from an entity that doesn't support it"
+    then $(throw) EngineFatal "Attempted to remove an occupant from an entity that doesn't support it"
     else do
       modComp occupiedUUID occupants $ zDelete oldOccupantUUID
       setComp occupiedUUID needsRedraw True
@@ -221,9 +213,12 @@ eraseEntity uuid = do
   deleteComp uuid damageChain
   deleteComp uuid viewRange
 
---TODO: placeholder. Need to look at creatures Dex, etc.
+--TODO: placeholder. Need to look at creatures Dex, etc
+--TODO: define maximum Statu value
 resetTicks :: UUID -> MonadCompState ()
-resetTicks entityUUID = setComp entityUUID ticks 50
+resetTicks uuid = setComp uuid ticks 100
+  -- dex <- lookupStat DEX <$> stats <~> uuid
+  -- return 100 * (1.0 - (fromIntegral dex) / 200.0)
 
 -- getNextEntityToTick :: MonadCompReader UUID
 -- getNextEntityToTick = do

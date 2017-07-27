@@ -34,7 +34,7 @@ data Components = Components
   , _aiType         :: NamedUUIDMap AIType
   , _damageChain    :: NamedUUIDMap DamageChain
   , _viewRange      :: NamedUUIDMap Double
-  , _equippableSlot :: NamedUUIDMap EquippableSlot
+  , _slot           :: NamedUUIDMap EquipmentSlot
   , _itemType       :: NamedUUIDMap ItemType
   , _needsRedraw    :: NamedUUIDMap Bool
   , _nextUUID       :: UUID
@@ -45,6 +45,7 @@ instance Binary Components
 
 type Component a = forall s. HasComponents s => Lens' s (NamedUUIDMap a)
 
+--TODO: make MonadCompState, MonadCompReader, MonadCompStateErr, MonadCompStateRandom
 -- Basic context for manipulating entity components
 type MonadCompState a = forall s m. ( HasComponents s
                                     , MonadError ZError m
@@ -90,7 +91,7 @@ emptyComponents =
   , _aiType         = NamedUUIDMap "aiType"         zEmpty
   , _damageChain    = NamedUUIDMap "damageChain"    zEmpty
   , _viewRange      = NamedUUIDMap "viewRange"      zEmpty
-  , _equippableSlot = NamedUUIDMap "equippableSlot" zEmpty
+  , _slot           = NamedUUIDMap "slot" zEmpty
   , _itemType       = NamedUUIDMap "itemType"       zEmpty
   , _needsRedraw    = NamedUUIDMap "needsRedraw"    zEmpty
   , _nextUUID       = playerUUID + 1
