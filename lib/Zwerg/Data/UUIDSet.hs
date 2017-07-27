@@ -3,7 +3,7 @@ module Zwerg.Data.UUIDSet where
 import Zwerg.Prelude
 
 import qualified Control.Monad as CM (filterM, liftM)
-import qualified Data.List as L (delete)
+import qualified Data.List as L (delete, nub)
 
 newtype UUIDSet =
   MkUUIDSet [UUID]
@@ -33,4 +33,4 @@ instance ZEmptiable UUIDSet where
 
 instance ZIsList UUIDSet UUID where
   zToList (MkUUIDSet us) = us
-  zFromList = MkUUIDSet
+  zFromList = MkUUIDSet . L.nub
