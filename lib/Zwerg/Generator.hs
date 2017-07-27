@@ -38,7 +38,7 @@ getRandomEmptyTile levelUUID = do
     else Just <$> pickRandom unoccupiedTiles
 
 assignUniformRandomStat
-  :: (HasComponents s, MonadError ZError m, MonadState s m, MonadRandom m)
+  :: (HasComponents s, MonadState s m, MonadRandom m)
   => UUID -> Stat -> (Int, Int) -> m ()
 assignUniformRandomStat targetUUID stat bounds = do
   newStat <- getRandomR bounds
