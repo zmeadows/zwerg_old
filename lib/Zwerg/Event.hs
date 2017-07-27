@@ -129,12 +129,11 @@ pushEventM evt = eventQueue %= MkZwergEventQueue . (|> evt) . unwrap
 
 -- | This template haskell is purely for avoiding boiler plate code.
 newEvent :: Language.Haskell.TH.Syntax.Quasi m => Text -> m Exp
-newEvent "MoveEntity" = runQ [| \a b -> pushEventM $ MoveEntityEvent $ MoveEntityEventData a b|]
+newEvent "MoveEntity"     = runQ [| \a b -> pushEventM $ MoveEntityEvent $ MoveEntityEventData a b|]
 newEvent "IncomingDamage" = runQ [| \a b c d -> pushEventM $ IncomingDamageEvent $ IncomingDamageEventData a b c d|]
 newEvent "OutgoingDamage" = runQ [| \a b c -> pushEventM $ OutgoingDamageEvent $ OutgoingDamageEventData a b c|]
-newEvent _ = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION"|]
+newEvent _                = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION 'newEvent'"|]
 
--- TODO rewrite in less confusing looking way
 mergeEventsM :: (HasZwergEventQueue s, MonadState s m)
              => ZwergEventQueue -> m ()
 mergeEventsM evts = eventQueue %= MkZwergEventQueue . (><) (unwrap evts) . unwrap
