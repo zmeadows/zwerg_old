@@ -125,6 +125,7 @@ executable zwerg
                        -optc-ffast-math
                        -funbox-strict-fields
                        -O1
+                       -threaded
                        -funfolding-use-threshold=16
 
   build-depends:       base >= 4.7 && < 5, zwerg, brick, vty
