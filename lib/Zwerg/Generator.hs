@@ -1,10 +1,10 @@
 module Zwerg.Generator
   ( module EXPORTED
-  , Generator'(..)
   , Generator
+  , Generator'
   , getRandomEmptyTile
   , assignUniformRandomStat
-  , putEntityOnRandomEmptyTile
+  , putOnRandomEmptyTile
   ) where
 
 import Zwerg.Component as EXPORTED
@@ -21,19 +21,19 @@ import Zwerg.Util as EXPORTED
 import Control.Monad.Except as EXPORTED hiding ((<$!>))
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
 
-newtype Generator' a = MkGenerator
-  { generate :: forall s m. ( HasComponents s
-                            , MonadError ZError m
-                            , MonadRandom m
-                            , MonadState s m
-                            ) => m a
-  }
+type Generator = forall s m. ( HasComponents s
+                             , MonadError ZError m
+                             , MonadRandom m
+                             , MonadState s m
+                             ) => m UUID
 
-type Generator = Generator' UUID
+type Generator' a = forall s m. ( HasComponents s
+                                , MonadError ZError m
+                                , MonadRandom m
+                                , MonadState s m
+                                ) => m a
 
-getRandomEmptyTile
-  :: (HasComponents s, MonadState s m, MonadError ZError m, MonadRandom m)
-  => UUID -> m (Maybe UUID)
+getRandomEmptyTile :: UUID -> Generator' (Maybe UUID)
 getRandomEmptyTile levelUUID = do
   levelTiles <- tiles <@> levelUUID
   -- TODO: make sure new tile isn't fully enclosed by walls
@@ -42,18 +42,13 @@ getRandomEmptyTile levelUUID = do
     then return Nothing
     else Just <$> pickRandom unoccupiedTiles
 
-assignUniformRandomStat
-  :: (HasComponents s, MonadState s m, MonadRandom m)
-  => UUID -> Stat -> (Int, Int) -> m ()
+assignUniformRandomStat :: UUID -> Stat -> (Int, Int) -> Generator' ()
 assignUniformRandomStat targetUUID stat bounds = do
   newStat <- getRandomR bounds
   modComp targetUUID stats (replaceStat stat newStat)
 
-putEntityOnRandomEmptyTile
-  :: (HasComponents s, MonadState s m, MonadError ZError m, MonadRandom m)
-  => UUID -> Generator -> m ()
-putEntityOnRandomEmptyTile levelUUID entityGen = do
-  newEntityUUID <- generate entityGen
+putOnRandomEmptyTile :: UUID -> UUID -> Generator' ()
+putOnRandomEmptyTile levelUUID entityUUID = do
   tileUUID <- getRandomEmptyTile levelUUID
   -- TODO modify fromJustErrM to be a template haskell'd function
   tileUUID' <-
@@ -63,6 +58,8 @@ putEntityOnRandomEmptyTile levelUUID entityGen = do
       __LINE__
       EngineFatal
       "Could not find an open tile to place Goblin"
-  addComp newEntityUUID level levelUUID
-  position <@> tileUUID' >>= addComp newEntityUUID position
-  addOccupant newEntityUUID tileUUID'
+  addComp entityUUID level levelUUID
+  -- TODO: where to set tileOn? in addOccupant?
+  addComp entityUUID tileOn tileUUID'
+  position <@> tileUUID' >>= addComp entityUUID position
+  transferOccupant entityUUID Nothing tileUUID'
