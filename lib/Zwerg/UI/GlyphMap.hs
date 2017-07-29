@@ -5,13 +5,10 @@ import Zwerg.Prelude
 import Zwerg.Util
 
 import Data.Map.Lazy (Map)
-import qualified Data.Map.Lazy as M
-       (empty, fromList, union, toList, map)
+import qualified Data.Map.Lazy as M (empty, fromList, union, elems, map)
 
-newtype GlyphMap =
-  MkGlyphMap (Map Position (Glyph, Bool))
+newtype GlyphMap = MkGlyphMap (Map Position (Glyph, Bool))
   deriving (Show, Read, Eq, Generic)
-
 instance Binary GlyphMap
 
 class HasGlyphMap s where
@@ -36,15 +33,5 @@ mergeGlyphMaps (MkGlyphMap gmUpdated) (MkGlyphMap gmMain) =
   MkGlyphMap (M.union gmUpdated $ M.map (\(g, _) -> (g, False)) gmMain)
 
 glyphMapToRows :: GlyphMap -> [[(Glyph, Bool)]]
-glyphMapToRows (MkGlyphMap gm) =
-  let glyphList = M.toList gm
-      sortedGlyphList = sortBy brickCmpPos glyphList
-  in chunksOf mapWidthINT (map snd sortedGlyphList)
+glyphMapToRows (MkGlyphMap gm) = chunksOf mapWidthINT (M.elems gm)
 
-brickCmpPos :: (Position, a) -> (Position, a) -> Ordering
-brickCmpPos (p1, _) (p2, _) =
-  let (x1, y1) = unwrap p1
-      (x2, y2) = unwrap p2
-  in if | y1 > y2 -> GT
-        | x1 > x2 -> GT
-        | otherwise -> LT

@@ -1,10 +1,30 @@
 module Zwerg.Component.Position where
+  --TODO export proper things
 
 import Zwerg.Prelude
 
+newtype ZLevel = MkZLevel Int
+  deriving (Show, Read, Eq, Ord, Generic)
+instance Binary ZLevel
+
+instance ZConstructable ZLevel Int where
+  zConstruct z =
+    if z >= 0
+      then return $ MkZLevel z
+      else $(throw) EngineFatal "Attempted to construct an invalid ZLevel."
+
 newtype Position =
   MkPosition (Int, Int)
-  deriving (Show, Read, Eq, Ord, Generic)
+  deriving (Show, Read, Eq, Generic)
+
+--NOTE: this Ord instance is important, as it keeps the
+--GlyphMap position ordering automatic so we don't have to
+--sort before drawing
+instance Ord Position where
+  compare (MkPosition (x1,y1)) (MkPosition (x2,y2)) =
+    if (y1 /= y2)
+       then compare y1 y2
+       else compare x1 x2
 
 instance Binary Position
 
@@ -69,3 +89,4 @@ validatePosition p =
   if isValidPosition p
     then Just $ MkPosition p
     else Nothing
+
