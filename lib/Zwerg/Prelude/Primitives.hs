@@ -68,6 +68,8 @@ data TargetType
   deriving (Show, Read, Eq, Generic)
 instance Binary TargetType
 
+--TODO: map this onto 256 color?
+  --TODO: fallback 8 bit color?
 data Color
   = Green0 | Green1 | Green2 | Green3
   | Blue0  | Blue1  | Blue2  | Blue3
@@ -76,6 +78,8 @@ data Color
   | White0 | White1 | White2 | White3
   deriving (Eq, Read, Show, Generic)
 instance Binary Color
+
+-- type ColoredText = [(Color, Text)]
 
 data Glyph = Glyph
   { char :: Char
@@ -87,12 +91,12 @@ data Glyph = Glyph
 instance Binary Glyph
 
 data EntityType
-  = Player
-  | Enemy
-  | Item
-  | Tile
-  | Level
+  = Level
   | Container
+  | Tile
+  | Item
+  | Enemy
+  | Player
   deriving (Show, Read, Eq, Ord, Enum, Generic)
 instance Binary EntityType
 
@@ -122,6 +126,7 @@ replaceStat :: Stat -> Int -> Stats -> Stats
 replaceStat s v (MkStats m) = MkStats $ M.insert s v m
 
 -- TODO: modifyStat (Int -> Int)
+-- TODO: maximum stat == 100?
 
 data ItemType = Armor | Weapon | Potion | Scroll
   deriving (Show, Read, Eq, Ord, Enum, Generic)
