@@ -5,13 +5,14 @@ module Zwerg.Data.GridMap
   , traverseWithPos_
   , makeGridMapM
   , makeGridMap
+  , gridMapElems
   ) where
 
 import Zwerg.Prelude
 import Zwerg.Data.Position
 
 import Data.IntMap.Lazy (IntMap)
-import qualified Data.IntMap.Lazy as M (traverseWithKey, lookup, fromList, size)
+import qualified Data.IntMap.Lazy as M (traverseWithKey, lookup, fromList, size, elems)
 import Data.Maybe (fromJust)
 
 newtype GridMap a = MkGridMap (IntMap a)
@@ -41,3 +42,6 @@ traverseWithPos (MkGridMap gm) f = MkGridMap <$> M.traverseWithKey (\i -> f $ (f
 
 traverseWithPos_ :: Applicative t => GridMap a -> (Position -> a -> t b) -> t ()
 traverseWithPos_ g f = void $ traverseWithPos g f
+
+gridMapElems :: GridMap a -> [a]
+gridMapElems (MkGridMap gm) = M.elems gm
