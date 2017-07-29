@@ -133,6 +133,8 @@ newEvent "IncomingDamage" = runQ [| \a b c d -> pushEventM $ IncomingDamageEvent
 newEvent "OutgoingDamage" = runQ [| \a b c -> pushEventM $ OutgoingDamageEvent $ OutgoingDamageEventData a b c|]
 newEvent "MoveEntityDirection" = runQ [| \a b -> pushEventM $ MoveEntityDirectionEvent $ MoveEntityDirectionEventData a b|]
 newEvent "WeaponAttackAttempt" = runQ [| \a b -> pushEventM $ WeaponAttackAttemptEvent $ WeaponAttackAttemptEventData a b|]
+newEvent "WeaponAttackHit" = runQ [| \a b -> pushEventM $ WeaponAttackHitEvent $ WeaponAttackHitEventData a b|]
+newEvent "WeaponAttackMiss" = runQ [| \a b -> pushEventM $ WeaponAttackMissEvent $ WeaponAttackMissEventData a b|]
 newEvent _                = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION 'newEvent'"|]
 
 mergeEventsM :: (HasZwergEventQueue s, MonadState s m)

@@ -130,10 +130,10 @@ processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
     n <- name <@> id
     return $ (n, InventoryMenuItem id d)
   case menuItems of
-    [] -> return ()
+    [] -> pushLogMsgM "You don't have any items to look at."
     i:is -> portal .= (ViewInventory $ makeMenu $ i :| is) : p
 
--- processUserInput' (ViewInventory _ : ps) (KeyChar 'i') = portal .= ps
+processUserInput' (ViewInventory _ : ps) (KeyChar 'i') = portal .= ps
 
 processUserInput' p@(MainScreen _ : _) (KeyChar 'x') = do
   playerPos <- position <@> playerUUID
@@ -161,9 +161,6 @@ processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') = do
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
 
--- TODO: only process ticks if player pressed action button
--- right now, if you presa a button that does nothing,
--- enemies get a free turn
 processUserInput' _ _ = return ()
 
 updateGlyphMap :: Game ()
@@ -204,24 +201,31 @@ processEvent (MoveEntityEvent ed) = do
        transferOccupant (ed ^. moverUUID) (Just oldTileUUID) newTileUUID
        setComp (ed ^. moverUUID) position (ed ^. newPosition)
 
-processEvent (WeaponAttackAttemptEvent ed)
-  -- TODO: explicitely calculate hit probability
-  -- FIXME: refactor this ugly shit.
- = do
+processEvent (WeaponAttackAttemptEvent ed) = do
+  attDEX <- readC $ getStat DEX $ ed ^. attackerUUID
+  defDEX <- readC $ getStat DEX $ ed ^. defenderUUID
+  let prob = if attDEX > defDEX then 0.75 else 0.5
   r <- getRandomR ((0.0, 1.0) :: (Double, Double))
-  when (r < 0.5) $ do
-    weaponUUID' <- readC $ getEquippedWeapon $ ed ^. attackerUUID
-    whenJust weaponUUID' $ \weaponUUID -> do
+  if (r < prob)
+     then $(newEvent "WeaponAttackHit") (ed ^. attackerUUID) (ed ^. defenderUUID)
+     else $(newEvent "WeaponAttackMiss") (ed ^. attackerUUID) (ed ^. defenderUUID)
+
+
+processEvent (WeaponAttackHitEvent ed) = do
+  readC (getEquippedWeapon $ ed ^. attackerUUID) >>= \case
+    Just weaponUUID -> do
       chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do
-        targetedUUIDs <-
-          readC $
-          getTargetedUUIDs (damageData ^. targetType) (ed ^. defenderUUID)
+        targetedUUIDs <- readC $ getTargetedUUIDs (damageData ^. targetType) (ed ^. defenderUUID)
         forM_ targetedUUIDs $ \targetUUID ->
-          $(newEvent "IncomingDamage") (ed ^. attackerUUID) targetUUID
-            (damageData ^. attribute) (damageData ^. distribution)
+          $(newEvent "IncomingDamage") (ed ^. attackerUUID)
+                                       targetUUID
+                                       (damageData ^. attribute)
+                                       (damageData ^. distribution)
+    --TODO: decide how to handle unarmed attacks
+    Nothing -> return ()
 
-processEvent (WeaponAttackHitEvent _) = return ()
+processEvent (WeaponAttackMissEvent _) = return ()
 
 processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
 
@@ -250,6 +254,7 @@ getGlyphMapUpdates = do
       gly <- glyph <@> occUUID
       --setComp tileUUID needsRedraw False
       return (pos, (gly, True))
+
   return $ mkGlyphMap updatedGlyphs
 
 processPlayerDirectionInput :: Direction -> Game ()

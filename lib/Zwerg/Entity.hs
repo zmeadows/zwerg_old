@@ -223,3 +223,6 @@ getTargetedUUIDs (Line _ _) mainDefenderUUID = return [mainDefenderUUID]
 
 getFearLevel :: UUID -> MonadCompRead Text
 getFearLevel _ = return "Terrifying"
+
+getStat :: Stat -> UUID -> MonadCompRead Int
+getStat someStat entityUUID = lookupStat someStat <$> stats <~> entityUUID
