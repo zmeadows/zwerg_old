@@ -18,15 +18,11 @@ type RanGen = PureMT
 pureRanGen :: Word64 -> RanGen
 pureRanGen = pureMT
 
-newPureRanGen
-  :: (MonadIO m)
-  => m RanGen
+newPureRanGen :: (MonadIO m) => m RanGen
 newPureRanGen = liftIO newPureMT
 
 class RanChoice a b | a -> b where
-  pickRandom
-    :: (MonadRandom m)
-    => a -> m b
+  pickRandom :: (MonadRandom m) => a -> m b
 
 instance RanChoice [a] a where
   pickRandom xs =
