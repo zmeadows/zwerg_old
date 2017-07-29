@@ -14,19 +14,23 @@ getAsset path = pack <$> liftIO (getDataFileName $ "assets/" ++ unpack path)
 assertfM :: Monad m => a -> (a -> m Bool) -> m ()
 assertfM x f = f x >>= flip assert (return ())
 
+{-# INLINABLE whenJust #-}
 whenJust :: Applicative m => Maybe a -> (a -> m ()) -> m ()
 whenJust mg f = maybe (pure ()) f mg
 
+{-# INLINABLE whenJustErr #-}
 whenJustErr :: (MonadError ZError m) => Maybe a -> ZError -> (a -> m b) -> m b
 whenJustErr mg err f = maybe (throwError err) f mg
 
--- | Like 'whenJust', but where the test can be monadic.
+{-# INLINABLE whenJustM #-}
 whenJustM :: Monad m => m (Maybe a) -> (a -> m ()) -> m ()
 whenJustM mg f = maybe (return ()) f =<< mg
 
+{-# INLINABLE fromJustErrM #-}
 fromJustErrM :: (MonadError ZError m) => Maybe a -> ZError -> m a
 fromJustErrM x err = maybe (throwError err) return x
 
+{-# INLINABLE chunksOf #-}
 chunksOf :: Int -> [e] -> [[e]]
 chunksOf i ls = map (take i) (build (splitter ls))
   where
@@ -35,6 +39,7 @@ chunksOf i ls = map (take i) (build (splitter ls))
     splitter [] _ n = n
     splitter l c n = l `c` splitter (drop i l) c n
 
+{-# INLINABLE takeWhileM1 #-}
 takeWhileM1 :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
 takeWhileM1 _ [] = return []
 takeWhileM1 p (x:xs) = do
