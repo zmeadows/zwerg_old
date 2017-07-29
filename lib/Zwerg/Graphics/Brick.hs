@@ -44,10 +44,12 @@ glyphMapToVtyImage gm =
 
 makeStatsWidget :: Stats -> BT.Widget ()
 makeStatsWidget s =
-  ((makeStat "STR" STR) <+> (makeStat "DEX" DEX)) <=>
-  ((makeStat "INT" INT) <+> (makeStat "CHA" CHA)) <=>
-  ((makeStat "CON" CON) <+> (makeStat "WIS" WIS))
-    where makeStat statStr stat = markup ( (append statStr ": ") @@ fg VTY.green) <+> (txt $ (leftPad 3 $ show $ lookupStat stat s)) <+> (txt " ")
+  vBox [go STR <+> go DEX, go INT <+> go CHA, go CON <+> go WIS]
+    where go :: Stat -> BT.Widget ()
+          go stat =
+            let statTypeStr = append (show stat) ": "
+                statValStr = leftPad 3 $ show $ lookupStat stat s
+            in markup (statTypeStr @@ fg VTY.green) <+> (txt statValStr) <+> (txt " ")
 
 makeHpWidget :: HP -> BT.Widget ()
 makeHpWidget h =
