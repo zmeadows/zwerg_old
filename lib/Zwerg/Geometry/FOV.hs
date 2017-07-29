@@ -1,4 +1,13 @@
-module Zwerg.Geometry.FOV where
+module Zwerg.Geometry.FOV (getFOV) where
+
+import Zwerg.Data.GridMap
+import Zwerg.Data.Position
+
+type BlockedMap = GridMap Bool
+type VisibleMap = GridMap Bool
+
+getFOV :: Position -> BlockedMap -> VisibleMap
+
 
 -- import qualified Data.HashTable.ST.Basic as H
 -- 

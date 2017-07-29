@@ -9,6 +9,7 @@ module Zwerg.Data.Position
   , modPos
   , movePosDir
   , validatePosition
+  , allPositions
   ) where
 
 import Zwerg.Prelude
@@ -104,4 +105,8 @@ validatePosition p =
     then Just $ MkPosition p
     else Nothing
 
-
+allPositions :: [Position]
+allPositions =
+  let xs = [0 .. mapWidthINT - 1]
+      ys = [0 .. mapHeightINT - 1]
+  in map MkPosition [ (x,y) | x <- xs, y <- ys ]
