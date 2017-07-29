@@ -1,4 +1,4 @@
-module Zwerg.Prelude (module EXPORTED) where
+module Zwerg.Prelude (String, module EXPORTED) where
 
 import Protolude as EXPORTED hiding (to, forM, (<>))
 
@@ -21,3 +21,5 @@ import Lens.Micro.Platform as EXPORTED
 import Data.List.NonEmpty as EXPORTED (NonEmpty(..))
 
 import Data.Semigroup as EXPORTED (Semigroup)
+
+type String = [Char]

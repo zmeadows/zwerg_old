@@ -35,7 +35,7 @@ instance RanChoice (NonEmpty a) a where
     in (NE.!!) xs <$> getRandomR (0, maxInd)
 
 instance RanChoiceFail UUIDSet UUID where
-  tryPickRandom us = case (unwrap us) of
+  tryPickRandom us = case unwrap us of
                        [] -> return Nothing
                        x:xs -> fmap Just $ pickRandom $ x :| xs
 

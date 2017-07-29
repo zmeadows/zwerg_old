@@ -77,7 +77,7 @@ makeMenu entries = makeMenu' entries []
 
 makeMenu' :: NonEmpty (Text, a) -> [MenuEntry a] -> Menu a
 makeMenu' ((newLabel, newItem) :| remaining) entries =
-  let alreadyUsedChars = map (view shortcut) entries :: [Char]
+  let alreadyUsedChars = map (view shortcut) entries
       makeCharPair ch = (ch, length $ filter (== ch) alreadyUsedChars)
       newCharCounts = map makeCharPair $ T.unpack newLabel
       newChar = fst $ minimumBy (compare `on` snd) newCharCounts
