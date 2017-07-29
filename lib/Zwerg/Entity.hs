@@ -156,7 +156,9 @@ transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
         if occupiedType `notElem` [Tile, Container]
           then $(throw) EngineFatal "Attempted to add an occupant to an entity that doesn't support it"
           else do
+            --TODO: check z-level hasn't changed?
             modComp newContainerUUID occupants $ zAdd transfereeUUID
+            position <@> newContainerUUID >>= setComp transfereeUUID position
             when (occupiedType == Tile) $ do
                setComp newContainerUUID needsRedraw True
                setComp transfereeUUID tileOn newContainerUUID

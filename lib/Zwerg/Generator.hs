@@ -50,5 +50,4 @@ putOnRandomEmptyTile levelUUID entityUUID = do
   tileUUID <- getRandomEmptyTile levelUUID >>= $(maybeThrow) EngineFatal
                                                "Couldn't find empty tile to place entity"
   addComp entityUUID level levelUUID
-  position <@> tileUUID >>= addComp entityUUID position
   transferOccupant entityUUID Nothing tileUUID
