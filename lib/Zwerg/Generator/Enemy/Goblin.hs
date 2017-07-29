@@ -5,27 +5,30 @@ import Zwerg.Generator
 import Zwerg.Generator.Item.Weapon
 
 goblin :: Generator
-goblin = MkGenerator $ do
+goblin = do
     goblinUUID <- popUUID
     generateGoblinName >>= addComp goblinUUID name
+    addComp goblinUUID description "It is a foul-smelling, wrinkly goblin."
     goblinHP <- getRandomR (3, 7)
     zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
-    -- TODO: initial ticks random
+
     addComp goblinUUID glyph $ Glyph 'g' Green0 Green3 Nothing Nothing
     addComp goblinUUID ticks 1
     addComp goblinUUID entityType Enemy
     addComp goblinUUID equipment emptyEquipment
-    addComp goblinUUID stats zeroStats
     addComp goblinUUID aiType SimpleMeleeCreature
     addComp goblinUUID blocksPassage True
     addComp goblinUUID blocksVision False
+
+    addComp goblinUUID stats zeroStats
     assignUniformRandomStat goblinUUID STR (1, 4)
     assignUniformRandomStat goblinUUID DEX (2, 6)
     assignUniformRandomStat goblinUUID INT (1, 2)
     assignUniformRandomStat goblinUUID CHA (1, 2)
     assignUniformRandomStat goblinUUID CON (1, 3)
     assignUniformRandomStat goblinUUID WIS (1, 2)
-    swordUUID <- generate sword
+
+    swordUUID <- sword
     equipItem swordUUID goblinUUID
     return goblinUUID
 

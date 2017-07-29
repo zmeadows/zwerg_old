@@ -2,14 +2,14 @@ module Zwerg.Generator.Level.TestSquare where
 
 import Zwerg.Generator
 import Zwerg.Generator.Enemy.Goblin
+import Zwerg.Generator.Item.Weapon
 import Zwerg.Generator.Level
 
 import Data.Map.Lazy (traverseWithKey)
 
 testSquareGenerator :: Generator
-testSquareGenerator = MkGenerator $ do
-    testSquareLevelUUID <- popUUID
-    generate $ levelSkeletonGenerator testSquareLevelUUID
+testSquareGenerator = do
+    testSquareLevelUUID <- levelSkeletonGenerator
     testSquareTiles <- tileMap <@> testSquareLevelUUID
     void $ flip traverseWithKey (unwrap testSquareTiles) $ \pos tileUUID -> do
         let (x, y) = unwrap pos
@@ -19,9 +19,14 @@ testSquareGenerator = MkGenerator $ do
             setComp tileUUID tileType Wall
             setComp tileUUID blocksPassage True
             setComp tileUUID glyph $ Glyph 'X' White2 White0 (Just Black2) (Just Black0)
+            setComp tileUUID name "Wall tile"
+            setComp tileUUID description "It is a wall."
           else do
             setComp tileUUID tileType Floor
             setComp tileUUID blocksPassage False
             setComp tileUUID glyph $ Glyph '·' White2 White0 (Just Black2) (Just Black0)
-    replicateM_ 150 $ putEntityOnRandomEmptyTile testSquareLevelUUID goblin
+            setComp tileUUID name "Floor tile"
+            setComp tileUUID description "It is a floor."
+    replicateM_ 3 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
+    replicateM_ 5 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
     return testSquareLevelUUID

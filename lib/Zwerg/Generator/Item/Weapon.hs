@@ -1,14 +1,13 @@
-module Zwerg.Generator.Item.Weapon
-  ( sword
-  ) where
+module Zwerg.Generator.Item.Weapon (sword) where
 
 import Zwerg.Generator
 
 sword :: Generator
-sword = MkGenerator $ do
+sword = do
     swordUUID <- popUUID
-    addComp swordUUID name "Short Sword"
-    addComp swordUUID glyph $ Glyph '/' Black1 Black3 Nothing Nothing
+    addComp swordUUID name "Iron Short Sword"
+    addComp swordUUID description "A simple sword with short iron blade"
+    addComp swordUUID glyph $ Glyph '/' White3 Black1 Nothing Nothing
     addComp swordUUID entityType Item
     addComp swordUUID itemType Weapon
     addComp swordUUID damageChain [DamageData SingleTarget Slash (Uniform 1 6)]
