@@ -230,6 +230,7 @@ processEvent (WeaponAttackMissEvent _) = return ()
 processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
 
 processEvent (IncomingDamageEvent ed) = do
+  --TODO: account for weaknesses in creatures and armor
   damageDone <- round <$> sample (ed ^. damageDistribution)
   $(newEvent "OutgoingDamage") (ed ^. attackerUUID) (ed ^. defenderUUID) damageDone
 

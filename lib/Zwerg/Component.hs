@@ -24,6 +24,7 @@ data Components = Components
   , _cooldown       :: NamedUUIDMap Int
   , _equipment      :: NamedUUIDMap Equipment
   , _level          :: NamedUUIDMap UUID
+  , _resistances    :: NamedUUIDMap Resistances
   , _tiles          :: NamedUUIDMap UUIDSet
   , _ticks          :: NamedUUIDMap Int
   , _tileOn         :: NamedUUIDMap UUID
@@ -101,6 +102,7 @@ emptyComponents =
   , _cooldown       = NamedUUIDMap "cooldown"      zEmpty
   , _equipment      = NamedUUIDMap "equipment"     zEmpty
   , _level          = NamedUUIDMap "level"         zEmpty
+  , _resistances    = NamedUUIDMap "resistances"   zEmpty
   , _tiles          = NamedUUIDMap "tiles"         zEmpty
   , _tileOn         = NamedUUIDMap "tileOn"        zEmpty
   , _ticks          = NamedUUIDMap "ticks"         zEmpty
