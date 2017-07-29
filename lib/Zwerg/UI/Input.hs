@@ -3,7 +3,7 @@ module Zwerg.UI.Input where
 import Zwerg.Prelude
 
 data KeyCode =
-    KeyChar Char
+      KeyChar Char
     | Return
     | Escape
     | Backspace
