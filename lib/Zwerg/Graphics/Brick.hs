@@ -5,37 +5,19 @@ import Zwerg.Prelude hiding (on)
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
-
-import Brick.Widgets.Core
+import Zwerg.Util
 
 import Brick.Markup (markup)
-import qualified Brick.Types as BT
 import Brick.Util (on, fg)
+import Brick.Widgets.Core
+import Data.Foldable (foldl1)
+import Data.Text (append)
+import Data.Text.Markup ((@@))
+import qualified Brick.Types as BT
 import qualified Brick.Widgets.List as BL
 import qualified Brick.Widgets.ProgressBar as BP
-import Data.Foldable (foldl1)
 import qualified Data.Vector as Vec
-
-import Data.Text.Markup ((@@))
 import qualified Graphics.Vty as VTY
-
-data BrickMainMenuContext =
-  BrickMainMenuContext (Menu ())
-  deriving (Show, Eq)
-
-data BrickContext =
-  BrickContext Int
-  deriving (Show, Eq)
-
-makeClassy ''BrickContext
-
-brick
-  :: HasBrickContext s
-  => Lens' s BrickContext
-brick = brickContext
-
-uninitializedBrickContext :: BrickContext
-uninitializedBrickContext = BrickContext 0
 
 menuToBrickList :: Menu a -> BL.List () Text
 menuToBrickList m =
@@ -62,19 +44,17 @@ glyphMapToVtyImage gm =
 
 makeStatsWidget :: Stats -> BT.Widget ()
 makeStatsWidget s =
-  ((markup ("STR: " @@ fg VTY.green) <+> str (show $ lookupStat STR s)) <+>
-   (markup ("DEX: " @@ fg VTY.green) <+> str (show $ lookupStat DEX s))) <=>
-  ((markup ("INT: " @@ fg VTY.green) <+> str (show $ lookupStat INT s)) <+>
-   (markup ("CHA: " @@ fg VTY.green) <+> str (show $ lookupStat CHA s))) <=>
-  ((markup ("CON: " @@ fg VTY.green) <+> str (show $ lookupStat CON s)) <+>
-   (markup ("WIS: " @@ fg VTY.green) <+> str (show $ lookupStat WIS s)))
+  ((makeStat "STR" STR) <+> (makeStat "DEX" DEX)) <=>
+  ((makeStat "INT" INT) <+> (makeStat "CHA" CHA)) <=>
+  ((makeStat "CON" CON) <+> (makeStat "WIS" WIS))
+    where makeStat statStr stat = markup ( (append statStr ": ") @@ fg VTY.green) <+> (txt $ (leftPad 3 $ show $ lookupStat stat s)) <+> (txt " ")
 
 makeHpWidget :: HP -> BT.Widget ()
 makeHpWidget h =
   let (hpLeft, maxHP) = unwrap h
       hpLabel = show hpLeft ++ "/" ++ show maxHP
       hpRatio = (fromIntegral hpLeft :: Float) / (fromIntegral maxHP :: Float)
-  in str "HP: " <+> hLimit 5 (BP.progressBar (Just hpLabel) hpRatio)
+  in str "HP: " <+> hLimit 13 (BP.progressBar (Just hpLabel) hpRatio)
 
 zwergColorToVtyColor :: Color -> VTY.Color
 zwergColorToVtyColor zc =
