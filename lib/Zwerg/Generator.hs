@@ -47,17 +47,10 @@ assignUniformRandomStat targetUUID stat bounds = do
 
 putOnRandomEmptyTile :: UUID -> UUID -> Generator' ()
 putOnRandomEmptyTile levelUUID entityUUID = do
-  tileUUID <- getRandomEmptyTile levelUUID
-  -- TODO modify fromJustErrM to be a template haskell'd function
-  tileUUID' <-
-    fromJustErrM tileUUID $
-    ZError
-      __FILE__
-      __LINE__
-      EngineFatal
-      "Could not find an open tile to place Goblin"
+  tileUUID <- getRandomEmptyTile levelUUID >>= $(maybeThrow) EngineFatal
+                                               "Couldn't find empty tile to place entity"
   addComp entityUUID level levelUUID
   -- TODO: where to set tileOn? in addOccupant?
-  addComp entityUUID tileOn tileUUID'
-  position <@> tileUUID' >>= addComp entityUUID position
-  transferOccupant entityUUID Nothing tileUUID'
+  addComp entityUUID tileOn tileUUID
+  position <@> tileUUID >>= addComp entityUUID position
+  transferOccupant entityUUID Nothing tileUUID

@@ -3,6 +3,7 @@ module Zwerg.Data.ZError
   , ZError(..)
   , ZConstructable(..)
   , throw
+  , maybeThrow
   ) where
 
 import Protolude (Show, Read, Eq, Text, Int, MonadError, ($))
@@ -33,6 +34,10 @@ printZError zerr = T.concat [
 
 throw :: Language.Haskell.TH.Syntax.Quasi m => m Exp
 throw = runQ [| \l d -> throwError $ ZError __FILE__ __LINE__ l d|]
+
+maybeThrow :: Language.Haskell.TH.Syntax.Quasi m => m Exp
+maybeThrow = runQ [| \l d x -> maybe (throwError $ ZError __FILE__ __LINE__ l d) return x|]
+
 
 class ZConstructable a b | a -> b where
   zConstruct :: (MonadError ZError m) => b -> m a
