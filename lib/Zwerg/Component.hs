@@ -6,13 +6,14 @@ import Zwerg.Data.Equipment
 import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Prelude
-import Zwerg.Util
 
 import Control.Exception.Base (assert)
 import Data.Text (append)
 
 data Components = Components
   { _name           :: NamedUUIDMap Text
+  , _description    :: NamedUUIDMap Text
+  , _species        :: NamedUUIDMap Text
   , _glyph          :: NamedUUIDMap Glyph
   , _hp             :: NamedUUIDMap HP
   , _entityType     :: NamedUUIDMap EntityType
@@ -28,6 +29,7 @@ data Components = Components
   , _occupants      :: NamedUUIDMap UUIDSet
   , _parent         :: NamedUUIDMap Parent
   , _children       :: NamedUUIDMap UUIDSet
+  , _inventory      :: NamedUUIDMap UUIDSet
   , _stats          :: NamedUUIDMap Stats
   , _blocksPassage  :: NamedUUIDMap Bool
   , _blocksVision   :: NamedUUIDMap Bool
@@ -37,6 +39,7 @@ data Components = Components
   , _slot           :: NamedUUIDMap EquipmentSlot
   , _itemType       :: NamedUUIDMap ItemType
   , _needsRedraw    :: NamedUUIDMap Bool
+  , _zLevel         :: NamedUUIDMap ZLevel
   , _nextUUID       :: UUID
   } deriving (Show, Eq, Generic)
 makeClassy ''Components
@@ -69,31 +72,35 @@ readC x = do
 emptyComponents :: Components
 emptyComponents =
   Components
-  { _name           = NamedUUIDMap "name"           zEmpty
-  , _glyph          = NamedUUIDMap "glyph"          zEmpty
-  , _hp             = NamedUUIDMap "hp"             zEmpty
-  , _entityType     = NamedUUIDMap "entityType"     zEmpty
-  , _position       = NamedUUIDMap "position"       zEmpty
-  , _cooldown       = NamedUUIDMap "cooldown"       zEmpty
-  , _equipment      = NamedUUIDMap "equipment"      zEmpty
-  , _level          = NamedUUIDMap "level"          zEmpty
-  , _tiles          = NamedUUIDMap "tiles"          zEmpty
-  , _tileOn         = NamedUUIDMap "tileOn"         zEmpty
-  , _ticks          = NamedUUIDMap "ticks"          zEmpty
-  , _tileType       = NamedUUIDMap "tileType"       zEmpty
-  , _tileMap        = NamedUUIDMap "tileMap"        zEmpty
-  , _occupants      = NamedUUIDMap "occupants"      zEmpty
-  , _parent         = NamedUUIDMap "parent"         zEmpty
-  , _children       = NamedUUIDMap "children"       zEmpty
-  , _stats          = NamedUUIDMap "stats"          zEmpty
-  , _blocksPassage  = NamedUUIDMap "blocksPassage"  zEmpty
-  , _blocksVision   = NamedUUIDMap "blocksVision"   zEmpty
-  , _aiType         = NamedUUIDMap "aiType"         zEmpty
-  , _damageChain    = NamedUUIDMap "damageChain"    zEmpty
-  , _viewRange      = NamedUUIDMap "viewRange"      zEmpty
-  , _slot           = NamedUUIDMap "slot" zEmpty
-  , _itemType       = NamedUUIDMap "itemType"       zEmpty
-  , _needsRedraw    = NamedUUIDMap "needsRedraw"    zEmpty
+  { _name           = NamedUUIDMap "name"          zEmpty
+  , _description    = NamedUUIDMap "description"   zEmpty
+  , _species        = NamedUUIDMap "species"       zEmpty
+  , _glyph          = NamedUUIDMap "glyph"         zEmpty
+  , _hp             = NamedUUIDMap "hp"            zEmpty
+  , _entityType     = NamedUUIDMap "entityType"    zEmpty
+  , _position       = NamedUUIDMap "position"      zEmpty
+  , _cooldown       = NamedUUIDMap "cooldown"      zEmpty
+  , _equipment      = NamedUUIDMap "equipment"     zEmpty
+  , _level          = NamedUUIDMap "level"         zEmpty
+  , _tiles          = NamedUUIDMap "tiles"         zEmpty
+  , _tileOn         = NamedUUIDMap "tileOn"        zEmpty
+  , _ticks          = NamedUUIDMap "ticks"         zEmpty
+  , _tileType       = NamedUUIDMap "tileType"      zEmpty
+  , _tileMap        = NamedUUIDMap "tileMap"       zEmpty
+  , _occupants      = NamedUUIDMap "occupants"     zEmpty
+  , _parent         = NamedUUIDMap "parent"        zEmpty
+  , _children       = NamedUUIDMap "children"      zEmpty
+  , _inventory      = NamedUUIDMap "inventory"     zEmpty
+  , _stats          = NamedUUIDMap "stats"         zEmpty
+  , _blocksPassage  = NamedUUIDMap "blocksPassage" zEmpty
+  , _blocksVision   = NamedUUIDMap "blocksVision"  zEmpty
+  , _aiType         = NamedUUIDMap "aiType"        zEmpty
+  , _damageChain    = NamedUUIDMap "damageChain"   zEmpty
+  , _viewRange      = NamedUUIDMap "viewRange"     zEmpty
+  , _slot           = NamedUUIDMap "slot"          zEmpty
+  , _itemType       = NamedUUIDMap "itemType"      zEmpty
+  , _needsRedraw    = NamedUUIDMap "needsRedraw"   zEmpty
+  , _zLevel         = NamedUUIDMap "zLevel"        zEmpty
   , _nextUUID       = playerUUID + 1
   }
 
@@ -110,65 +117,72 @@ getComp uuid comp = use $ comp . uuidMap . at uuid
 hasComp :: UUID -> Component a -> MonadCompState Bool
 hasComp uuid comp = use $ comp . uuidMap . to (zContains uuid)
 
-addComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component a -> a -> m ()
+{-# INLINEABLE addComp #-}
+addComp :: (HasComponents s, MonadState s m)
+        => UUID -> Component a -> a -> m ()
 addComp uuid comp dat = (comp . uuidMap) %= zInsert uuid dat
 
-setComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component a -> a -> m ()
+{-# INLINEABLE setComp #-}
+setComp :: (HasComponents s, MonadState s m)
+        => UUID -> Component a -> a -> m ()
 setComp = addComp
 
-modComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component a -> (a -> a) -> m ()
+{-# INLINEABLE modComp #-}
+modComp :: (HasComponents s, MonadState s m)
+        => UUID -> Component a -> (a -> a) -> m ()
 modComp uuid comp f = (comp . uuidMap) %= zAdjust f uuid
 
-deleteComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component a -> m ()
+{-# INLINEABLE deleteComp #-}
+deleteComp :: (HasComponents s, MonadState s m)
+           => UUID -> Component a -> m ()
 deleteComp uuid comp = (comp . uuidMap) %= zRemoveAt uuid
 
-filterComp
-  :: (HasComponents s, MonadState s m)
-  => Component a -> (a -> Bool) -> m ()
+{-# INLINEABLE filterComp #-}
+filterComp :: (HasComponents s, MonadState s m)
+           => Component a -> (a -> Bool) -> m ()
 filterComp comp f = (comp . uuidMap) %= zFilter (\(_, x) -> f x)
 
--- TODO: define binary operators for demandComp, demandViewComp, and more(?)
+{-# INLINEABLE demandComp #-}
 demandComp :: Component a -> UUID -> MonadCompState a
-demandComp comp uuid = do
-  result <- getComp uuid comp
-  cn <- use (comp . componentName)
-  whenJustErr
-    result
-    (ZError __FILE__ __LINE__ EngineFatal $ append "Missing Component: " cn)
-    return
+demandComp comp uuid =
+  getComp uuid comp >>= \case
+    Just x -> return x
+    Nothing -> do
+      cn <- use (comp . componentName)
+      $(throw) EngineFatal $ append "Missing Component: " cn
 
--- (<.>) :: Component a -> UUID -> MonadCompState a
--- (<.>) = demandComp
-
+{-# INLINEABLE demandHasComp #-}
 demandHasComp :: UUID -> Component a -> MonadCompState ()
 demandHasComp uuid comp = do
   result <- hasComp uuid comp
   assert result $ return ()
 
 {-- READER --}
+{-# INLINEABLE viewComp #-}
 viewComp :: UUID -> Component a -> MonadCompReader (Maybe a)
 viewComp uuid comp = view (comp . uuidMap . at uuid)
 
+{-# INLINEABLE demandViewComp #-}
 demandViewComp :: Component a -> UUID -> MonadCompReader a
-demandViewComp comp uuid = do
-  result <- view (comp . uuidMap . at uuid)
-  cn <- view (comp . componentName)
-  whenJustErr
-    result
-    (ZError __FILE__ __LINE__ EngineFatal $ append "Missing Component: " cn)
-    return
+demandViewComp comp uuid =
+  viewComp uuid comp >>= \case
+    Just x -> return x
+    Nothing -> do
+      cn <- view (comp . componentName)
+      $(throw) EngineFatal $ append "Missing Component: " cn
 
+{-# INLINEABLE (<~>) #-}
 (<~>) :: Component a -> UUID -> MonadCompReader a
 (<~>) = demandViewComp
 
+{-# INLINEABLE (<~?>) #-}
+(<~?>) :: UUID -> Component a -> MonadCompReader (Maybe a)
+(<~?>) = viewComp
+
+{-# INLINEABLE (<@>) #-}
 (<@>) :: Component a -> UUID -> MonadCompState a
 (<@>) = demandComp
 
+{-# INLINEABLE (<@?>) #-}
+(<@?>) :: UUID -> Component a -> MonadCompState (Maybe a)
+(<@?>) = getComp
