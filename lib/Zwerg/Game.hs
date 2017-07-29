@@ -67,9 +67,7 @@ runGame (Game a) gen st =
 
 -- for now just generates the test level
 generateGame :: Game ()
-generateGame = do
-  lid <- generate testSquareGenerator
-  generate $ testPlayerGenerator lid
+generateGame = testSquareGenerator >>= testPlayerGenerator
 
 -- after we process a player tick, go through all other entities
 -- and process their ticks, until the player is ready to tick again
@@ -95,14 +93,18 @@ processUserInput :: KeyCode -> Game ()
 processUserInput k = do
   p <- use portal
   processUserInput' p k
-  processEvents
-  resetTicks playerUUID
-  processNonPlayerEvents
+  eq <- use eventQueue
+  -- only move on to process other entity ticks
+  -- if player actually did something
+  when (not $ zIsNull eq) $ do
+    processEvents
+    resetTicks playerUUID
+    processNonPlayerEvents
 
 processUserInput' :: Portal -> KeyCode -> Game ()
 
-processUserInput' (MainMenu m:ps) (KeyChar 'j') = portal .= (MainMenu $ next m) : ps
-processUserInput' (MainMenu m:ps) (KeyChar 'k') = portal .= (MainMenu $ prev m) : ps
+processUserInput' (MainMenu m : ps) (KeyChar 'j') = portal .= (MainMenu $ next m) : ps
+processUserInput' (MainMenu m : ps) (KeyChar 'k') = portal .= (MainMenu $ prev m) : ps
 
 processUserInput' (MainMenu m:_) Return =
   case focus m ^. label of
@@ -110,6 +112,7 @@ processUserInput' (MainMenu m:_) Return =
       generateGame
       gm <- blankGlyphMap
       portal .= [MainScreen gm]
+      updateGlyphMap
     "exit" -> portal .= [ExitScreen]
     _ -> return ()
 
@@ -117,7 +120,50 @@ processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput W
 processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput South
 processUserInput' (MainScreen _:_) (KeyChar 'k') = processPlayerDirectionInput North
 processUserInput' (MainScreen _:_) (KeyChar 'l') = processPlayerDirectionInput East
+processUserInput' (MainScreen _:_) (LeftArrow)   = processPlayerDirectionInput West
+processUserInput' (MainScreen _:_) (UpArrow)     = processPlayerDirectionInput South
+processUserInput' (MainScreen _:_) (DownArrow)   = processPlayerDirectionInput North
+processUserInput' (MainScreen _:_) (RightArrow)  = processPlayerDirectionInput East
 
+processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
+  inv <- zToList <$> inventory <@> playerUUID
+  menuItems <- forM inv $ \id -> do
+    d <- description <@> id
+    n <- name <@> id
+    return $ (n, InventoryMenuItem id d)
+  portal .= (ViewInventory $ makeMenu menuItems) : p
+
+-- processUserInput' (ViewInventory _ : ps) (KeyChar 'i') = portal .= ps
+
+processUserInput' p@(MainScreen _ : _) (KeyChar 'x') = do
+  playerPos <- position <@> playerUUID
+  portal .= ExamineTiles playerPos : p
+
+processUserInput' (ExamineTiles _ : ps) (KeyChar 'x') = portal .= ps
+
+processUserInput' (ExamineTiles pos : ps) (KeyChar 'h') = do
+  case movePosDir West pos of
+    Just newPos -> portal .= ExamineTiles newPos : ps
+    Nothing -> return ()
+
+processUserInput' (ExamineTiles pos : ps) (KeyChar 'j') = do
+  case movePosDir South pos of
+    Just newPos -> portal .= ExamineTiles newPos : ps
+    Nothing -> return ()
+
+processUserInput' (ExamineTiles pos : ps) (KeyChar 'k') = do
+  case movePosDir North pos of
+    Just newPos -> portal .= ExamineTiles newPos : ps
+    Nothing -> return ()
+
+processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') = do
+  case movePosDir East pos of
+    Just newPos -> portal .= ExamineTiles newPos : ps
+    Nothing -> return ()
+
+-- TODO: only process ticks if player pressed action button
+-- right now, if you presa a button that does nothing,
+-- enemies get a free turn
 processUserInput' _ _ = return ()
 
 updateGlyphMap :: Game ()
@@ -131,7 +177,7 @@ updateGlyphMap = do
 
 processEvents :: Game ()
 processEvents =
-  whenJustM popEvent $ \nextEvent -> do
+  whenJustM popEvent $! \nextEvent -> do
     processEvent nextEvent
     processEvents
 
@@ -140,8 +186,9 @@ processEvent :: ZwergEvent -> Game ()
 processEvent (MoveEntityDirectionEvent ed) = do
   oldPosition <- position <@> (ed ^. moverUUID)
   case movePosDir (ed ^. direction) oldPosition of
-    Nothing -> return () -- TODO: log message, player tried to move off map
-    Just newPos -> $(newEvent "MoveEntity") playerUUID newPos
+    Nothing -> pushLogMsgM "You cannot move into the void."
+    Just newPos -> do
+      $(newEvent "MoveEntity") (ed ^. moverUUID) newPos
 
 processEvent (MoveEntityEvent ed) = do
   oldPos <- position <@> (ed ^. moverUUID)
@@ -149,15 +196,14 @@ processEvent (MoveEntityEvent ed) = do
   newTileUUID <- TM.tileUUIDatPosition (ed ^. newPosition) levelTiles
   newTileBlocked <- readC $ tileBlocksPassage newTileUUID
 
-  when (newTileBlocked && (ed ^. moverUUID) /= playerUUID) $
-    $(throw) EngineFatal "NPC Entity attempted to move to blocked tile"
-
-  when (newTileBlocked && (ed ^. moverUUID) == playerUUID) $
-    $(throw) PlayerWarning "Player attempted to move to a blocked tile"
-
-  oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
-  transferOccupant (ed ^. moverUUID) oldTileUUID newTileUUID
-  setComp (ed ^. moverUUID) position (ed ^. newPosition)
+  if newTileBlocked
+     then if (ed ^. moverUUID) /= playerUUID
+             then $(throw) EngineFatal "NPC Entity attempted to move to blocked tile"
+             else pushLogMsgM "You cannot move into a blocked tile."
+     else do
+       oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
+       transferOccupant (ed ^. moverUUID) (Just oldTileUUID) newTileUUID
+       setComp (ed ^. moverUUID) position (ed ^. newPosition)
 
 processEvent (WeaponAttackAttemptEvent ed)
   -- TODO: explicitely calculate hit probability
@@ -173,13 +219,8 @@ processEvent (WeaponAttackAttemptEvent ed)
           readC $
           getTargetedUUIDs (damageData ^. targetType) (ed ^. defenderUUID)
         forM_ targetedUUIDs $ \targetUUID ->
-          pushEventM $
-            IncomingDamageEvent $
-            IncomingDamageEventData
-              (ed ^. attackerUUID)
-              targetUUID
-              (damageData ^. attribute)
-              (damageData ^. distribution)
+          $(newEvent "IncomingDamage") (ed ^. attackerUUID) targetUUID
+            (damageData ^. attribute) (damageData ^. distribution)
 
 processEvent (WeaponAttackHitEvent _) = return ()
 
@@ -212,22 +253,8 @@ getGlyphMapUpdates = do
       return (pos, (gly, True))
   return $ mkGlyphMap updatedGlyphs
 
--- TODO: switch to HasEventQueue context since that is all we touch here
 processPlayerDirectionInput :: Direction -> Game ()
-processPlayerDirectionInput dir = do
-  let processPlayerMove = do
-        case dir of
-          North -> pushLogMsgM "player moved North"
-          South -> pushLogMsgM "player moved South"
-          East  -> pushLogMsgM "player moved East"
-          West  -> pushLogMsgM "player moved West"
-          _     -> return ()
-        pushEventM $
-          MoveEntityDirectionEvent $ MoveEntityDirectionEventData playerUUID dir
-        -- $(newEvent "MoveEntity") playerUUID dir
-      processPlayerAttack attackedUUID =
-        pushEventM $
-        WeaponAttackAttemptEvent $
-        WeaponAttackAttemptEventData playerUUID attackedUUID
-  attackedEntity <- readC $ getPlayerAdjacentEnemy dir
-  maybe processPlayerMove processPlayerAttack attackedEntity
+processPlayerDirectionInput dir =
+  readC (getPlayerAdjacentEnemy dir) >>= \case
+    Just attackedUUID -> $(newEvent "WeaponAttackAttempt") playerUUID attackedUUID
+    Nothing -> $(newEvent "MoveEntityDirection") playerUUID dir
