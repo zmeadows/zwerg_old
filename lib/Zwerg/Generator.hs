@@ -38,9 +38,7 @@ getRandomEmptyTile levelUUID = do
   levelTiles <- tiles <@> levelUUID
   -- TODO: make sure new tile isn't fully enclosed by walls
   unoccupiedTiles <- zFilterM (fmap not . (<@>) blocksPassage) levelTiles
-  if zIsNull unoccupiedTiles
-    then return Nothing
-    else Just <$> pickRandom unoccupiedTiles
+  tryPickRandom unoccupiedTiles
 
 assignUniformRandomStat :: UUID -> Stat -> (Int, Int) -> Generator' ()
 assignUniformRandomStat targetUUID stat bounds = do

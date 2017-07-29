@@ -34,8 +34,8 @@ goblin = do
 
 generateGoblinName :: (MonadRandom m) => m Text
 generateGoblinName =
-  let firstNameFirstSyllables = ["Gol", "Kra", "Bah", "Quo"]
-      firstNameSecondSyllables = ["ith", "xul", "nix", "oth"]
+  let firstNameFirstSyllables = "Gol" :| ["Kra", "Bah", "Quo"]
+      firstNameSecondSyllables = "ith" :| ["xul", "nix", "oth"]
   in do f1 <- pickRandom firstNameFirstSyllables
         f2 <- pickRandom firstNameSecondSyllables
         return $ append f1 f2
