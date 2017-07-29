@@ -5,8 +5,8 @@ module Zwerg.Data.ZError
   , throw
   ) where
 
-import Protolude (Show, Read, Eq, Text, Int, MonadError)
-import Lens.Micro.Platform as EXPORTED (makeClassy)
+import Protolude (Show, Read, Eq, Text, Int, MonadError, ($))
+import Lens.Micro.Platform (makeClassy)
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 
@@ -17,13 +17,24 @@ data ZError = ZError
   { _file :: Text
   , _line :: Int
   , _errLevel :: ZErrorLevel
-  , _description :: Text
+  , _explanation :: Text
   } deriving (Show, Read, Eq)
-
 makeClassy ''ZError
+
+{-
+printZError :: ZError -> Text
+printZError zerr = T.concat [
+    "File: ", zerr ^. file, "\n",
+    "Line: ", show $ zerr ^. line, "\n",
+    "ErrorLevel: ", show $ zerr ^. errLevel, "\n",
+    "Description: ", show $ zerr ^. description, "\n"
+  ]
+-}
 
 throw :: Language.Haskell.TH.Syntax.Quasi m => m Exp
 throw = runQ [| \l d -> throwError $ ZError __FILE__ __LINE__ l d|]
 
 class ZConstructable a b | a -> b where
   zConstruct :: (MonadError ZError m) => b -> m a
+
+
