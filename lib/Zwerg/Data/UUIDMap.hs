@@ -11,7 +11,7 @@ import Data.IntMap.Lazy (IntMap)
 import qualified Data.IntMap.Lazy as IM
 
 newtype UUIDMap a = MkUUIDMap (IntMap a)
-  deriving (Show, Read, Eq, Ord, Functor, Foldable, Traversable, Monoid, Generic)
+  deriving (Show, Read, Eq, Ord, Functor, Foldable, Traversable, Monoid, Semigroup, Generic)
 instance Binary a => Binary (UUIDMap a)
 
 data NamedUUIDMap a = NamedUUIDMap

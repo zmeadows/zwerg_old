@@ -6,8 +6,8 @@ import Zwerg.Data.Damage
 import Zwerg.Prelude
 import Zwerg.Random.Distribution
 
-import Data.Sequence (Seq, (><), (|>), ViewL(..))
-import qualified Data.Sequence as S
+import Data.Sequence (Seq, (|>), ViewL(..), (><))
+import qualified Data.Sequence as S (viewl, empty, length, null)
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -113,13 +113,12 @@ instance ZEmptiable ZwergEventQueue where
   zSize   = S.length . unwrap
 
 popEvent :: (HasZwergEventQueue s, MonadState s m) => m (Maybe ZwergEvent)
-popEvent = do
-  eq <- use eventQueue
-  if | zIsNull eq -> return Nothing
-     | otherwise ->
-       let (evt :< eq') = S.viewl (unwrap eq)
-       in do eventQueue .= MkZwergEventQueue eq'
-             return $ Just evt
+popEvent =
+  S.viewl <$> unwrap <$> use eventQueue >>= \case
+    EmptyL -> return Nothing
+    evt :< eq' -> do
+      eventQueue .= MkZwergEventQueue eq'
+      return $ Just evt
 
 pushEvent :: ZwergEvent -> ZwergEventQueue -> ZwergEventQueue
 pushEvent evt (MkZwergEventQueue eq) = MkZwergEventQueue $ eq |> evt

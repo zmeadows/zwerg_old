@@ -73,9 +73,8 @@ generateGame = testSquareGenerator >>= testPlayerGenerator
 -- and process their ticks, until the player is ready to tick again
 processNonPlayerEvents :: Game ()
 processNonPlayerEvents = do
-  newPort:_ <- use portal
-  case newPort of
-    MainScreen _ -> do
+  use portal >>= \case
+    MainScreen _ : _ -> do
       ts <- use (ticks . uuidMap)
       (minTick, uuids) <- getMinimumUUIDs ts
       (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
@@ -131,7 +130,9 @@ processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
     d <- description <@> id
     n <- name <@> id
     return $ (n, InventoryMenuItem id d)
-  portal .= (ViewInventory $ makeMenu menuItems) : p
+  case menuItems of
+    [] -> return ()
+    i:is -> portal .= (ViewInventory $ makeMenu $ i :| is) : p
 
 -- processUserInput' (ViewInventory _ : ps) (KeyChar 'i') = portal .= ps
 
@@ -168,9 +169,8 @@ processUserInput' _ _ = return ()
 
 updateGlyphMap :: Game ()
 updateGlyphMap = do
-  p:ps <- use portal
-  case p of
-    MainScreen gm -> do
+  use portal >>= \case
+    MainScreen gm : ps -> do
       updatedGlyphs <- getGlyphMapUpdates
       portal .= (MainScreen $ mergeGlyphMaps updatedGlyphs gm) : ps
     _ -> return ()

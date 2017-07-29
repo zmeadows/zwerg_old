@@ -16,8 +16,6 @@ import Data.ByteString.Lazy (ByteString)
 -- import Data.Binary (encode)
 -- import Codec.Compression.Zlib (compress)
 
-import Debug (error)
-
 import Brick.AttrMap
 import qualified Brick.Main as BM
 import Brick.Markup (markup)
@@ -140,7 +138,7 @@ handleEventZwerg zs (BT.VtyEvent ev) =
       case err of
         --TODO: if player warning, print to log
         -- if engine failure, print to file and exit
-        Just x -> error (show x)
+        Just _ -> BM.halt zs'
         Nothing -> BM.continue zs'
           -- liftIO $ encodeFile "binary_components.dat" (zs' ^. components)
     _ -> BM.continue zs

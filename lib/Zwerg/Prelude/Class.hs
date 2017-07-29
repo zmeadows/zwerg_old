@@ -7,19 +7,7 @@ module Zwerg.Prelude.Class
   , ZFilterable(..)
   ) where
 
-import Protolude
-
--- import Control.Monad.Random.Class as EXPORTED
--- import Data.Binary as EXPORTED (Binary)
--- import Data.Monoid as EXPORTED ((<>))
--- import Data.Text as EXPORTED (Text, pack, unpack)
--- import Data.Traversable as EXPORTED (forM)
--- import GHC.Generics as EXPORTED (Generic)
--- import Lens.Micro.Internal as EXPORTED
---        (At(..), Ixed(..), Index, IxValue)
--- import Lens.Micro.Platform as EXPORTED
---        (makeClassy, makeLenses, makeFields, (%=), (^.), (.=), over, use,
---         view, to, set, Lens', (<&>))
+import Protolude (Bool, Monad, Int, Maybe)
 
 class ZWrapped a b | a -> b where
   unwrap :: a -> b

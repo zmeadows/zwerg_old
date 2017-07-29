@@ -12,9 +12,12 @@ import Data.Monoid as EXPORTED ((<>))
 import Data.Text as EXPORTED (Text, pack, unpack)
 import Data.Traversable as EXPORTED (forM)
 import GHC.Generics as EXPORTED (Generic)
-import Lens.Micro.Internal as EXPORTED
-       (At(..), Ixed(..), Index, IxValue)
+
+import Lens.Micro.Internal as EXPORTED (At(..), Ixed(..), Index, IxValue)
 import Lens.Micro.Platform as EXPORTED
        (makeClassy, makeLenses, makeFields, (%=), (^.), (.=), over, use,
         view, to, set, Lens', (<&>))
 
+import Data.List.NonEmpty as EXPORTED (NonEmpty(..))
+
+import Data.Semigroup as EXPORTED (Semigroup)

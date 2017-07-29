@@ -5,6 +5,8 @@ import Zwerg.Component.Position
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Menu
 
+import qualified Data.List.NonEmpty as NE (repeat, zip)
+
 data Port
   = MainScreen GlyphMap
   | MainMenu (Menu ())
@@ -35,4 +37,4 @@ class HasPortal s where
 initMainMenu :: Port
 initMainMenu =
   MainMenu $ makeMenu $
-  zip ["new game", "load game", "options", "about", "exit"] $ repeat ()
+  NE.zip ("new game" :| ["load game", "options", "about", "exit"]) $ NE.repeat ()

@@ -16,12 +16,17 @@ library
   default-language:    Haskell2010
 
   ghc-options:         -Wall
-                       -- -Werror
+                       -Werror
                        -optc-O3
                        -optc-ffast-math
                        -funbox-strict-fields
                        -O2
                        -funfolding-use-threshold=16
+                       -Wcompat
+                       -Wnoncanonical-monad-instances
+                       -Wnoncanonical-monadfail-instances
+                       -Wincomplete-uni-patterns
+                       -Wincomplete-record-updates
 
   hs-source-dirs:      lib/
 
@@ -89,6 +94,7 @@ library
                        vty,
                        brick,
                        zlib,
+                       semigroups,
                        StateVar
 
   default-extensions: CPP,
@@ -120,13 +126,18 @@ executable zwerg
   default-language:    Haskell2010
 
   ghc-options:         -Wall
-                       -- -Werror
+                       -Werror
                        -optc-O3
                        -optc-ffast-math
                        -funbox-strict-fields
                        -O2
                        -threaded
                        -funfolding-use-threshold=16
+                       -Wcompat
+                       -Wnoncanonical-monad-instances
+                       -Wnoncanonical-monadfail-instances
+                       -Wincomplete-uni-patterns
+                       -Wincomplete-record-updates
 
   build-depends:       base >= 4.7 && < 5, zwerg, brick, vty
 

@@ -7,8 +7,8 @@ module Zwerg.Data.ZError
 
 import Protolude (Show, Read, Eq, Text, Int, MonadError, ($))
 import Lens.Micro.Platform (makeClassy)
-import Language.Haskell.TH
-import Language.Haskell.TH.Syntax
+import Language.Haskell.TH (Exp, runQ)
+import Language.Haskell.TH.Syntax (Quasi)
 
 data ZErrorLevel = PlayerWarning | EngineWarning | EngineFatal
   deriving (Show, Read, Eq)
