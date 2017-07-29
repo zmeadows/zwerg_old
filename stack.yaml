@@ -1,6 +1,4 @@
 flags: {}
 packages:
 - location: '.'
-extra-deps:
-- sdl2-ttf-1.0.0
 resolver: lts-8.23
