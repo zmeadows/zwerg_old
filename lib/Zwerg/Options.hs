@@ -5,7 +5,7 @@ import Zwerg.Prelude
 data Options = Options
   { _effectsLevel :: Int
   , _backgroundLevel :: Int
-  } deriving (Show, Read, Eq)
+  } deriving (Show, Eq)
 
 makeClassy ''Options
 

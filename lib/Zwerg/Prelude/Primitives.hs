@@ -32,8 +32,8 @@ import Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as M
 
 newtype UUID = MkUUID Int
-  deriving (Show, Read, Eq, Bounded, Enum, Num, Ord, Generic)
-instance Binary UUID
+  deriving (Show, Eq, Bounded, Enum, Num, Ord, Generic, Binary)
+-- instance Binary UUID
 
 instance ZWrapped UUID Int where
   unwrap (MkUUID uuid) = uuid
@@ -55,7 +55,7 @@ data Direction
   | NorthEast
   | SouthWest
   | SouthEast
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 instance Binary Direction
 
 cardinalDirections :: [Direction]
@@ -65,7 +65,7 @@ data TargetType
   = SingleTarget
   | AOE Double
   | Line Direction Int
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 instance Binary TargetType
 
 --TODO: map this onto 256 color?
@@ -76,7 +76,7 @@ data Color
   | Red0   | Red1   | Red2   | Red3
   | Black0 | Black1 | Black2 | Black3
   | White0 | White1 | White2 | White3
-  deriving (Eq, Read, Show, Generic)
+  deriving (Eq, Show, Generic)
 instance Binary Color
 
 -- type ColoredText = [(Color, Text)]
@@ -87,7 +87,7 @@ data Glyph = Glyph
   , fgColorFOG :: Color
   , bgColorVIS :: Maybe Color
   , bgColorFOG :: Maybe Color
-  } deriving (Show, Read, Eq, Generic)
+  } deriving (Show, Eq, Generic)
 instance Binary Glyph
 
 data EntityType
@@ -97,23 +97,23 @@ data EntityType
   | Item
   | Enemy
   | Player
-  deriving (Show, Read, Eq, Ord, Enum, Generic)
+  deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary EntityType
 
 data Parent = Alive UUID | Dead
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 instance Binary Parent
 
 data TileType = Floor | Wall | Door | Void
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 instance Binary TileType
 
 data Stat = STR | DEX | INT | CHA | CON | WIS
-  deriving (Read, Show, Eq, Ord, Enum, Generic)
+  deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary Stat
 
 newtype Stats = MkStats (Map Stat Int)
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 instance Binary Stats
 
 zeroStats :: Stats
@@ -129,11 +129,11 @@ replaceStat s v (MkStats m) = MkStats $ M.insert s v m
 -- TODO: maximum stat == 100?
 
 data ItemType = Armor | Weapon | Potion | Scroll
-  deriving (Show, Read, Eq, Ord, Enum, Generic)
+  deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary ItemType
 
 data AIType = SimpleMeleeCreature | SimpleRangedCreature
-  deriving (Show, Read, Eq, Ord, Enum, Generic)
+  deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary AIType
 
 ------------

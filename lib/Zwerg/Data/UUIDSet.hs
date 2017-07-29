@@ -7,7 +7,7 @@ import qualified Data.List as L (delete, nub)
 
 newtype UUIDSet =
   MkUUIDSet [UUID]
-  deriving (Eq, Ord, Read, Show, Monoid, Semigroup, Generic)
+  deriving (Eq, Ord, Show, Monoid, Semigroup, Generic)
 
 instance Binary UUIDSet
 

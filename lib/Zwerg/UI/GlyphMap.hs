@@ -8,7 +8,7 @@ import Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as M (empty, fromList, union, elems, map)
 
 newtype GlyphMap = MkGlyphMap (Map Position (Glyph, Bool))
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 instance Binary GlyphMap
 
 class HasGlyphMap s where

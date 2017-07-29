@@ -15,7 +15,7 @@ module Zwerg.Data.Position
 import Zwerg.Prelude
 
 newtype ZLevel = MkZLevel Int
-  deriving (Show, Read, Eq, Ord, Generic)
+  deriving (Show, Eq, Ord, Generic)
 instance Binary ZLevel
 
 instance ZConstructable ZLevel Int where
@@ -26,7 +26,7 @@ instance ZConstructable ZLevel Int where
 
 newtype Position =
   MkPosition (Int, Int)
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 
 --NOTE: this Ord instance is important, as it keeps the
 --GlyphMap position ordering automatic so we don't have to
@@ -42,17 +42,15 @@ instance Binary Position
 instance ZWrapped Position (Int, Int) where
   unwrap (MkPosition p) = p
 
-data Metric
-  = Euclidean
-  | TaxiCab
-  deriving (Show, Read, Eq)
+data Metric = Euclidean | TaxiCab
+  deriving (Show, Eq)
 
 data Rectangle = Rectangle
   { _recW :: Int
   , _recH :: Int
   , _recX :: Int
   , _recY :: Int
-  } deriving (Read, Show, Eq)
+  } deriving (Show, Eq)
 
 {-# INLINABLE to1DIndex #-}
 to1DIndex :: Position -> Int

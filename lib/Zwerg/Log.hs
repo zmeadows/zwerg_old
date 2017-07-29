@@ -14,7 +14,7 @@ import qualified Data.Sequence as S
 import qualified Data.Text as T (splitAt, empty)
 
 newtype Log = MkLog (Seq Text)
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 
 instance Binary Log
 

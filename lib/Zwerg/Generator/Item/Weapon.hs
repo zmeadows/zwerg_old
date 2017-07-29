@@ -10,7 +10,10 @@ sword = do
     addComp swordUUID glyph $ Glyph '/' White3 Black1 Nothing Nothing
     addComp swordUUID entityType Item
     addComp swordUUID itemType Weapon
-    addComp swordUUID damageChain [DamageData SingleTarget Slash (Uniform 1 6)]
+    addComp swordUUID damageChain
+      [ DamageData SingleTarget Slash $ Uniform 1 2
+      , DamageData SingleTarget Pierce $ Uniform 1 2
+      ]
     addComp swordUUID blocksPassage False
     addComp swordUUID blocksVision False
     addComp swordUUID slot $ SingleHand RightHand

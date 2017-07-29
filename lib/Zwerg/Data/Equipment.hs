@@ -16,19 +16,19 @@ import Data.Map (Map)
 import qualified Data.Map as M (empty, insert, delete, lookup, elems)
 
 data ArmorSlot = Gloves | Head | Chest | Legs | Boots | Shoulders | Belt
-  deriving (Show, Read, Eq, Ord, Enum, Generic)
+  deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary ArmorSlot
 
 data HandSlot = LeftHand | RightHand
-  deriving (Show, Read, Eq, Ord, Enum, Generic)
+  deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary HandSlot
 
 data EquipmentSlot = Body ArmorSlot | SingleHand HandSlot | BothHands
-  deriving (Show, Read, Eq, Ord, Generic)
+  deriving (Show, Eq, Ord, Generic)
 instance Binary EquipmentSlot
 
 newtype Equipment = MkEquipment (Map EquipmentSlot UUID)
-  deriving (Show, Read, Eq, Generic)
+  deriving (Show, Eq, Generic)
 instance Binary Equipment
 
 {-# INLINABLE emptyEquipment #-}

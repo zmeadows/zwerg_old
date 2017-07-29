@@ -9,7 +9,7 @@ import Zwerg.Prelude
 
 newtype HP =
   MkHP (Int, Int)
-  deriving (Show, Read, Eq, Ord, Generic)
+  deriving (Show, Eq, Ord, Generic)
 
 instance Binary HP
 
