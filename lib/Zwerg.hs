@@ -1,7 +1,7 @@
 module Zwerg (zwerg) where
 
 import Zwerg.Component
-import Zwerg.Component.TileMap
+import Zwerg.Data.GridMap
 import Zwerg.Event
 import Zwerg.Entity
 import Zwerg.Game
@@ -36,6 +36,7 @@ data ZwergState = ZwergState
   , _ranGen :: RanGen
   , _quitting :: Bool
   , _pastState :: [ByteString]
+  , _errorMsg :: Maybe Text
   }
 makeClassy ''ZwergState
 
@@ -52,6 +53,7 @@ initZwergState = ZwergState
   , _ranGen = pureRanGen 0
   , _quitting = False
   , _pastState = []
+  , _errorMsg = Nothing
   }
 
 zwerg :: IO ()
@@ -84,7 +86,7 @@ buildPortUI (ViewInventory m) = return [ui]
 -- TODO: take background color from tile?
 -- TODO: check that name/description exist and just don't show them if they don't
 buildPortUI (ExamineTiles pos) = do
-  tileUUID <- level <~> playerUUID >>= (<~>) tileMap >>= tileUUIDatPosition pos
+  tileUUID <- fmap (atPos pos) $ level <~> playerUUID >>= (<~>) tileMap
   occUUID <- getPrimaryOccupant tileUUID
   thisName <- name <~> occUUID
   thisDesc <- description <~> occUUID
@@ -138,9 +140,8 @@ handleEventZwerg zs (BT.VtyEvent ev) =
       case err of
         --TODO: if player warning, print to log
         -- if engine failure, print to file and exit
-        Just _ -> BM.halt zs'
+        Just x -> BM.halt $ set errorMsg (Just $ show x) zs'
         Nothing -> BM.continue zs'
-          -- liftIO $ encodeFile "binary_components.dat" (zs' ^. components)
     _ -> BM.continue zs
 handleEventZwerg a b = BM.resizeOrQuit a b
 
@@ -165,7 +166,8 @@ zwergApp = BM.App
 initBrick :: MonadIO m => m ()
 initBrick = do
   gen <- newPureRanGen
-  void $ liftIO $ BM.defaultMain zwergApp $ initZwergState {_ranGen = gen}
+  s <- liftIO $ BM.defaultMain zwergApp $ initZwergState {_ranGen = gen}
+  liftIO $ print $ s ^. errorMsg
 
 zwergLogo :: BT.Widget ()
 zwergLogo = vBox $ map (withAttr customAttr)

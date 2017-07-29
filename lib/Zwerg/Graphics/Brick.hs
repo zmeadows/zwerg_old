@@ -1,7 +1,8 @@
 module Zwerg.Graphics.Brick where
 
-import Zwerg.Component.HP
 import Zwerg.Prelude hiding (on)
+
+import Zwerg.Data.HP
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Menu

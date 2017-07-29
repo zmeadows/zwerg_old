@@ -1,5 +1,15 @@
-module Zwerg.Component.Position where
-  --TODO export proper things
+module Zwerg.Data.Position
+  ( Position
+  , ZLevel
+  , Metric(..)
+  , Rectangle
+  , to1DIndex
+  , from1DIndex
+  , distance
+  , modPos
+  , movePosDir
+  , validatePosition
+  ) where
 
 import Zwerg.Prelude
 
@@ -47,7 +57,11 @@ data Rectangle = Rectangle
 to1DIndex :: Position -> Int
 to1DIndex pos =
   let (x, y) = unwrap pos
-  in y * mapHeightINT + x
+  in y * mapWidthINT + x
+
+{-# INLINABLE from1DIndex #-}
+from1DIndex :: Int -> Maybe Position
+from1DIndex i = validatePosition $ (mod i mapWidthINT, div i mapWidthINT)
 
 instance ZConstructable Position (Int, Int) where
   zConstruct pos =
@@ -89,4 +103,5 @@ validatePosition p =
   if isValidPosition p
     then Just $ MkPosition p
     else Nothing
+
 

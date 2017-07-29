@@ -1,11 +1,14 @@
 module Zwerg.Component where
 
-import Zwerg.Component.All
+import Zwerg.Prelude
+
 import Zwerg.Data.Damage
 import Zwerg.Data.Equipment
+import Zwerg.Data.HP
+import Zwerg.Data.Position
+import Zwerg.Data.GridMap
 import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
-import Zwerg.Prelude
 
 import Control.Exception.Base (assert)
 import Data.Text (append)
@@ -25,7 +28,7 @@ data Components = Components
   , _ticks          :: NamedUUIDMap Int
   , _tileOn         :: NamedUUIDMap UUID
   , _tileType       :: NamedUUIDMap TileType
-  , _tileMap        :: NamedUUIDMap TileMap
+  , _tileMap        :: NamedUUIDMap (GridMap UUID)
   , _occupants      :: NamedUUIDMap UUIDSet
   , _parent         :: NamedUUIDMap Parent
   , _children       :: NamedUUIDMap UUIDSet

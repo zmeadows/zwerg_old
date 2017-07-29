@@ -5,13 +5,11 @@ import Zwerg.Generator.Enemy.Goblin
 import Zwerg.Generator.Item.Weapon
 import Zwerg.Generator.Level
 
-import Data.Map.Lazy (traverseWithKey)
-
 testSquareGenerator :: Generator
 testSquareGenerator = do
     testSquareLevelUUID <- levelSkeletonGenerator
     testSquareTiles <- tileMap <@> testSquareLevelUUID
-    void $ flip traverseWithKey (unwrap testSquareTiles) $ \pos tileUUID -> do
+    traverseWithPos_ testSquareTiles $ \pos tileUUID -> do
         let (x, y) = unwrap pos
             isWallTile = x == 0 || x == mapWidthINT - 1 || y == 0 || y == mapHeightINT - 1
         if isWallTile
@@ -30,3 +28,5 @@ testSquareGenerator = do
     replicateM_ 3 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
     replicateM_ 5 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
     return testSquareLevelUUID
+
+

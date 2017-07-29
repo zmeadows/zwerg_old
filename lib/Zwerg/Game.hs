@@ -1,8 +1,7 @@
 module Zwerg.Game where
 
 import Zwerg.Component
-import Zwerg.Component.Position
-import qualified Zwerg.Component.TileMap as TM
+import Zwerg.Data.Position
 import Zwerg.Data.UUIDMap
 import Zwerg.Entity
 import Zwerg.Entity.AI
@@ -193,7 +192,7 @@ processEvent (MoveEntityDirectionEvent ed) = do
 processEvent (MoveEntityEvent ed) = do
   oldPos <- position <@> (ed ^. moverUUID)
   levelTiles <- level <@> (ed ^. moverUUID) >>= (<@>) tileMap
-  newTileUUID <- TM.tileUUIDatPosition (ed ^. newPosition) levelTiles
+  let newTileUUID = atPos (ed ^. newPosition) levelTiles
   newTileBlocked <- readC $ tileBlocksPassage newTileUUID
 
   if newTileBlocked
@@ -201,7 +200,7 @@ processEvent (MoveEntityEvent ed) = do
              then $(throw) EngineFatal "NPC Entity attempted to move to blocked tile"
              else pushLogMsgM "You cannot move into a blocked tile."
      else do
-       oldTileUUID <- TM.tileUUIDatPosition oldPos levelTiles
+       let oldTileUUID = atPos oldPos levelTiles
        transferOccupant (ed ^. moverUUID) (Just oldTileUUID) newTileUUID
        setComp (ed ^. moverUUID) position (ed ^. newPosition)
 

@@ -3,7 +3,7 @@ module Zwerg.Entity.AI
   ) where
 
 import Zwerg.Component
-import Zwerg.Component.Position
+import Zwerg.Data.Position
 import Zwerg.Entity
 import Zwerg.Event
 import Zwerg.Prelude

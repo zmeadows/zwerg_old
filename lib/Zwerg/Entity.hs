@@ -13,8 +13,9 @@ commentary with @some markup@.
 module Zwerg.Entity where
 
 import Zwerg.Component
-import Zwerg.Component.All
 import Zwerg.Data.Equipment
+import Zwerg.Data.Position
+import Zwerg.Data.GridMap
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Prelude
 import Zwerg.Util
@@ -71,7 +72,9 @@ getVisibleTiles uuid = do
       minY = round $ max (fromIntegral playerY - fov) 0.0
       maxX = round $ min (fromIntegral playerX + fov) $ mapWidthDOUBLE - 1.0
       maxY = round $ min (fromIntegral playerY + fov) $ mapHeightDOUBLE - 1.0
-      -- fovEdges = circle (playerX, playerY) (round $ 1.5 * fov)
+      -- fovEdges =
+      --   filter (\(x,y) -> x >= minX && x <= maxX && y >= minY && y <= maxY)
+      --   $ circle (playerX, playerY) (round $ 1.4 * fov)
       -- linesToFovEdges = map (unsafeTail . (line (playerX, playerY))) fovEdges
   -- tileUUIDlinesToFovEdges <-
   --   (mapM . mapM)
@@ -83,7 +86,7 @@ getVisibleTiles uuid = do
   candidatePOSs <-
     filter (\p -> distance Euclidean playerPOS p < fov) <$>
     mapM zConstruct [(x, y) | x <- [minX .. maxX], y <- [minY .. maxY]]
-  candidateTileUUIDs <- mapM (`tileUUIDatPosition` levelTiles) candidatePOSs
+  let candidateTileUUIDs = map (`atPos` levelTiles) candidatePOSs
   -- return $ zFromList $ intersect candidateTileUUIDs $ concat visibleLines
   return $ zFromList candidateTileUUIDs
 
@@ -130,7 +133,7 @@ getAdjacentTileUUID dir tileUUID = do
     Just adjPos -> do
       tileLevelUUID <- level <~> tileUUID
       levelTileMap <- tileMap <~> tileLevelUUID
-      Just <$> tileUUIDatPosition adjPos levelTileMap
+      return $ Just $ atPos adjPos levelTileMap
 
 getPrimaryOccupant :: UUID -> MonadCompReader UUID
 getPrimaryOccupant occupiedUUID = do

@@ -8,7 +8,9 @@ module Zwerg.Generator
   ) where
 
 import Zwerg.Component as EXPORTED
-import Zwerg.Component.All as EXPORTED
+import Zwerg.Data.HP as EXPORTED
+import Zwerg.Data.Position as EXPORTED
+import Zwerg.Data.GridMap as EXPORTED
 import Zwerg.Data.Damage as EXPORTED
 import Zwerg.Data.UUIDSet as EXPORTED
 import Zwerg.Data.Equipment as EXPORTED

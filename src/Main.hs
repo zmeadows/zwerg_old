@@ -1,6 +1,8 @@
 module Main where
 
-import Zwerg
+import Zwerg.Prelude (IO)
+import Zwerg (zwerg)
+
 import Control.Monad (void)
 
 main :: IO ()

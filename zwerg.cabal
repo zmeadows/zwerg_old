@@ -32,11 +32,11 @@ library
 
   exposed-modules:     Zwerg
                        Zwerg.Component
-                       Zwerg.Component.HP
-                       Zwerg.Component.Position
-                       Zwerg.Component.TileMap
                        Zwerg.Data.Damage
                        Zwerg.Data.Equipment
+                       Zwerg.Data.GridMap
+                       Zwerg.Data.HP
+                       Zwerg.Data.Position
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
                        Zwerg.Data.ZError
@@ -46,10 +46,11 @@ library
                        Zwerg.Game
                        Zwerg.Generator
                        Zwerg.Generator.Enemy.Goblin
+                       Zwerg.Generator.Item.Weapon
                        Zwerg.Generator.Level
                        Zwerg.Generator.Level.TestSquare
                        Zwerg.Generator.Player.TestPlayer
-                       Zwerg.Generator.Item.Weapon
+                       Zwerg.Geometry
                        Zwerg.Graphics.Brick
                        Zwerg.Log
                        Zwerg.Options
@@ -64,10 +65,7 @@ library
                        Zwerg.UI.Menu
                        Zwerg.UI.Port
                        Zwerg.Util
-                       Zwerg.Util.Geometry
                        Paths_zwerg
-
-  other-modules:       Zwerg.Component.All
 
   build-depends:       base >= 4.7 && < 5,
                        containers,

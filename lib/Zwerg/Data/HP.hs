@@ -1,4 +1,4 @@
-module Zwerg.Component.HP
+module Zwerg.Data.HP
   ( HP
   , adjustHP
   , adjustMaxHP

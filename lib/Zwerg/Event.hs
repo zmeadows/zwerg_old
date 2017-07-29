@@ -1,9 +1,9 @@
 module Zwerg.Event where
 -- TODO: export properly only what is needed
 
-import Zwerg.Component.Position
-import Zwerg.Data.Damage
 import Zwerg.Prelude
+import Zwerg.Data.Damage
+import Zwerg.Data.Position
 import Zwerg.Random.Distribution
 
 import Data.Sequence (Seq, (|>), ViewL(..), (><))

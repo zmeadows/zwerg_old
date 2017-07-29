@@ -1,6 +1,6 @@
 module Zwerg.UI.GlyphMap where
 
-import Zwerg.Component.Position
+import Zwerg.Data.Position
 import Zwerg.Prelude
 import Zwerg.Util
 

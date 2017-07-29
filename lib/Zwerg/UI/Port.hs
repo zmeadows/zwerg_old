@@ -1,7 +1,8 @@
 module Zwerg.UI.Port where
 
 import Zwerg.Prelude
-import Zwerg.Component.Position
+
+import Zwerg.Data.Position
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Menu
 
