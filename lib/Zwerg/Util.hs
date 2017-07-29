@@ -5,22 +5,8 @@ import Paths_zwerg (getDataFileName)
 
 import Control.Exception.Base (assert)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-
-{-
-import Data.List (words)
-import Data.Typeable (typeOf)
-import Language.Haskell.TH
-import Unsafe (unsafeLast)
-
-constrRecord :: Typeable a => a -> ExpQ
-constrRecord x = rei ex where
-    rei (Just r) = appE r $ conE $ mkName $ unsafeLast args
-    ex           = foldl dot uncur $ replicate terms uncur
-    terms        = (length args `div` 2) - 2
-    dot a b      = Just $ infixE a (varE $ mkName ".") b
-    uncur        = Just [|uncurry|]
-    args         = words . show $ typeOf x
--}
+import Data.Text (Text)
+import qualified Data.Text as T (replicate, append, length)
 
 getAsset :: MonadIO m => Text -> m Text
 getAsset path = pack <$> liftIO (getDataFileName $ "assets/" ++ unpack path)
@@ -55,3 +41,10 @@ takeWhileM1 p (x:xs) = do
   q <- p x
   if q then liftM ((:) x) (takeWhileM1 p xs)
        else return [x]
+
+{-# INLINABLE leftPad #-}
+leftPad :: Int -> Text -> Text
+leftPad n t =
+  let tlen = T.length t
+  in if tlen < n then T.append (T.replicate (n - tlen) " ") t else t
+
