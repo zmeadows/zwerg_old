@@ -21,8 +21,6 @@ import Zwerg.Util
 
 import Control.Monad.Loops (anyM)
 
-import Unsafe (unsafeHead)
-
 {-# INLINABLE getItemsOnEntityTile #-}
 getItemsOnEntityTile :: UUID -> MonadCompReader UUIDSet
 getItemsOnEntityTile entityUUID = tileOn <~> entityUUID >>= (`getOccupantsOfType` Item)
@@ -118,11 +116,10 @@ getPlayerAdjacentEnemy dir = do
   attackedTileUUID <- tileOn <~> playerUUID >>= getAdjacentTileUUID dir
   case attackedTileUUID of
     Just attackedTileUUID' -> do
-      adjacentTileEnemyOccupants <- getOccupantsOfType attackedTileUUID' Enemy
-      if | zIsNull adjacentTileEnemyOccupants -> return Nothing
-         | zSize adjacentTileEnemyOccupants == 1 ->
-           return $ Just $ unsafeHead $ zToList adjacentTileEnemyOccupants
-         | otherwise -> $(throw) EngineFatal "found multiple enemies on same tile"
+      zToList <$> getOccupantsOfType attackedTileUUID' Enemy >>= \case
+        [] -> return Nothing
+        [x] -> return $ Just x
+        _ -> $(throw) EngineFatal "found multiple enemies on same tile"
     Nothing -> return Nothing
 
 getAdjacentTileUUID :: Direction -> UUID -> MonadCompReader (Maybe UUID)
@@ -143,6 +140,7 @@ getPrimaryOccupant occupiedUUID = do
     else do
       types <- forM occs ((<~>) entityType)
       -- TODO: if multiple of same max entity type, further sort somehow
+      -- TODO: factor out a 'sortOccupantsByViewPriority' function?
       let maxUUID = fst $ maximumBy (comparing snd) $ zip occs types
       return maxUUID
 
