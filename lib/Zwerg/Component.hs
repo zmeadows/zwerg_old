@@ -51,21 +51,37 @@ instance Binary Components
 
 type Component a = forall s. HasComponents s => Lens' s (NamedUUIDMap a)
 
---TODO: make MonadCompState, MonadCompReader, MonadCompStateErr, MonadCompStateRandom
--- Basic context for manipulating entity components
-type MonadCompState a = forall s m. ( HasComponents s
-                                    , MonadError ZError m
-                                    , MonadState s m
-                                    ) => m a
 
--- Basic context for reading entity component values
-type MonadCompReader a = forall s m. ( HasComponents s
-                                     , MonadError ZError m
-                                     , MonadReader s m
-                                     ) => m a
+-- purely for convenience, type synonyms for commonly various monad contexts
+type MonadCompState a =
+  forall s m. ( HasComponents s
+              , MonadState s m
+              , MonadError ZError m
+              ) => m a
 
--- For running a MonadCompReader function inside the MonadCompState context
-readC :: MonadCompReader a -> MonadCompState a
+type MonadCompStateRand a =
+  forall s m. ( HasComponents s
+              , MonadState s m
+              , MonadError ZError m
+              , MonadRandom m
+              ) => m a
+
+
+type MonadCompRead a =
+  forall s m. ( HasComponents s
+              , MonadReader s m
+              , MonadError ZError m
+              ) => m a
+
+type MonadCompReadRand a =
+  forall s m. ( HasComponents s
+              , MonadReader s m
+              , MonadError ZError m
+              , MonadRandom m
+              ) => m a
+
+-- For running a MonadCompRead function inside the MonadCompState context
+readC :: MonadCompRead a -> MonadCompState a
 readC x = do
   cs <- use components
   case runReader (runExceptT x) cs of
@@ -162,11 +178,11 @@ demandHasComp uuid comp = do
 
 {-- READER --}
 {-# INLINEABLE viewComp #-}
-viewComp :: UUID -> Component a -> MonadCompReader (Maybe a)
+viewComp :: UUID -> Component a -> MonadCompRead (Maybe a)
 viewComp uuid comp = view (comp . uuidMap . at uuid)
 
 {-# INLINEABLE demandViewComp #-}
-demandViewComp :: Component a -> UUID -> MonadCompReader a
+demandViewComp :: Component a -> UUID -> MonadCompRead a
 demandViewComp comp uuid =
   viewComp uuid comp >>= \case
     Just x -> return x
@@ -175,11 +191,11 @@ demandViewComp comp uuid =
       $(throw) EngineFatal $ append "Missing Component: " cn
 
 {-# INLINEABLE (<~>) #-}
-(<~>) :: Component a -> UUID -> MonadCompReader a
+(<~>) :: Component a -> UUID -> MonadCompRead a
 (<~>) = demandViewComp
 
 {-# INLINEABLE (<~?>) #-}
-(<~?>) :: UUID -> Component a -> MonadCompReader (Maybe a)
+(<~?>) :: UUID -> Component a -> MonadCompRead (Maybe a)
 (<~?>) = viewComp
 
 {-# INLINEABLE (<@>) #-}

@@ -23,7 +23,7 @@ import Zwerg.Util
 import Control.Monad.Loops (anyM)
 
 {-# INLINABLE getItemsOnEntityTile #-}
-getItemsOnEntityTile :: UUID -> MonadCompReader UUIDSet
+getItemsOnEntityTile :: UUID -> MonadCompRead UUIDSet
 getItemsOnEntityTile entityUUID = tileOn <~> entityUUID >>= (`getOccupantsOfType` Item)
 
 {-# INLINABLE unequipItem #-}
@@ -38,11 +38,12 @@ equipItem :: UUID -> UUID -> MonadCompState ()
 equipItem itemUUID entityUUID = do
   islot <- slot <@> itemUUID
   -- TODO add unequipped item to inventory
+  -- TODO check that itemUUID has correct type
   (_, newEquipment) <- equip islot itemUUID <$> equipment <@> entityUUID
   setComp entityUUID equipment newEquipment
 
 {-# INLINABLE getEquippedWeapon #-}
-getEquippedWeapon :: UUID -> MonadCompReader (Maybe UUID)
+getEquippedWeapon :: UUID -> MonadCompRead (Maybe UUID)
 getEquippedWeapon entityUUID = do
   uuids <- getEquippedInSlot (SingleHand RightHand) <$> equipment <~> entityUUID
   filterM (isItemType Weapon) uuids >>= \case
@@ -51,7 +52,7 @@ getEquippedWeapon entityUUID = do
     _ -> $(throw) EngineFatal "Entity has multiple weapons equipped, and dual-wielding is not yet implemented."
 
 {-# INLINABLE isItemType #-}
-isItemType :: ItemType -> UUID -> MonadCompReader Bool
+isItemType :: ItemType -> UUID -> MonadCompRead Bool
 isItemType itypetest uuid =
   entityType <~> uuid >>= \case
     Item -> do
@@ -59,7 +60,7 @@ isItemType itypetest uuid =
       return (itype == itypetest)
     _ -> $(throw) EngineFatal "attempted to compare ItemType for non-Item entity."
 
-getVisibleTiles :: UUID -> MonadCompReader UUIDSet
+getVisibleTiles :: UUID -> MonadCompRead UUIDSet
 getVisibleTiles uuid = do
   -- TODO: use ST monad to implement classic impreative mutable algorithm?
   -- levelTiles <- level <~> uuid >>= (<~>) tiles
@@ -91,7 +92,7 @@ getVisibleTiles uuid = do
   return $ zFromList candidateTileUUIDs
 
 {-# INLINABLE tileBlocksVision #-}
-tileBlocksVision :: UUID -> MonadCompReader Bool
+tileBlocksVision :: UUID -> MonadCompRead Bool
 tileBlocksVision tileUUID = do
   -- The tile might iself block vision (ex: stone column)
   tileBlocks <- blocksVision <~> tileUUID
@@ -103,7 +104,7 @@ tileBlocksVision tileUUID = do
       anyM (blocksVision <~>) (unwrap occs)
 
 {-# INLINABLE tileBlocksPassage #-}
-tileBlocksPassage :: UUID -> MonadCompReader Bool
+tileBlocksPassage :: UUID -> MonadCompRead Bool
 tileBlocksPassage tileUUID = do
   -- The tile might itself block passage
   tileBlocks <- blocksPassage <~> tileUUID
@@ -114,7 +115,7 @@ tileBlocksPassage tileUUID = do
       occs <- occupants <~> tileUUID
       anyM (blocksPassage <~>) (unwrap occs)
 
-getPlayerAdjacentEnemy :: Direction -> MonadCompReader (Maybe UUID)
+getPlayerAdjacentEnemy :: Direction -> MonadCompRead (Maybe UUID)
 getPlayerAdjacentEnemy dir = do
   attackedTileUUID <- tileOn <~> playerUUID >>= getAdjacentTileUUID dir
   case attackedTileUUID of
@@ -125,7 +126,7 @@ getPlayerAdjacentEnemy dir = do
         _ -> $(throw) EngineFatal "found multiple enemies on same tile"
     Nothing -> return Nothing
 
-getAdjacentTileUUID :: Direction -> UUID -> MonadCompReader (Maybe UUID)
+getAdjacentTileUUID :: Direction -> UUID -> MonadCompRead (Maybe UUID)
 getAdjacentTileUUID dir tileUUID = do
   tilePosition <- position <~> tileUUID
   case movePosDir dir tilePosition of
@@ -135,7 +136,7 @@ getAdjacentTileUUID dir tileUUID = do
       levelTileMap <- tileMap <~> tileLevelUUID
       return $ Just $ atPos adjPos levelTileMap
 
-getPrimaryOccupant :: UUID -> MonadCompReader UUID
+getPrimaryOccupant :: UUID -> MonadCompRead UUID
 getPrimaryOccupant occupiedUUID = do
   occs <- zToList <$> occupants <~> occupiedUUID
   if null occs
@@ -148,7 +149,7 @@ getPrimaryOccupant occupiedUUID = do
       return maxUUID
 
 {-# INLINABLE getOccupantsOfType #-}
-getOccupantsOfType :: UUID -> EntityType -> MonadCompReader UUIDSet
+getOccupantsOfType :: UUID -> EntityType -> MonadCompRead UUIDSet
 getOccupantsOfType containerUUID eType = occupants <~> containerUUID >>= zFilterM isEtype
   where isEtype uuid = (eType ==) <$> entityType <~> uuid
 
@@ -214,11 +215,11 @@ resetTicks uuid = setComp uuid ticks 100
   -- dex <- lookupStat DEX <$> stats <~> uuid
   -- return 100 * (1.0 - (fromIntegral dex) / 200.0)
 
-getTargetedUUIDs :: TargetType -> UUID -> MonadCompReader [UUID]
+getTargetedUUIDs :: TargetType -> UUID -> MonadCompRead [UUID]
 -- TODO: fix AOE/Line implementation (same as SingleTarget for now)
 getTargetedUUIDs SingleTarget mainDefenderUUID = return [mainDefenderUUID]
 getTargetedUUIDs (AOE _) mainDefenderUUID = return [mainDefenderUUID]
 getTargetedUUIDs (Line _ _) mainDefenderUUID = return [mainDefenderUUID]
 
-getFearLevel :: UUID -> MonadCompReader Text
+getFearLevel :: UUID -> MonadCompRead Text
 getFearLevel _ = return "Terrifying"
