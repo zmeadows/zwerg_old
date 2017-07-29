@@ -20,9 +20,7 @@ data DamageData = DamageData
   , _damageDataAttribute :: DamageAttribute
   , _damageDataDistribution :: Distribution
   } deriving (Show, Read, Eq, Generic)
-
 makeFields ''DamageData
-
 instance Binary DamageData
 
 type DamageChain = [DamageData]
