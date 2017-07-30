@@ -5,7 +5,7 @@ module Zwerg.Data.Damage
   , attribute
   , distribution
   , DamageChain
-  , ResistanceLevel(..)
+  , Resistance(..)
   , Resistances
   ) where
 
@@ -17,9 +17,9 @@ data DamageAttribute
   | Ice
   | Poison
   | Electricity
+  | Slash
   | Pierce
   | Bludgeon
-  | Slash
   | Holy
   | Evil
   deriving (Show, Eq, Ord, Bounded, Generic)
@@ -36,21 +36,19 @@ instance Binary DamageData
 
 type DamageChain = [DamageData]
 
-data ResistanceLevel
-  = Weak
-  | Medium
-  | Strong
-  | Complete
-  | WeakHeal
-  | MediumHeal
-  | StrongHeal
+--TODO: make newtype of Int
+newtype Resistance = MkResistance Int
   deriving (Show, Eq, Ord, Bounded, Generic)
-instance Binary ResistanceLevel
+instance Binary Resistance
 
-newtype Resistances = MkResistances (Map DamageAttribute ResistanceLevel)
+-- increaseResistance :: Resistance -> Int -> Resistance
+-- increaseResistance (MkResistance r) i = MkResistance $ min 10 $ r + i
+
+-- decreaseResistance :: Resistance -> Int -> Resistance
+-- decreaseResistance (MkResistance r) i = MkResistance $ max (-10) $ r - i
+
+newtype Resistances = MkResistances (Map DamageAttribute Resistance)
   deriving (Show, Eq, Ord, Generic)
 instance Binary Resistances
-
-
 
 

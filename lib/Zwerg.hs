@@ -71,6 +71,8 @@ buildZwergUI zs =
 --FIXME: refactor
 buildPortUI :: Port -> UIBuilder [BT.Widget ()]
 
+buildPortUI (DeathScreen deathMsg) = return [BC.vCenter $ BC.hCenter $ txt deathMsg]
+
 buildPortUI (MainMenu m) = return [ui]
   where
     l = menuToBrickList m

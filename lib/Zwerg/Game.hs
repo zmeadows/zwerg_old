@@ -15,6 +15,8 @@ import Zwerg.UI.Input
 import Zwerg.UI.Menu
 import Zwerg.UI.Port
 
+import qualified Data.Text as T (concat)
+
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
 
 data GameState = GameState
@@ -210,9 +212,10 @@ processEvent (WeaponAttackAttemptEvent ed) = do
      then $(newEvent "WeaponAttackHit") (ed ^. attackerUUID) (ed ^. defenderUUID)
      else $(newEvent "WeaponAttackMiss") (ed ^. attackerUUID) (ed ^. defenderUUID)
 
-
 processEvent (WeaponAttackHitEvent ed) = do
   readC (getEquippedWeapon $ ed ^. attackerUUID) >>= \case
+    --TODO: decide how to handle unarmed attacks
+    Nothing -> return ()
     Just weaponUUID -> do
       chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do
@@ -222,8 +225,6 @@ processEvent (WeaponAttackHitEvent ed) = do
                                        targetUUID
                                        (damageData ^. attribute)
                                        (damageData ^. distribution)
-    --TODO: decide how to handle unarmed attacks
-    Nothing -> return ()
 
 processEvent (WeaponAttackMissEvent _) = return ()
 
@@ -231,13 +232,23 @@ processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
 
 processEvent (IncomingDamageEvent ed) = do
   --TODO: account for weaknesses in creatures and armor
-  damageDone <- round <$> sample (ed ^. damageDistribution)
-  $(newEvent "OutgoingDamage") (ed ^. attackerUUID) (ed ^. defenderUUID) damageDone
+    damageDone <- round <$> sample (ed ^. damageDistribution)
+    $(newEvent "OutgoingDamage") (ed ^. attackerUUID) (ed ^. defenderUUID) damageDone
 
 processEvent (OutgoingDamageEvent ed) = do
-  modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
-  newHP <- hp <@> (ed ^. defenderUUID)
-  when (fst (unwrap newHP) == 0) $ eraseEntity $ ed ^. defenderUUID
+  stillAlive <- hasComp (ed ^. defenderUUID) hp
+  when stillAlive $ do
+    modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
+    newHP <- hp <@> (ed ^. defenderUUID)
+    when (ed ^. attackerUUID == playerUUID || ed ^. defenderUUID == playerUUID) $ do
+      attName <- name <@> (ed ^. attackerUUID)
+      defName <- name <@> (ed ^. defenderUUID)
+      pushLogMsgM $ T.concat [attName, " hit ", defName, " for ", show $ ed ^. damageAmount, " damage."]
+
+    when (fst (unwrap newHP) == 0) $
+      if (ed ^. defenderUUID) == playerUUID
+         then portal %= (DeathScreen "You died." :)
+         else eraseEntity $ ed ^. defenderUUID
 
 processEvent _ = return ()
 

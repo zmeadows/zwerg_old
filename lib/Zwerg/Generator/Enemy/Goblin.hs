@@ -8,7 +8,8 @@ goblin :: Generator
 goblin = do
     goblinUUID <- popUUID
     generateGoblinName >>= addComp goblinUUID name
-    addComp goblinUUID description "It is a foul-smelling, wrinkly goblin."
+    addComp goblinUUID description "It is foul-smelling and wrinkly."
+    addComp goblinUUID species "Goblin"
     goblinHP <- getRandomR (3, 7)
     zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
 

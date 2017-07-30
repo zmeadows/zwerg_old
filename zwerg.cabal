@@ -96,6 +96,7 @@ library
                        StateVar
 
   default-extensions: CPP,
+                      BangPatterns,
                       DeriveFoldable,
                       DeriveGeneric,
                       DeriveTraversable,
@@ -114,6 +115,7 @@ library
                       TemplateHaskell,
                       TupleSections,
                       TypeFamilies,
+                      -- UnboxedSums, in ghc 8.2!
                       TypeOperators
 
 executable zwerg

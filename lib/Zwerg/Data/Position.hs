@@ -10,6 +10,7 @@ module Zwerg.Data.Position
   , movePosDir
   , validatePosition
   , allPositions
+  , isNeighborPos
   ) where
 
 import Zwerg.Prelude
@@ -108,3 +109,9 @@ allPositions =
   let xs = [0 .. mapWidthINT - 1]
       ys = [0 .. mapHeightINT - 1]
   in map MkPosition [ (x,y) | x <- xs, y <- ys ]
+
+isNeighborPos :: Position -> Position -> Bool
+isNeighborPos (MkPosition (x1,y1)) (MkPosition (x2,y2)) =
+  let yn = abs (y1 - y2) == 1
+      xn = abs (x1 - x2) == 1
+  in yn && xn

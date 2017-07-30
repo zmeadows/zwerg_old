@@ -38,7 +38,6 @@ throw = runQ [| \l d -> throwError $ ZError __FILE__ __LINE__ l d|]
 maybeThrow :: Language.Haskell.TH.Syntax.Quasi m => m Exp
 maybeThrow = runQ [| \l d x -> maybe (throwError $ ZError __FILE__ __LINE__ l d) return x|]
 
-
 class ZConstructable a b | a -> b where
   zConstruct :: (MonadError ZError m) => b -> m a
 

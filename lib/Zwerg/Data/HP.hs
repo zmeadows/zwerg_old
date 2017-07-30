@@ -7,8 +7,7 @@ module Zwerg.Data.HP
 
 import Zwerg.Prelude
 
-newtype HP =
-  MkHP (Int, Int)
+newtype HP = MkHP (Int, Int)
   deriving (Show, Eq, Ord, Generic)
 
 instance Binary HP
@@ -38,8 +37,7 @@ adjustMaxHP f (MkHP (curHP, maxHP))
   | newMaxHP < 0 = MkHP (1, 1)
   | curHP > newMaxHP = MkHP (newMaxHP, newMaxHP)
   | otherwise = MkHP (curHP, newMaxHP)
-  where
-    newMaxHP = f maxHP
+  where newMaxHP = f maxHP
 
 {-# INLINABLE fullHeal #-}
 fullHeal :: HP -> HP

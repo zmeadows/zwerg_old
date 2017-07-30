@@ -17,7 +17,7 @@ data Port
   | ViewInventory (Menu InventoryMenuItem)
   | PickupItems (Menu UUID)
   | ExamineTiles Position
-  | DeathScreen
+  | DeathScreen Text
   | ExitScreen
   deriving (Show, Eq, Generic)
 

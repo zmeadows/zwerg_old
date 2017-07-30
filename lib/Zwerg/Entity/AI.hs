@@ -49,16 +49,20 @@ enact :: UUID -> AIType -> AI ()
 
 enact entityUUID SimpleMeleeCreature = do
   tileUUID <- tileOn <~> entityUUID
-  possTiles <- catMaybes <$> mapM (`getAdjacentTileUUID` tileUUID) cardinalDirections
-  openPossTiles <- filterM (\i -> not <$> tileBlocksPassage i) possTiles
+  entityPos <- position <~> entityUUID
   playerPos <- position <~> playerUUID
-  let distanceToPlayer e1UUID e2UUID = do
-        e1Dis <- distance Euclidean playerPos <$> position <~> e1UUID
-        e2Dis <- distance Euclidean playerPos <$> position <~> e2UUID
-        return $ compare e1Dis e2Dis
-  unless (null openPossTiles) $ do
-    newTileUUID <- fromJust <$> minimumByM distanceToPlayer openPossTiles
-    newPos <- position <~> newTileUUID
-    $(newEvent "MoveEntity") entityUUID newPos
+  if (isNeighborPos entityPos playerPos)
+     then $(newEvent "WeaponAttackAttempt") entityUUID playerUUID
+     else do
+       possTiles <- catMaybes <$> mapM (`getAdjacentTileUUID` tileUUID) cardinalDirections
+       openPossTiles <- filterM (\i -> not <$> tileBlocksPassage i) possTiles
+       let distanceToPlayer e1UUID e2UUID = do
+             e1Dis <- distance Euclidean playerPos <$> position <~> e1UUID
+             e2Dis <- distance Euclidean playerPos <$> position <~> e2UUID
+             return $ compare e1Dis e2Dis
+       unless (null openPossTiles) $ do
+         newTileUUID <- fromJust <$> minimumByM distanceToPlayer openPossTiles
+         newPos <- position <~> newTileUUID
+         $(newEvent "MoveEntity") entityUUID newPos
 
 enact _ _ = return ()

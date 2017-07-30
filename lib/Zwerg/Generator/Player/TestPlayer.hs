@@ -32,6 +32,6 @@ testPlayerGenerator startLevelUUID = do
     swordUUID <- sword
     equipItem swordUUID playerUUID
 
-    -- anotherSword <- sword
+    anotherSword <- sword
     addComp playerUUID inventory zEmpty
-    -- modComp playerUUID inventory (zAdd anotherSword)
+    modComp playerUUID inventory (zAdd anotherSword)
