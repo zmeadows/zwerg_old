@@ -18,6 +18,7 @@ import Brick.AttrMap
 import Brick.Markup (markup)
 import Brick.Util (on, fg)
 import Brick.Widgets.Core
+import Data.Either (either)
 import Data.Foldable (foldl1)
 import Data.Monoid ((<>))
 import Data.Text (append)
@@ -47,15 +48,15 @@ menuToBrickList m =
   let allLabels = getMenuLabels m
   in BL.listMoveTo (getMenuFocusIndex m) $ BL.list () (Vec.fromList allLabels) 1
 
--- TODO: newtype and factor into another file
-type UIBuilder a = ExceptT ZError (Reader ZwergState) a
+newtype UIBuilder a = UIBuilder (ExceptT ZError (Reader GameState) a)
+  deriving (Functor , Applicative , Monad , MonadReader GameState, MonadError ZError)
+
+runUIBuilder :: UIBuilder a -> GameState -> Either ZError a
+runUIBuilder (UIBuilder x) gs = runReader (runExceptT x) gs
 
 buildZwergUI :: ZwergState -> [BT.Widget ()]
 buildZwergUI zs =
-  let ps = view (gameState . portal) zs
-   in case runReader (runExceptT (concat <$> mapM buildPortUI ps)) zs of
-       Left _ -> []
-       Right x -> x
+  either (const []) id $ runUIBuilder (concat <$> (mapM buildPortUI (view portal zs))) $ view gameState zs
 
 --FIXME: refactor
 buildPortUI :: Port -> UIBuilder [BT.Widget ()]

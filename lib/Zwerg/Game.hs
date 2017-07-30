@@ -1,4 +1,5 @@
 module Zwerg.Game where
+--TODO: export only what you want, and factor out processEvent into new module
 
 import Zwerg.Component
 import Zwerg.Data.Position
@@ -18,8 +19,6 @@ import Zwerg.UI.Port
 import qualified Data.Text as T (concat)
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
-
-
 
 data GameState = GameState
   { _gsComponents :: Components
@@ -96,8 +95,7 @@ processUserInput k = do
   p <- use portal
   processUserInput' p k
   eq <- use eventQueue
-  -- only move on to process other entity ticks
-  -- if player actually did something
+  -- only move on to process other entity ticks if player actually did something
   when (not $ zIsNull eq) $ do
     processEvents
     resetTicks playerUUID

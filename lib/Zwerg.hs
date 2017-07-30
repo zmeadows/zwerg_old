@@ -10,6 +10,7 @@ import Zwerg.Component
 import Zwerg.Game
 import Zwerg.Log
 import Zwerg.Random
+import Zwerg.UI.Port
 
 import Data.ByteString.Lazy (ByteString)
 
@@ -28,6 +29,8 @@ instance HasComponents ZwergState where
   components = gameState . components
 instance HasLog ZwergState where
   userLog = gameState . userLog
+instance HasPortal ZwergState where
+  portal = gameState . portal
 
 initZwergState :: ZwergState
 initZwergState = ZwergState
