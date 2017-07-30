@@ -52,7 +52,6 @@ instance Binary Components
 
 type Component a = forall s. HasComponents s => Lens' s (NamedUUIDMap a)
 
-
 -- purely for convenience, type synonyms for commonly various monad contexts
 type MonadCompState a =
   forall s m. ( HasComponents s

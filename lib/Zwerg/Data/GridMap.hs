@@ -11,8 +11,8 @@ module Zwerg.Data.GridMap
 import Zwerg.Prelude
 import Zwerg.Data.Position
 
-import Data.IntMap.Lazy (IntMap)
-import qualified Data.IntMap.Lazy as M (traverseWithKey, lookup, fromList, size, elems)
+import Data.IntMap.Strict (IntMap)
+import qualified Data.IntMap.Strict as M (traverseWithKey, lookup, fromList, size, elems)
 import Data.Maybe (fromJust)
 
 newtype GridMap a = MkGridMap (IntMap a)

@@ -4,8 +4,8 @@ import Zwerg.Data.Position
 import Zwerg.Prelude
 import Zwerg.Util
 
-import Data.Map.Lazy (Map)
-import qualified Data.Map.Lazy as M (empty, fromList, union, elems, map)
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M (empty, fromList, union, elems, map)
 
 newtype GlyphMap = MkGlyphMap (Map Position (Glyph, Bool))
   deriving (Show, Eq, Generic)

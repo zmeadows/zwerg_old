@@ -19,6 +19,8 @@ import qualified Data.Text as T (concat)
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
 
+
+
 data GameState = GameState
   { _gsComponents :: Components
   , _gsLog        :: Log
@@ -85,9 +87,9 @@ processNonPlayerEvents = do
              processEvents
              -- TODO: set ticks according to DEX + other things
              setComp i ticks 100
-         | otherwise -> return ()
+         | otherwise -> return $! ()
       updateGlyphMap
-    _ -> return ()
+    _ -> return $! ()
 
 processUserInput :: KeyCode -> Game ()
 processUserInput k = do
@@ -114,7 +116,7 @@ processUserInput' (MainMenu m:_) Return =
       portal .= [MainScreen gm]
       updateGlyphMap
     "exit" -> portal .= [ExitScreen]
-    _ -> return ()
+    _ -> return $! ()
 
 processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput West
 processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput South
@@ -127,10 +129,10 @@ processUserInput' (MainScreen _:_) (RightArrow)  = processPlayerDirectionInput E
 
 processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
   inv <- zToList <$> inventory <@> playerUUID
-  menuItems <- forM inv $ \id -> do
-    d <- description <@> id
-    n <- name <@> id
-    return $ (n, InventoryMenuItem id d)
+  menuItems <- forM inv $ \uuid -> do
+    d <- description <@> uuid
+    n <- name <@> uuid
+    return $! (n, InventoryMenuItem uuid d)
   case menuItems of
     [] -> pushLogMsgM "You don't have any items to look at."
     i:is -> portal .= (ViewInventory $ makeMenu $ i :| is) : p
@@ -146,24 +148,24 @@ processUserInput' (ExamineTiles _ : ps) (KeyChar 'x') = portal .= ps
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'h') = do
   case movePosDir West pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return ()
+    Nothing -> return $! ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'j') = do
   case movePosDir South pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return ()
+    Nothing -> return $! ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'k') = do
   case movePosDir North pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return ()
+    Nothing -> return $! ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') = do
   case movePosDir East pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return ()
+    Nothing -> return $! ()
 
-processUserInput' _ _ = return ()
+processUserInput' _ _ = return $! ()
 
 updateGlyphMap :: Game ()
 updateGlyphMap = do
@@ -171,7 +173,7 @@ updateGlyphMap = do
     MainScreen gm : ps -> do
       updatedGlyphs <- getGlyphMapUpdates
       portal .= (MainScreen $ mergeGlyphMaps updatedGlyphs gm) : ps
-    _ -> return ()
+    _ -> return $! ()
 
 processEvents :: Game ()
 processEvents =
@@ -214,7 +216,7 @@ processEvent (WeaponAttackAttemptEvent ed) = do
 processEvent (WeaponAttackHitEvent ed) = do
   readC (getEquippedWeapon $ ed ^. attackerUUID) >>= \case
     --TODO: decide how to handle unarmed attacks
-    Nothing -> return ()
+    Nothing -> return $! ()
     Just weaponUUID -> do
       chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do
@@ -225,7 +227,7 @@ processEvent (WeaponAttackHitEvent ed) = do
                                        (damageData ^. attribute)
                                        (damageData ^. distribution)
 
-processEvent (WeaponAttackMissEvent _) = return ()
+processEvent (WeaponAttackMissEvent _) = return $! ()
 
 processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
 

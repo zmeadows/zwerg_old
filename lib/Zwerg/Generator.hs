@@ -20,7 +20,6 @@ import Zwerg.Prelude as EXPORTED
 import Zwerg.Random as EXPORTED
 import Zwerg.Util as EXPORTED
 
-import Control.Monad.Except as EXPORTED hiding ((<$!>))
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
 
 type Generator = forall s m. ( HasComponents s

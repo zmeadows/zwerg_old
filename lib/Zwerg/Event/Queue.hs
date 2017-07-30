@@ -22,7 +22,7 @@ class HasZwergEventQueue s where
   eventQueue :: Lens' s ZwergEventQueue
 
 instance HasZwergEventQueue ZwergEventQueue where
-  eventQueue = identity
+  eventQueue = id
 
 instance ZWrapped ZwergEventQueue (Seq ZwergEvent) where
   unwrap (MkZwergEventQueue eq) = eq

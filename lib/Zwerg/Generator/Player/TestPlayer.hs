@@ -10,7 +10,7 @@ testPlayerGenerator startLevelUUID = do
     addPlayerComp description "It's you."
     addPlayerComp level startLevelUUID
     addPlayerComp glyph $ Glyph '@' Red0 Red0 Nothing Nothing
-    zConstruct (7, 10) >>= addPlayerComp hp
+    zConstruct (100, 100) >>= addPlayerComp hp
     addPlayerComp entityType Player
     addPlayerComp equipment emptyEquipment
 

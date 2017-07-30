@@ -7,7 +7,7 @@ module Zwerg.Prelude.Class
   , ZFilterable(..)
   ) where
 
-import Protolude (Bool, Monad, Int, Maybe)
+import Prelude (Bool, Monad, Int, Maybe)
 
 class ZWrapped a b | a -> b where
   unwrap :: a -> b

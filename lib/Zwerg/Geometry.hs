@@ -5,8 +5,6 @@ module Zwerg.Geometry
 
 import Zwerg.Prelude
 
-import Unsafe
-
 circle :: (Int, Int) -> Int -> [(Int, Int)]
 circle p0 r = circle' p0 (r, 0) 0 []
 
@@ -40,7 +38,7 @@ bla (x0, y0) (x1, y1) =
       (p, q, step)
         | abs dx > abs dy = (abs dy, abs dx, xyStep)
         | otherwise = (abs dx, abs dy, yxStep)
-      walk w xy = xy : walk (unsafeTail w) (step (unsafeHead w) xy)
+      walk w xy = xy : walk (tail w) (step (head w) xy)
   in walk (balancedWord p q 0) (x0, y0)
 
 -- | See <http://roguebasin.roguelikedevelopment.org/index.php/Digital_lines>.

@@ -5,6 +5,8 @@ module Zwerg.Random.Distribution
 
 import Zwerg.Prelude
 
+import Data.Word (Word64)
+
 import qualified Control.Monad.Random as CMR (MonadRandom, getRandom)
 import qualified Data.Random.Distribution.Uniform as RU
 import qualified Data.Random.RVar as RV

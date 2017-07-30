@@ -22,8 +22,6 @@ import qualified Data.Sequence as S (viewr, viewl, empty, fromList, length)
 import Data.Text (Text)
 import qualified Data.Text as T
 
-import Unsafe (unsafeHead, unsafeTail)
-
 data MenuEntry a = MenuEntry
   { _shortcut :: Char
   , _label :: Text
@@ -85,7 +83,7 @@ makeMenu' ((newLabel, newItem) :| remaining) entries =
   in case remaining of
        r:rs -> makeMenu' (r :| rs) newEntries
        [] -> let res = reverse newEntries
-             in MkMenu S.empty (unsafeHead res) (S.fromList $ unsafeTail res)
+             in MkMenu S.empty (head res) (S.fromList $ tail res)
 
 getMenuLabels :: Menu a -> [Text]
 getMenuLabels (MkMenu ls x rs) =

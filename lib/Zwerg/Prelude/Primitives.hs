@@ -22,14 +22,16 @@ module Zwerg.Prelude.Primitives
   , mapHeightINT
   ) where
 
-import Protolude
+import Prelude
+
 import Zwerg.Prelude.Class
 import Zwerg.Data.ZError
 
+import GHC.Generics (Generic)
 import Data.Binary as EXPORTED (Binary)
 
-import Data.Map.Lazy (Map)
-import qualified Data.Map.Lazy as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 
 newtype UUID = MkUUID Int
   deriving (Show, Eq, Bounded, Enum, Num, Ord, Generic, Binary)

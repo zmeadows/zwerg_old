@@ -12,6 +12,7 @@ module Zwerg.Data.Equipment
 import Zwerg.Prelude
 import Zwerg.Data.UUIDSet
 
+import Data.Maybe (catMaybes)
 import Data.Map (Map)
 import qualified Data.Map as M (empty, insert, delete, lookup, elems)
 

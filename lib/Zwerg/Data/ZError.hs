@@ -6,10 +6,12 @@ module Zwerg.Data.ZError
   , maybeThrow
   ) where
 
-import Protolude (Show, Ord, Eq, Text, Int, MonadError, ($))
+import Prelude (Show, Ord, Eq, Int, ($))
+import Data.Text (Text)
 import Lens.Micro.Platform (makeClassy)
 import Language.Haskell.TH (Exp, runQ)
 import Language.Haskell.TH.Syntax (Quasi)
+import Control.Monad.Except (MonadError, throwError)
 
 data ZErrorLevel = PlayerWarning | EngineWarning | EngineFatal
   deriving (Show, Eq, Ord)
@@ -21,16 +23,6 @@ data ZError = ZError
   , _explanation :: Text
   } deriving (Show, Eq)
 makeClassy ''ZError
-
-{-
-printZError :: ZError -> Text
-printZError zerr = T.concat [
-    "File: ", zerr ^. file, "\n",
-    "Line: ", show $ zerr ^. line, "\n",
-    "ErrorLevel: ", show $ zerr ^. errLevel, "\n",
-    "Description: ", show $ zerr ^. description, "\n"
-  ]
--}
 
 throw :: Language.Haskell.TH.Syntax.Quasi m => m Exp
 throw = runQ [| \l d -> throwError $ ZError __FILE__ __LINE__ l d|]

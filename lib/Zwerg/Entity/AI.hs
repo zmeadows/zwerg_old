@@ -11,7 +11,7 @@ import Zwerg.Random
 
 import Control.Monad.Loops (minimumByM)
 import Control.Monad.Random (RandT, evalRandT)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, catMaybes)
 
 newtype AI a =
   AI (ExceptT ZError (RandT RanGen (StateT ZwergEventQueue (Reader Components))) a)

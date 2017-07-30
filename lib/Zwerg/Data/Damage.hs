@@ -12,6 +12,8 @@ module Zwerg.Data.Damage
 import Zwerg.Prelude
 import Zwerg.Random.Distribution
 
+import Data.Map (Map)
+
 data DamageAttribute
   = Fire
   | Ice

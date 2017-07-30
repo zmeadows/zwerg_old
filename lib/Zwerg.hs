@@ -1,5 +1,7 @@
 module Zwerg (zwerg) where
 
+import Zwerg.Prelude
+
 import Zwerg.Component
 import Zwerg.Data.GridMap
 import Zwerg.Event
@@ -7,7 +9,6 @@ import Zwerg.Entity
 import Zwerg.Game
 import Zwerg.Graphics.Brick
 import Zwerg.Log
-import Zwerg.Prelude hiding (on, ByteString)
 import Zwerg.Random
 import Zwerg.UI.Input
 import Zwerg.UI.Port

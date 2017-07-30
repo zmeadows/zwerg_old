@@ -80,7 +80,6 @@ library
                        microlens-platform,
                        monad-loops,
                        mtl,
-                       protolude,
                        random,
                        random-fu,
                        semigroups,
@@ -93,6 +92,7 @@ library
                        vty,
                        xml,
                        zlib,
+                       string-conv,
                        MonadRandom,
                        StateVar
 
