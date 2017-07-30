@@ -117,6 +117,7 @@ library
                       TemplateHaskell,
                       TupleSections,
                       TypeFamilies,
+                      Strict,
                       -- UnboxedSums, in ghc 8.2!
                       TypeOperators
 
