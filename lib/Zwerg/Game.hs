@@ -185,8 +185,7 @@ processEvent (MoveEntityDirectionEvent ed) = do
   oldPosition <- position <@> (ed ^. moverUUID)
   case movePosDir (ed ^. direction) oldPosition of
     Nothing -> pushLogMsgM "You cannot move into the void."
-    Just newPos -> do
-      $(newEvent "MoveEntity") (ed ^. moverUUID) newPos
+    Just newPos -> $(newEvent "MoveEntity") (ed ^. moverUUID) newPos
 
 processEvent (MoveEntityEvent ed) = do
   oldPos <- position <@> (ed ^. moverUUID)
@@ -206,8 +205,8 @@ processEvent (MoveEntityEvent ed) = do
 processEvent (WeaponAttackAttemptEvent ed) = do
   attDEX <- readC $ getStat DEX $ ed ^. attackerUUID
   defDEX <- readC $ getStat DEX $ ed ^. defenderUUID
-  let prob = if attDEX > defDEX then 0.75 else 0.5
-  r <- getRandomR ((0.0, 1.0) :: (Double, Double))
+  let prob = if attDEX > defDEX then 0.75 else 0.5 :: Double
+  r <- getRandomR (0.0, 1.0)
   if (r < prob)
      then $(newEvent "WeaponAttackHit") (ed ^. attackerUUID) (ed ^. defenderUUID)
      else $(newEvent "WeaponAttackMiss") (ed ^. attackerUUID) (ed ^. defenderUUID)
