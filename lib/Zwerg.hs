@@ -1,6 +1,6 @@
 module Zwerg (zwerg) where
 
-import Zwerg.Prelude
+import Zwerg.Prelude hiding ((<>))
 
 import Zwerg.Component
 import Zwerg.Data.GridMap
