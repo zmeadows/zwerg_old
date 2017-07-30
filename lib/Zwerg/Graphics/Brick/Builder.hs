@@ -122,12 +122,11 @@ buildPortUI (MainScreen gm) = do
       nameWidget = markup $ pName @@ fg VTY.yellow :: BT.Widget ()
 
   return $! [
-    vLimit mapHeightINT
-    $ (mapWidget <+> BB.vBorder <+>
-        (nameWidget <=> hpWidget <=> statsWidget)
-      ) <=> (
-        BB.hBorder <=> logWidget
-      )
+    vLimit mapHeightINT (
+      mapWidget <+> BB.vBorder <+> (
+        nameWidget <=> hpWidget <=> statsWidget
+        )
+    ) <=> (BB.hBorder <=> logWidget)
     ]
 
 buildPortUI _ = return $! [emptyWidget]
