@@ -53,6 +53,7 @@ library
                        Zwerg.Generator.Player.TestPlayer
                        Zwerg.Geometry
                        Zwerg.Graphics.Brick
+                       Zwerg.Graphics.Brick.Builder
                        Zwerg.Log
                        Zwerg.Options
                        Zwerg.Prelude
