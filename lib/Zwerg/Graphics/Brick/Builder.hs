@@ -4,7 +4,6 @@ import Zwerg.Prelude hiding ((<>))
 
 import Zwerg
 import Zwerg.Component
-import Zwerg.Data.HP
 import Zwerg.Entity
 import Zwerg.Game
 import Zwerg.Log
@@ -31,12 +30,8 @@ import qualified Brick.Widgets.ProgressBar as BP
 import qualified Data.Vector as Vec
 import qualified Graphics.Vty as VTY
 
--- TODO: inline some of these Zwerg UI -> Widget functions
 customAttr :: AttrName
 customAttr = BL.listSelectedAttr <> "custom"
-
-makeLogWidget :: Log -> BT.Widget ()
-makeLogWidget l = vBox $ (str . unpack) <$> concat (splitLog 50 15 l)
 
 listDrawElement :: Bool -> Text -> BT.Widget ()
 listDrawElement sel a =
@@ -61,15 +56,15 @@ buildZwergUI zs =
 --FIXME: refactor
 buildPortUI :: Port -> UIBuilder [BT.Widget ()]
 
-buildPortUI (DeathScreen deathMsg) = return [BC.vCenter $ BC.hCenter $ txt deathMsg]
+buildPortUI (DeathScreen deathMsg) = return $! [BC.vCenter $ BC.hCenter $ txt deathMsg]
 
-buildPortUI (MainMenu m) = return [ui]
+buildPortUI (MainMenu m) = return $! [ui]
   where
     l = menuToBrickList m
     box = BB.border $ hLimit 24 $ vLimit 5 $ BL.renderList listDrawElement True l
     ui = BC.vCenter $ vBox [BC.hCenter $ zwergLogo, str " ", BC.hCenter box]
 
-buildPortUI (ViewInventory m) = return [ui]
+buildPortUI (ViewInventory m) = return $! [ui]
   where
     l = menuToBrickList m
     box = BB.border $ hLimit 24 $ vLimit 5 $ BL.renderList listDrawElement True l
@@ -89,21 +84,53 @@ buildPortUI (ExamineTiles pos) = do
       sometext  = translateBy (BT.Location (0,mapHeightINT+1))
                     $ vBox [txt thisName, txt thisDesc, txt thisFearLevel]
       blankLog  = translateBy (BT.Location (0,mapHeightINT+1)) (padBottom BT.Max $ padRight BT.Max $ fill ' ')
-  return [tileMaker, sometext, blankLog]
+  return $! [tileMaker, sometext, blankLog]
 
 buildPortUI (MainScreen gm) = do
-  let uiMap = raw $ glyphMapToVtyImage gm
   pName <- name <~> playerUUID
   pStats <- stats <~> playerUUID
   pHP <- hp <~> playerUUID
   uLog <- view userLog
-  return $ [vLimit mapHeightINT
-      (uiMap <+> BB.vBorder <+>
-       (markup (pName @@ fg VTY.yellow) <=> makeHpWidget pHP <=>
-        makeStatsWidget pStats)) <=>
-    (BB.hBorder <=> makeLogWidget uLog)]
 
-buildPortUI _ = return [emptyWidget]
+  let mapWidget :: BT.Widget ()
+      mapWidget =
+        let rows = glyphMapToRows gm :: [[(Glyph, Bool)]]
+            glyphToVtyImage :: (Glyph, Bool) -> VTY.Image
+            glyphToVtyImage (Glyph c fgC _ _ _, isVis) =
+              if isVis
+                then VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 220) c
+                else VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 0) c
+            mkImageRow :: [(Glyph, Bool)] -> VTY.Image
+            mkImageRow row = foldl1 (VTY.<|>) $ map glyphToVtyImage row
+         in raw $ foldl1 (VTY.<->) $ map mkImageRow rows
+
+      logWidget = vBox $ (str . unpack) <$> concat (splitLog 50 15 uLog) :: BT.Widget ()
+
+      statsWidget = vBox [go STR <+> go DEX, go INT <+> go CHA, go CON <+> go WIS] :: BT.Widget ()
+
+      go :: Stat -> BT.Widget ()
+      go stat = let statTypeStr = append (show stat) ": "
+                    statValStr = leftPad 3 $ show $ lookupStat stat pStats
+                in markup (statTypeStr @@ fg VTY.green) <+> (txt statValStr) <+> (txt " ")
+
+      hpWidget :: BT.Widget ()
+      hpWidget = let (hpLeft, maxHP) = unwrap pHP
+                     hpLabel = show hpLeft ++ "/" ++ show maxHP
+                     hpRatio = (fromIntegral hpLeft :: Float) / (fromIntegral maxHP :: Float)
+                 in str "HP: " <+> hLimit 13 (BP.progressBar (Just hpLabel) hpRatio)
+
+      nameWidget = markup $ pName @@ fg VTY.yellow :: BT.Widget ()
+
+  return $! [
+    vLimit mapHeightINT
+    $ (mapWidget <+> BB.vBorder <+>
+        (nameWidget <=> hpWidget <=> statsWidget)
+      ) <=> (
+        BB.hBorder <=> logWidget
+      )
+    ]
+
+buildPortUI _ = return $! [emptyWidget]
 
 zwergLogo :: BT.Widget ()
 zwergLogo = vBox $ map (withAttr customAttr)
@@ -115,33 +142,6 @@ zwergLogo = vBox $ map (withAttr customAttr)
                  , txt "                       |___/ "
                  ]
 
-glyphMapToVtyImage :: GlyphMap -> VTY.Image
-glyphMapToVtyImage gm =
-  let rows = glyphMapToRows gm :: [[(Glyph, Bool)]]
-      mkImageRow row = foldl1 (VTY.<|>) $ map glyphToVtyImage row
-  in foldl1 (VTY.<->) $ map mkImageRow rows
-
-makeStatsWidget :: Stats -> BT.Widget ()
-makeStatsWidget s =
-  vBox [go STR <+> go DEX, go INT <+> go CHA, go CON <+> go WIS]
-    where go :: Stat -> BT.Widget ()
-          go stat =
-            let statTypeStr = append (show stat) ": "
-                statValStr = leftPad 3 $ show $ lookupStat stat s
-            in markup (statTypeStr @@ fg VTY.green) <+> (txt statValStr) <+> (txt " ")
-
-makeHpWidget :: HP -> BT.Widget ()
-makeHpWidget h =
-  let (hpLeft, maxHP) = unwrap h
-      hpLabel = show hpLeft ++ "/" ++ show maxHP
-      hpRatio = (fromIntegral hpLeft :: Float) / (fromIntegral maxHP :: Float)
-  in str "HP: " <+> hLimit 13 (BP.progressBar (Just hpLabel) hpRatio)
-
-glyphToVtyImage :: (Glyph, Bool) -> VTY.Image
-glyphToVtyImage (Glyph c fgC _ _ _, isVis) =
-  if isVis
-    then VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 220) c
-    else VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 0) c
 
 zwergColorToVtyColor :: Color -> VTY.Color
 zwergColorToVtyColor zc =
