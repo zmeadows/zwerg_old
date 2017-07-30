@@ -1,13 +1,9 @@
 module Zwerg.Event where
--- TODO: export properly only what is needed
 
 import Zwerg.Prelude
 import Zwerg.Data.Damage
 import Zwerg.Data.Position
 import Zwerg.Random.Distribution
-
-import Data.Sequence (Seq, (|>), ViewL(..), (><))
-import qualified Data.Sequence as S (viewl, empty, length, null)
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -93,39 +89,6 @@ data ZwergEvent
 
 instance Binary ZwergEvent
 
-newtype ZwergEventQueue = MkZwergEventQueue (Seq ZwergEvent)
-  deriving (Show, Eq, Generic)
-
-instance Binary ZwergEventQueue
-
-class HasZwergEventQueue s where
-  eventQueue :: Lens' s ZwergEventQueue
-
-instance HasZwergEventQueue ZwergEventQueue where
-  eventQueue = identity
-
-instance ZWrapped ZwergEventQueue (Seq ZwergEvent) where
-  unwrap (MkZwergEventQueue eq) = eq
-
-instance ZEmptiable ZwergEventQueue where
-  zEmpty  = MkZwergEventQueue S.empty
-  zIsNull = S.null . unwrap
-  zSize   = S.length . unwrap
-
-popEvent :: (HasZwergEventQueue s, MonadState s m) => m (Maybe ZwergEvent)
-popEvent =
-  S.viewl <$> unwrap <$> use eventQueue >>= \case
-    EmptyL -> return Nothing
-    evt :< eq' -> do
-      eventQueue .= MkZwergEventQueue eq'
-      return $ Just evt
-
-pushEvent :: ZwergEvent -> ZwergEventQueue -> ZwergEventQueue
-pushEvent evt (MkZwergEventQueue eq) = MkZwergEventQueue $ eq |> evt
-
-pushEventM :: (HasZwergEventQueue s, MonadState s m) => ZwergEvent -> m ()
-pushEventM evt = eventQueue %= MkZwergEventQueue . (|> evt) . unwrap
-
 -- | This template haskell is purely for avoiding boiler plate code.
 newEvent :: Language.Haskell.TH.Syntax.Quasi m => Text -> m Exp
 newEvent "IncomingDamage"      = runQ [| \a b c d -> pushEventM $ IncomingDamageEvent $ IncomingDamageEventData a b c d|]
@@ -136,7 +99,3 @@ newEvent "WeaponAttackMiss"    = runQ [| \a b -> pushEventM $ WeaponAttackMissEv
 newEvent "MoveEntity"          = runQ [| \a b -> pushEventM $ MoveEntityEvent $ MoveEntityEventData a b|]
 newEvent "MoveEntityDirection" = runQ [| \a b -> pushEventM $ MoveEntityDirectionEvent $ MoveEntityDirectionEventData a b|]
 newEvent _                     = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION 'newEvent'"|]
-
-mergeEventsM :: (HasZwergEventQueue s, MonadState s m)
-             => ZwergEventQueue -> m ()
-mergeEventsM evts = eventQueue %= MkZwergEventQueue . (><) (unwrap evts) . unwrap

@@ -43,6 +43,7 @@ library
                        Zwerg.Entity
                        Zwerg.Entity.AI
                        Zwerg.Event
+                       Zwerg.Event.Queue
                        Zwerg.Game
                        Zwerg.Generator
                        Zwerg.Generator.Enemy.Goblin
@@ -68,31 +69,31 @@ library
                        Paths_zwerg
 
   build-depends:       base >= 4.7 && < 5,
-                       containers,
-                       unordered-containers,
+                       binary,
+                       brick,
                        bytestring,
-                       vector,
-                       monad-loops,
+                       containers,
+                       deepseq,
+                       filepath,
+                       mersenne-random-pure64,
                        microlens,
                        microlens-platform,
-                       mersenne-random-pure64,
-                       random-fu,
-                       text,
-                       template-haskell,
-                       deepseq,
+                       monad-loops,
                        mtl,
-                       transformers,
-                       MonadRandom,
-                       random,
-                       filepath,
-                       binary,
-                       xml,
-                       vector-binary-instances,
                        protolude,
-                       vty,
-                       brick,
-                       zlib,
+                       random,
+                       random-fu,
                        semigroups,
+                       template-haskell,
+                       text,
+                       transformers,
+                       unordered-containers,
+                       vector,
+                       vector-binary-instances,
+                       vty,
+                       xml,
+                       zlib,
+                       MonadRandom,
                        StateVar
 
   default-extensions: CPP,

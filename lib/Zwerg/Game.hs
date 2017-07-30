@@ -5,7 +5,7 @@ import Zwerg.Data.Position
 import Zwerg.Data.UUIDMap
 import Zwerg.Entity
 import Zwerg.Entity.AI
-import Zwerg.Event
+import Zwerg.Event.Queue
 import Zwerg.Generator
 import Zwerg.Generator.Level.TestSquare
 import Zwerg.Generator.Player.TestPlayer

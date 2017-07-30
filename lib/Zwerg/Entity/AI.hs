@@ -5,7 +5,7 @@ module Zwerg.Entity.AI
 import Zwerg.Component
 import Zwerg.Data.Position
 import Zwerg.Entity
-import Zwerg.Event
+import Zwerg.Event.Queue
 import Zwerg.Prelude
 import Zwerg.Random
 
