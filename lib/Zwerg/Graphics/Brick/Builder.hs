@@ -99,7 +99,7 @@ buildPortUI (MainScreen gm) = do
       mapWidget =
         let rows = glyphMapToRows gm :: [[(Glyph, Bool)]]
             glyphToVtyImage :: (Glyph, Bool) -> VTY.Image
-            glyphToVtyImage (Glyph c fgC _ _ _, isVis) =
+            glyphToVtyImage (Glyph c (CellColor fgC _) _, isVis) =
               if isVis
                 then VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 220) c
                 else VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 0) c

@@ -17,13 +17,13 @@ testSquareGenerator = do
           then do
             setComp tileUUID tileType Wall
             setComp tileUUID blocksPassage True
-            setComp tileUUID glyph $ Glyph 'X' White2 White0 (Just Black2) (Just Black0)
+            setComp tileUUID glyph $ Glyph 'X' (CellColor White2 White0) $ Just (CellColor Black1 Black0)
             setComp tileUUID name "Wall tile"
             setComp tileUUID description "It is a wall."
           else do
             setComp tileUUID tileType Floor
             setComp tileUUID blocksPassage False
-            setComp tileUUID glyph $ Glyph '·' White2 White0 (Just Black2) (Just Black0)
+            setComp tileUUID glyph $ Glyph '·' (CellColor White2 White0) $ Just (CellColor Black2 Black0)
             setComp tileUUID name "Floor tile"
             setComp tileUUID description "It is a floor."
     replicateM_ 5 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID

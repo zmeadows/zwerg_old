@@ -15,7 +15,6 @@ import Language.Haskell.TH.Syntax (Quasi)
 import Control.Monad.Except (MonadError, throwError)
 import GHC.Stack as EXPORTED (CallStack, callStack)
 
-
 data ZErrorLevel = PlayerWarning | EngineWarning | EngineFatal
   deriving (Show, Eq, Ord)
 

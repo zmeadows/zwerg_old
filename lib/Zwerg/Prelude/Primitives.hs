@@ -7,7 +7,13 @@ module Zwerg.Prelude.Primitives
   , cardinalDirections
   , TargetType(..)
   , Color(..)
+  , CellColor(..)
+  , foreground
+  , background
   , Glyph(..)
+  , char
+  , visible
+  , fogged
   , EntityType(..)
   , Parent(..)
   , TileType(..)
@@ -34,6 +40,8 @@ import Data.Binary as EXPORTED (Binary)
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+
+import Lens.Micro.Platform as EXPORTED (makeFields)
 
 newtype UUID = MkUUID Int
   deriving (Show, Eq, Bounded, Enum, Ord, Generic, Binary)
@@ -89,13 +97,19 @@ instance Binary Color
 
 -- type ColoredText = [(Color, Text)]
 
-data Glyph = Glyph
-  { char :: Char
-  , fgColorVIS :: Color
-  , fgColorFOG :: Color
-  , bgColorVIS :: Maybe Color
-  , bgColorFOG :: Maybe Color
+data CellColor = CellColor
+  { _cellColorForeground :: Color
+  , _cellColorBackground :: Color
   } deriving (Show, Eq, Generic)
+makeFields ''CellColor
+instance Binary CellColor
+
+data Glyph = Glyph
+  { _glyphChar    :: Char
+  , _glyphVisible :: CellColor
+  , _glyphFogged  :: Maybe CellColor
+  } deriving (Show, Eq, Generic)
+makeFields ''Glyph
 instance Binary Glyph
 
 data EntityType

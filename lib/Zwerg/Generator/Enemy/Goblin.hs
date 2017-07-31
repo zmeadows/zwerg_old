@@ -17,7 +17,7 @@ goblin = do
     goblinHP <- getRandomR (3, 7)
     zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
 
-    addComp goblinUUID glyph $ Glyph 'g' Green0 Green3 Nothing Nothing
+    addComp goblinUUID glyph $ Glyph 'g' (CellColor Green0 Green3) Nothing
     addComp goblinUUID ticks 1
     addComp goblinUUID aiType SimpleMeleeCreature
     addComp goblinUUID blocksPassage True

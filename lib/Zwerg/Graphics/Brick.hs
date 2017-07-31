@@ -73,5 +73,6 @@ initBrick = do
   s <- liftIO $ BM.defaultMain zwergApp $ set ranGen gen initZwergState
   case s ^. errorMsg of
     Nothing -> return ()
+    --TODO: write self contained function to print ZError
     Just x -> liftIO $ putStrLn $ prettyCallStack $ x ^. stack
 
