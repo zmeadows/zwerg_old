@@ -26,3 +26,6 @@ every generator when a new component is added.
 :: breakdown of Glyph ::
 separate Glyph into GlyphBasic and Glyph (which is just two GlyphBasic's,
 one for player visible and one for out of player vision range (fog))
+
+:: Errors ::
+add StackTrace to ZError (only in GHC 8.2.X ?)

@@ -3,6 +3,7 @@ module Zwerg.Generator.Enemy.Goblin (goblin) where
 import Data.Text (append)
 import Zwerg.Generator
 import Zwerg.Generator.Default
+import Zwerg.Generator.Verify
 import Zwerg.Generator.Item.Weapon
 
 goblin :: Generator
@@ -31,7 +32,7 @@ goblin = do
 
     swordUUID <- sword
     equipItem swordUUID goblinUUID
-    return goblinUUID
+    verifyAndReturn goblinUUID
 
 generateGoblinName :: (MonadRandom m) => m Text
 generateGoblinName =

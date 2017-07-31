@@ -52,6 +52,7 @@ library
                        Zwerg.Generator.Level
                        Zwerg.Generator.Level.TestSquare
                        Zwerg.Generator.Player.TestPlayer
+                       Zwerg.Generator.Verify
                        Zwerg.Geometry
                        Zwerg.Graphics.Brick
                        Zwerg.Graphics.Brick.Builder

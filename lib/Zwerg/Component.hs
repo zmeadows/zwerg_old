@@ -6,11 +6,11 @@ import Zwerg.Data.Damage
 import Zwerg.Data.Equipment
 import Zwerg.Data.HP
 import Zwerg.Data.Position
+import Zwerg.Util
 import Zwerg.Data.GridMap
 import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
 
-import Control.Exception.Base (assert)
 import Data.Text (append)
 
 data Components = Components
@@ -137,6 +137,9 @@ getComp uuid comp = use $ comp . uuidMap . at uuid
 hasComp :: UUID -> Component a -> MonadCompState Bool
 hasComp uuid comp = use $ comp . uuidMap . to (zContains uuid)
 
+canViewComp :: UUID -> Component a -> MonadCompRead Bool
+canViewComp uuid comp = view $ comp . uuidMap . to (zContains uuid)
+
 {-# INLINEABLE addComp #-}
 addComp :: (HasComponents s, MonadState s m)
         => UUID -> Component a -> a -> m ()
@@ -174,8 +177,9 @@ demandComp comp uuid =
 {-# INLINEABLE demandHasComp #-}
 demandHasComp :: UUID -> Component a -> MonadCompState ()
 demandHasComp uuid comp = do
-  result <- hasComp uuid comp
-  assert result $ return ()
+  whenM (not <$> hasComp uuid comp) $ do
+    cn <- use (comp . componentName)
+    $(throw) EngineFatal $ append "Missing Component: " cn
 
 {-- READER --}
 {-# INLINEABLE viewComp #-}
@@ -191,6 +195,13 @@ demandViewComp comp uuid =
       cn <- view (comp . componentName)
       $(throw) EngineFatal $ append "Missing Component: " cn
 
+{-# INLINEABLE demandCanViewComp #-}
+demandCanViewComp :: Component a -> UUID -> MonadCompRead ()
+demandCanViewComp comp uuid =
+  whenM (not <$> canViewComp uuid comp) $ do
+    cn <- view (comp . componentName)
+    $(throw) EngineFatal $ append "Missing Component: " cn
+
 {-# INLINEABLE (<~>) #-}
 (<~>) :: Component a -> UUID -> MonadCompRead a
 (<~>) = demandViewComp
@@ -198,6 +209,10 @@ demandViewComp comp uuid =
 {-# INLINEABLE (<~?>) #-}
 (<~?>) :: UUID -> Component a -> MonadCompRead (Maybe a)
 (<~?>) = viewComp
+
+{-# INLINEABLE (<~!>) #-}
+(<~!>) :: Component a -> UUID -> MonadCompRead ()
+(<~!>) = demandCanViewComp
 
 {-# INLINEABLE (<@>) #-}
 (<@>) :: Component a -> UUID -> MonadCompState a
