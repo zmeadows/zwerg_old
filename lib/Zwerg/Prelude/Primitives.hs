@@ -1,6 +1,8 @@
 module Zwerg.Prelude.Primitives
   ( UUID
+  , worldUUID
   , playerUUID
+  , incUUID
   , Direction(..)
   , cardinalDirections
   , TargetType(..)
@@ -34,7 +36,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 
 newtype UUID = MkUUID Int
-  deriving (Show, Eq, Bounded, Enum, Num, Ord, Generic, Binary)
+  deriving (Show, Eq, Bounded, Enum, Ord, Generic, Binary)
 -- instance Binary UUID
 
 instance ZWrapped UUID Int where
@@ -45,8 +47,12 @@ instance ZConstructable UUID Int where
     if | x >= 0 -> return $ MkUUID x
        | otherwise -> $(throw) EngineFatal "Attempted to construct UUID < 0"
 
-playerUUID :: UUID
-playerUUID = MkUUID 0
+playerUUID, worldUUID :: UUID
+worldUUID = MkUUID 0
+playerUUID = MkUUID 1
+
+incUUID :: UUID -> UUID
+incUUID (MkUUID i) = MkUUID $ i + 1
 
 data Direction
   = North

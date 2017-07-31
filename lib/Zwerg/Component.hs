@@ -121,13 +121,13 @@ emptyComponents =
   , _itemType       = NamedUUIDMap "itemType"      zEmpty
   , _needsRedraw    = NamedUUIDMap "needsRedraw"   zEmpty
   , _zLevel         = NamedUUIDMap "zLevel"        zEmpty
-  , _nextUUID       = playerUUID + 1
+  , _nextUUID       = incUUID playerUUID
   }
 
 popUUID :: MonadCompState UUID
 popUUID = do
   newUUID <- use nextUUID
-  nextUUID %= (+ 1)
+  nextUUID %= incUUID
   return newUUID
 
 {-- STATE --}
