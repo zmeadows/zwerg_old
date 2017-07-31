@@ -4,6 +4,8 @@ import Zwerg.Data.Position
 import Zwerg.Prelude
 import Zwerg.Util
 
+--TODO: convert to GridMap and remove this module
+
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M (empty, fromList, union, elems, map)
 

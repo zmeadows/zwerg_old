@@ -5,6 +5,7 @@ module Zwerg.Generator
   , getRandomEmptyTile
   , assignUniformRandomStat
   , putOnRandomEmptyTile
+  , hasAll
   ) where
 
 import Zwerg.Component as EXPORTED
@@ -19,6 +20,8 @@ import Zwerg.Event as EXPORTED
 import Zwerg.Prelude as EXPORTED
 import Zwerg.Random as EXPORTED
 import Zwerg.Util as EXPORTED
+
+import Language.Haskell.TH
 
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
 
@@ -52,3 +55,9 @@ putOnRandomEmptyTile levelUUID entityUUID = do
                                                "Couldn't find empty tile to place entity"
   addComp entityUUID level levelUUID
   transferOccupant entityUUID Nothing tileUUID
+
+verify :: String -> String -> Q Exp
+verify us cs = [| $(dyn cs) <~!> $(dyn us) |]
+
+hasAll :: String -> [String] -> Q Exp
+hasAll us css = DoE <$> (mapM (fmap NoBindS . verify us) css)

@@ -22,6 +22,7 @@ goblin = do
     addComp goblinUUID aiType SimpleMeleeCreature
     addComp goblinUUID blocksPassage True
     addComp goblinUUID blocksVision False
+    addComp goblinUUID viewRange 5
 
     assignUniformRandomStat goblinUUID STR (1, 5)
     assignUniformRandomStat goblinUUID DEX (1, 5)
