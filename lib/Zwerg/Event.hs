@@ -114,5 +114,5 @@ newEvent "WeaponAttackMiss"    = runQ [| \a b -> pushEventM $ WeaponAttackMissEv
 newEvent "MoveEntity"          = runQ [| \a b -> pushEventM $ MoveEntityEvent $ MoveEntityEventData a b|]
 newEvent "MoveEntityDirection" = runQ [| \a b -> pushEventM $ MoveEntityDirectionEvent $ MoveEntityDirectionEventData a b|]
 newEvent "EntityLeftTile"      = runQ [| \a b -> pushEventM $ EntityLeftTileEvent $ EntityLeftTileEventData a b|]
-newEvent "EntityReachedTile"      = runQ [| \a b -> pushEventM $ EntityReachedTileEvent $ EntityReachedTileEventData a b|]
+newEvent "EntityReachedTile"   = runQ [| \a b -> pushEventM $ EntityReachedTileEvent $ EntityReachedTileEventData a b|]
 newEvent _                     = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION 'newEvent'"|]

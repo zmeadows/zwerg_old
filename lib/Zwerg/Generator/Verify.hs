@@ -15,7 +15,7 @@ verifyAndReturn' uuid Enemy =
   $(hasAll "uuid"
     [ "name" , "description" , "species"
     , "glyph" , "hp" , "entityType"
-    , "stats" , "aiType" , "viewRange", "needsRedraw"
+    , "stats" , "aiType" , "viewRange"
     ]
    )
 

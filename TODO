@@ -15,17 +15,18 @@ and computed in the handleEventZwerg function (which is MonadIO context)
 Make a function to return the full Glyph for a player-visible tile,
 and call this in the relevant UIBuiler
 
-:: default components ::
-
+:: default components :: DONE
 This is tricky, perhaps.
 Make a function that takes EntityType as argument, and
 adds the 100% essential default components.
 This is one way to help guard against the problem of forgetting to update
 every generator when a new component is added.
 
-:: breakdown of Glyph ::
+:: breakdown of Glyph :: DONE
 separate Glyph into GlyphBasic and Glyph (which is just two GlyphBasic's,
 one for player visible and one for out of player vision range (fog))
 
-:: Errors ::
+:: Errors :: DONE
 add StackTrace to ZError (only in GHC 8.2.X ?)
+
+:: add pick-up item port ::

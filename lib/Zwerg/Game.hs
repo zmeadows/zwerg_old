@@ -208,6 +208,8 @@ processEvent (MoveEntityEvent ed) = do
                pushLogMsgM "You cannot move into a blocked tile."
                playerGoofed .= True
      else do
+       --TODO: granular add/remove component from tiles in processing these left/reached
+       -- tile events? Or stick with transferOccupant here?
        transferOccupant (ed ^. moverUUID) (Just oldTileUUID) newTileUUID
        $(newEvent "EntityLeftTile") (ed ^. moverUUID) oldTileUUID
        $(newEvent "EntityReachedTile") (ed ^. moverUUID) newTileUUID
