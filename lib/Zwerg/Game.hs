@@ -196,7 +196,7 @@ processEvent (MoveEntityDirectionEvent ed) = do
     Just newPos -> $(newEvent "MoveEntity") (ed ^. moverUUID) newPos
 
 processEvent (MoveEntityEvent ed) = do
-  oldPos <- position <@> (ed ^. moverUUID)
+  oldTileUUID <- tileOn <@> (ed ^. moverUUID)
   levelTiles <- level <@> (ed ^. moverUUID) >>= (<@>) tileMap
   let newTileUUID = atPos (ed ^. newPosition) levelTiles
   newTileBlocked <- readC $ tileBlocksPassage newTileUUID
@@ -208,10 +208,13 @@ processEvent (MoveEntityEvent ed) = do
                pushLogMsgM "You cannot move into a blocked tile."
                playerGoofed .= True
      else do
-       let oldTileUUID = atPos oldPos levelTiles
        transferOccupant (ed ^. moverUUID) (Just oldTileUUID) newTileUUID
-       setComp (ed ^. moverUUID) position (ed ^. newPosition)
+       $(newEvent "EntityLeftTile") (ed ^. moverUUID) oldTileUUID
+       $(newEvent "EntityReachedTile") (ed ^. moverUUID) newTileUUID
 
+processEvent (EntityLeftTileEvent _) = return ()
+
+processEvent (EntityReachedTileEvent _) = return ()
 
 processEvent (WeaponAttackAttemptEvent ed) = do
   attDEX <- readC $ getStat DEX $ ed ^. attackerUUID

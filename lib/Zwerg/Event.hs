@@ -70,6 +70,20 @@ data MoveEntityEventData = MoveEntityEventData
 makeFields ''MoveEntityEventData
 instance Binary MoveEntityEventData
 
+data EntityLeftTileEventData = EntityLeftTileEventData
+  { _entityLeftTileEventDataLeaverUUID :: !UUID
+  , _entityLeftTileEventDataLeftTileUUID :: !UUID
+  } deriving (Show, Eq, Generic)
+makeFields ''EntityLeftTileEventData
+instance Binary EntityLeftTileEventData
+
+data EntityReachedTileEventData = EntityReachedTileEventData
+  { _entityLeftTileEventDataReacherUUID :: !UUID
+  , _entityLeftTileEventDataReachedTileUUID :: !UUID
+  } deriving (Show, Eq, Generic)
+makeFields ''EntityReachedTileEventData
+instance Binary EntityReachedTileEventData
+
 data TickEventData = TickEventData !Int
   deriving (Show, Eq, Generic)
 instance Binary TickEventData
@@ -85,8 +99,9 @@ data ZwergEvent
   | MoveEntityEvent !MoveEntityEventData
   | MoveEntityDirectionEvent !MoveEntityDirectionEventData
   | TickEvent !TickEventData
+  | EntityLeftTileEvent EntityLeftTileEventData
+  | EntityReachedTileEvent EntityReachedTileEventData
   deriving (Show, Eq, Generic)
-
 instance Binary ZwergEvent
 
 -- | This template haskell is purely for avoiding boiler plate code.
@@ -98,4 +113,6 @@ newEvent "WeaponAttackHit"     = runQ [| \a b -> pushEventM $ WeaponAttackHitEve
 newEvent "WeaponAttackMiss"    = runQ [| \a b -> pushEventM $ WeaponAttackMissEvent $ WeaponAttackMissEventData a b|]
 newEvent "MoveEntity"          = runQ [| \a b -> pushEventM $ MoveEntityEvent $ MoveEntityEventData a b|]
 newEvent "MoveEntityDirection" = runQ [| \a b -> pushEventM $ MoveEntityDirectionEvent $ MoveEntityDirectionEventData a b|]
+newEvent "EntityLeftTile"      = runQ [| \a b -> pushEventM $ EntityLeftTileEvent $ EntityLeftTileEventData a b|]
+newEvent "EntityReachedTile"      = runQ [| \a b -> pushEventM $ EntityReachedTileEvent $ EntityReachedTileEventData a b|]
 newEvent _                     = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION 'newEvent'"|]
