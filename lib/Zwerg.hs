@@ -14,6 +14,8 @@ import Zwerg.UI.Port
 
 import Data.ByteString.Lazy (ByteString)
 
+-- TODO: actually use 'quitting' variable
+-- probably needs to be moved to GameState
 data ZwergState = ZwergState
   { _zsGameState :: GameState
   , _ranGen      :: RanGen

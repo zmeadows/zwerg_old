@@ -30,6 +30,10 @@ whenJustM mg f = maybe (return ()) f =<< mg
 fromJustErrM :: (MonadError ZError m) => Maybe a -> ZError -> m a
 fromJustErrM x err = maybe (throwError err) return x
 
+{-# INLINABLE whenM #-}
+whenM :: Monad m => m Bool -> m () -> m ()
+whenM mg f = mg >>= (flip when) f
+
 {-# INLINABLE chunksOf #-}
 chunksOf :: Int -> [e] -> [[e]]
 chunksOf i ls = map (take i) (build (splitter ls))

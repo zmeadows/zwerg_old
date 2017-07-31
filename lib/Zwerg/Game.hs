@@ -25,6 +25,7 @@ data GameState = GameState
   , _gsLog        :: Log
   , _gsPortal     :: Portal
   , _gsEventQueue :: ZwergEventQueue
+  , _playerGoofed :: Bool
   } deriving (Show, Eq, Generic)
 makeClassy ''GameState
 
@@ -46,6 +47,7 @@ emptyGameState =
   , _gsLog        = emptyLog
   , _gsPortal     = [initMainMenu]
   , _gsEventQueue = zEmpty
+  , _playerGoofed = False
   }
 
 -- Highest level purely-functional context which encapsulates
@@ -67,7 +69,7 @@ runGame (Game a) gen st =
        Left err -> (st', Just err, gen')
        Right () -> (st', Nothing, gen')
 
--- for now just generates the test level
+-- TODO: factor out into Generator.World module
 generateGame :: Game ()
 generateGame = testSquareGenerator >>= testPlayerGenerator
 
@@ -92,11 +94,10 @@ processNonPlayerEvents = do
 
 processUserInput :: KeyCode -> Game ()
 processUserInput k = do
+  playerGoofed .= False
   p <- use portal
   processUserInput' p k
-  eq <- use eventQueue
-  -- only move on to process other entity ticks if player actually did something
-  when (not $ zIsNull eq) $ do
+  whenM (not <$> use playerGoofed) $ do
     processEvents
     resetTicks playerUUID
     processNonPlayerEvents
@@ -132,7 +133,9 @@ processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
     n <- name <@> uuid
     return $! (n, InventoryMenuItem uuid d)
   case menuItems of
-    [] -> pushLogMsgM "You don't have any items to look at."
+    [] -> do
+      pushLogMsgM "You don't have any items to look at."
+      playerGoofed .= True
     i:is -> portal .= (ViewInventory $ makeMenu $ i :| is) : p
 
 processUserInput' (ViewInventory _ : ps) (KeyChar 'i') = portal .= ps
@@ -184,7 +187,10 @@ processEvent :: ZwergEvent -> Game ()
 processEvent (MoveEntityDirectionEvent ed) = do
   oldPosition <- position <@> (ed ^. moverUUID)
   case movePosDir (ed ^. direction) oldPosition of
-    Nothing -> pushLogMsgM "You cannot move into the void."
+    -- TODO: check if non player entity and give error
+    Nothing -> do
+      pushLogMsgM "You cannot move into the void."
+      playerGoofed .= True
     Just newPos -> $(newEvent "MoveEntity") (ed ^. moverUUID) newPos
 
 processEvent (MoveEntityEvent ed) = do
@@ -196,11 +202,14 @@ processEvent (MoveEntityEvent ed) = do
   if newTileBlocked
      then if (ed ^. moverUUID) /= playerUUID
              then $(throw) EngineFatal "NPC Entity attempted to move to blocked tile"
-             else pushLogMsgM "You cannot move into a blocked tile."
+             else do
+               pushLogMsgM "You cannot move into a blocked tile."
+               playerGoofed .= True
      else do
        let oldTileUUID = atPos oldPos levelTiles
        transferOccupant (ed ^. moverUUID) (Just oldTileUUID) newTileUUID
        setComp (ed ^. moverUUID) position (ed ^. newPosition)
+
 
 processEvent (WeaponAttackAttemptEvent ed) = do
   attDEX <- readC $ getStat DEX $ ed ^. attackerUUID

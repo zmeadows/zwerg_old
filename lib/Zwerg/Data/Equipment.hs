@@ -2,6 +2,7 @@ module Zwerg.Data.Equipment
   ( Equipment,
     EquipmentSlot(..),
     HandSlot(..),
+    ArmorSlot(..),
     emptyEquipment,
     equip,
     unequip,

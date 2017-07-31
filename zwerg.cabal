@@ -97,8 +97,8 @@ library
                        MonadRandom,
                        StateVar
 
-  default-extensions: CPP,
-                      BangPatterns,
+  default-extensions: BangPatterns,
+                      CPP,
                       DeriveFoldable,
                       DeriveGeneric,
                       DeriveTraversable,
@@ -114,12 +114,12 @@ library
                       RankNTypes,
                       ScopedTypeVariables,
                       StandaloneDeriving,
+                      Strict,
                       TemplateHaskell,
                       TupleSections,
                       TypeFamilies,
-                      Strict,
-                      -- UnboxedSums, in ghc 8.2!
                       TypeOperators
+                      -- UnboxedSums, in ghc 8.2!
 
 executable zwerg
   hs-source-dirs:      src/

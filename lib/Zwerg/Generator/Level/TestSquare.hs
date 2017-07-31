@@ -25,7 +25,7 @@ testSquareGenerator = do
             setComp tileUUID glyph $ Glyph '·' White2 White0 (Just Black2) (Just Black0)
             setComp tileUUID name "Floor tile"
             setComp tileUUID description "It is a floor."
-    replicateM_ 20 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
+    replicateM_ 5 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
     replicateM_ 4 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
     return testSquareLevelUUID
 

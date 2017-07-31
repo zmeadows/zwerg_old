@@ -1,9 +1,9 @@
 module Zwerg.Data.Damage
   ( DamageAttribute(..)
   , DamageData(..)
-  , targetType
-  , attribute
-  , distribution
+  , HasTargetType(..)
+  , HasAttribute(..)
+  , HasDistribution(..)
   , DamageChain
   , Resistance(..)
   , Resistances

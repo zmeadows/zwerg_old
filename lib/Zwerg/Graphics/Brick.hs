@@ -3,11 +3,12 @@ module Zwerg.Graphics.Brick where
 import Zwerg.Prelude hiding ((<>))
 
 import Zwerg
-import Zwerg.Event
+import Zwerg.Event.Queue
 import Zwerg.Game
+import Zwerg.Graphics.Brick.Builder
+import Zwerg.Log
 import Zwerg.Random
 import Zwerg.UI.Input
-import Zwerg.Graphics.Brick.Builder
 
 import Brick.AttrMap
 import Brick.Util (on, fg)
@@ -28,14 +29,20 @@ handleEventZwerg zs (BT.VtyEvent ev) =
       eventVTYtoZwergInput _ = Nothing
   in case eventVTYtoZwergInput ev of
        Just Escape -> BM.halt zs
-       Just kc -> do
+       Just key -> do
          let st = view gameState zs
-             gen = view ranGen zs
-             (st', err, gen') = runGame (processUserInput kc) gen st
+             (st', err, gen') = runGame (processUserInput key) (view ranGen zs) st
              zs' = set gameState st' $ set ranGen gen' zs
+             badPlayerInput = view (gameState . playerGoofed) zs'
          case err of
            Just x -> BM.halt $ set errorMsg (Just $ show x) zs'
-           Nothing -> BM.continue zs'
+           Nothing ->
+             if badPlayerInput
+                then BM.continue
+                     $ set (gameState . eventQueue) zEmpty
+                     $ set (gameState . userLog) (view (gameState . userLog) zs')
+                     $ zs
+                else BM.continue zs'
        _ -> BM.continue zs
 
 handleEventZwerg a b = BM.resizeOrQuit a b
