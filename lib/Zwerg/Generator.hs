@@ -25,13 +25,15 @@ import Language.Haskell.TH
 
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
 
-type Generator = forall s m. ( HasComponents s
+type Generator = forall s m. ( HasCallStack
+                             , HasComponents s
                              , MonadError ZError m
                              , MonadRandom m
                              , MonadState s m
                              ) => m UUID
 
-type Generator' a = forall s m. ( HasComponents s
+type Generator' a = forall s m. ( HasCallStack
+                                , HasComponents s
                                 , MonadError ZError m
                                 , MonadRandom m
                                 , MonadState s m
@@ -51,8 +53,7 @@ assignUniformRandomStat targetUUID stat bounds = do
 
 putOnRandomEmptyTile :: UUID -> UUID -> Generator' ()
 putOnRandomEmptyTile levelUUID entityUUID = do
-  tileUUID <- getRandomEmptyTile levelUUID >>= $(maybeThrow) EngineFatal
-                                               "Couldn't find empty tile to place entity"
+  tileUUID <- getRandomEmptyTile levelUUID >>= $(maybeThrow) EngineFatal "Couldn't find empty tile to place entity"
   addComp entityUUID level levelUUID
   transferOccupant entityUUID Nothing tileUUID
 

@@ -52,7 +52,7 @@ emptyGameState =
 
 -- Highest level purely-functional context which encapsulates
 -- all game logic/state/error handling
-newtype Game a =
+newtype Game' a =
   Game (ExceptT ZError (RandT RanGen (State GameState)) a)
   deriving ( Functor
            , Applicative
@@ -61,6 +61,8 @@ newtype Game a =
            , MonadError ZError
            , MonadRandom
            )
+
+type Game a = HasCallStack => Game' a
 
 runGame :: Game () -> RanGen -> GameState -> (GameState, Maybe ZError, RanGen)
 runGame (Game a) gen st =

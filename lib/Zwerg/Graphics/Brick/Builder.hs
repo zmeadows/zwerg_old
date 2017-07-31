@@ -43,8 +43,11 @@ menuToBrickList m =
   let allLabels = getMenuLabels m
   in BL.listMoveTo (getMenuFocusIndex m) $ BL.list () (Vec.fromList allLabels) 1
 
-newtype UIBuilder a = UIBuilder (ExceptT ZError (Reader GameState) a)
+newtype UIBuilder' a = UIBuilder (ExceptT ZError (Reader GameState) a)
   deriving (Functor , Applicative , Monad , MonadReader GameState, MonadError ZError)
+
+type UIBuilder a = HasCallStack => UIBuilder' a
+
 
 runUIBuilder :: UIBuilder a -> GameState -> Either ZError a
 runUIBuilder (UIBuilder x) gs = runReader (runExceptT x) gs

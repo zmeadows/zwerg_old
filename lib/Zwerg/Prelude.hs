@@ -15,6 +15,8 @@ import Control.Monad.Random.Class as EXPORTED hiding (fromList)
 import Control.Monad.Reader as EXPORTED
 import Control.Monad.State.Strict as EXPORTED
 
+import GHC.Stack as EXPORTED (HasCallStack, CallStack, callStack, prettyCallStack)
+
 import Data.Binary as EXPORTED (Binary)
 import Data.List.NonEmpty as EXPORTED (NonEmpty(..))
 import Data.Semigroup as EXPORTED

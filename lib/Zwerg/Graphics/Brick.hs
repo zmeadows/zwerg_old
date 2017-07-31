@@ -18,7 +18,8 @@ import qualified Brick.Main as BM
 import qualified Brick.Types as BT
 import qualified Graphics.Vty as VTY
 
-handleEventZwerg :: ZwergState
+handleEventZwerg :: HasCallStack
+                 => ZwergState
                  -> BT.BrickEvent () ZwergEvent
                  -> BT.EventM () (BT.Next ZwergState)
 handleEventZwerg zs (BT.VtyEvent ev) =
@@ -35,7 +36,7 @@ handleEventZwerg zs (BT.VtyEvent ev) =
              zs' = set gameState st' $ set ranGen gen' zs
              badPlayerInput = view (gameState . playerGoofed) zs'
          case err of
-           Just x -> BM.halt $ set errorMsg (Just $ show x) zs'
+           Just x -> BM.halt $ set errorMsg (Just x) zs'
            Nothing ->
              if badPlayerInput
                 then BM.continue
@@ -65,9 +66,12 @@ zwergApp = BM.App
   , BM.appChooseCursor = BM.neverShowCursor
   }
 
-initBrick :: MonadIO m => m ()
+initBrick :: (HasCallStack, MonadIO m) => m ()
 initBrick = do
   gen <- newPureRanGen
+  --TODO: is there an alternative 'main' that returns possible error?
   s <- liftIO $ BM.defaultMain zwergApp $ set ranGen gen initZwergState
-  liftIO $ print $ s ^. errorMsg
+  case s ^. errorMsg of
+    Nothing -> return ()
+    Just x -> liftIO $ putStrLn $ prettyCallStack $ x ^. stack
 

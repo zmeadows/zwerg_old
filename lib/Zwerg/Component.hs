@@ -54,13 +54,15 @@ type Component a = forall s. HasComponents s => Lens' s (NamedUUIDMap a)
 
 -- purely for convenience, type synonyms for commonly various monad contexts
 type MonadCompState a =
-  forall s m. ( HasComponents s
+  forall s m. ( HasCallStack
+              , HasComponents s
               , MonadState s m
               , MonadError ZError m
               ) => m a
 
 type MonadCompStateRand a =
-  forall s m. ( HasComponents s
+  forall s m. ( HasCallStack
+              , HasComponents s
               , MonadState s m
               , MonadError ZError m
               , MonadRandom m
@@ -68,13 +70,15 @@ type MonadCompStateRand a =
 
 
 type MonadCompRead a =
-  forall s m. ( HasComponents s
+  forall s m. ( HasCallStack
+              , HasComponents s
               , MonadReader s m
               , MonadError ZError m
               ) => m a
 
 type MonadCompReadRand a =
-  forall s m. ( HasComponents s
+  forall s m. ( HasCallStack
+              , HasComponents s
               , MonadReader s m
               , MonadError ZError m
               , MonadRandom m
