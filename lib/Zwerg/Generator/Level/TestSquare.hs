@@ -1,13 +1,14 @@
 module Zwerg.Generator.Level.TestSquare where
 
 import Zwerg.Generator
+import Zwerg.Generator.Default
 import Zwerg.Generator.Enemy.Goblin
 import Zwerg.Generator.Item.Weapon
-import Zwerg.Generator.Level
 
 testSquareGenerator :: Generator
 testSquareGenerator = do
-    testSquareLevelUUID <- levelSkeletonGenerator
+    testSquareLevelUUID <- popUUID
+    generateSkeleton testSquareLevelUUID Level
     testSquareTiles <- tileMap <@> testSquareLevelUUID
     traverseWithPos_ testSquareTiles $ \pos tileUUID -> do
         let (x, y) = unwrap pos

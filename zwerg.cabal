@@ -46,6 +46,7 @@ library
                        Zwerg.Event.Queue
                        Zwerg.Game
                        Zwerg.Generator
+                       Zwerg.Generator.Default
                        Zwerg.Generator.Enemy.Goblin
                        Zwerg.Generator.Item.Weapon
                        Zwerg.Generator.Level
