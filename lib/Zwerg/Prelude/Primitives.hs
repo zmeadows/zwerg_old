@@ -33,10 +33,8 @@ import Data.Binary as EXPORTED (Binary)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 
-import Language.Haskell.TH.Syntax (Lift)
-
 newtype UUID = MkUUID Int
-  deriving (Show, Eq, Bounded, Enum, Num, Ord, Generic, Binary, Lift)
+  deriving (Show, Eq, Bounded, Enum, Num, Ord, Generic, Binary)
 -- instance Binary UUID
 
 instance ZWrapped UUID Int where

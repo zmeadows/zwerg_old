@@ -102,7 +102,6 @@ library
   default-extensions: BangPatterns,
                       CPP,
                       DeriveFoldable,
-                      DeriveLift,
                       DeriveGeneric,
                       DeriveTraversable,
                       FlexibleContexts,
