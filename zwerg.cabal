@@ -17,10 +17,10 @@ library
 
   ghc-options:         -Wall
                        -Werror
-                       -optc-O3
-                       -optc-ffast-math
+                       -- -optc-O3
+                       -- -optc-ffast-math
                        -funbox-strict-fields
-                       -O2
+                       -- -O2
                        -funfolding-use-threshold=16
                        -Wcompat
                        -Wnoncanonical-monad-instances
@@ -132,10 +132,10 @@ executable zwerg
 
   ghc-options:         -Wall
                        -Werror
-                       -optc-O3
-                       -optc-ffast-math
+                       -- -optc-O3
+                       -- -optc-ffast-math
                        -funbox-strict-fields
-                       -O2
+                       -- -O2
                        -threaded
                        -funfolding-use-threshold=16
                        -Wcompat

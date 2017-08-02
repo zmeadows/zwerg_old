@@ -14,20 +14,11 @@ data Port
   | ChooseTarget
   | LoadingScreen
   | ViewEquipment
-  | ViewInventory (Menu InventoryMenuItem)
-  | PickupItems (Menu UUID)
+  | ViewInventory (MenuGroupSelect UUID)
   | ExamineTiles Position
   | DeathScreen Text
   | ExitScreen
   deriving (Show, Eq, Generic)
-
-data InventoryMenuItem = InventoryMenuItem
-  { _itemUUID        :: UUID
-  , _longDescription :: Text
-  } deriving (Show, Eq, Generic)
-makeClassy ''InventoryMenuItem
-instance Binary InventoryMenuItem
-
 instance Binary Port
 
 type Portal = [Port]

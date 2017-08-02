@@ -7,13 +7,28 @@ module Zwerg.Data.UUIDMap
 
 import Zwerg.Prelude
 
+--TODO: don't export constructors for newtypes
+
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IM
+  ( adjust
+  , insert
+  , delete
+  , filterWithKey
+  , fromAscList
+  , toAscList
+  , empty
+  , size
+  , lookup
+  , member
+  , foldrWithKey
+  )
 
 newtype UUIDMap a = MkUUIDMap (IntMap a)
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Monoid, Semigroup, Generic)
 instance Binary a => Binary (UUIDMap a)
 
+--TODO: switch to newtype tuple above, no need for new data type
 data NamedUUIDMap a = NamedUUIDMap
   { _componentName :: Text
   , _uuidMap :: UUIDMap a
@@ -30,8 +45,8 @@ instance ZWrapped (UUIDMap a) (IntMap a) where
   unwrap (MkUUIDMap um) = um
 
 instance ZIsList (UUIDMap a) (Int, a) where
-  zToList (MkUUIDMap um) = IM.toList um
-  zFromList = MkUUIDMap . IM.fromList
+  zToList (MkUUIDMap um) = toList um
+  zFromList = MkUUIDMap . fromList
 
 -- TODO: remove these classes... they dillute the point of newtype?
 instance ZMapContainer (UUIDMap a) UUID a where
@@ -41,6 +56,7 @@ instance ZMapContainer (UUIDMap a) UUID a where
   zRemoveAt uuid (MkUUIDMap m) = MkUUIDMap $ IM.delete (unwrap uuid) m
   zContains uuid (MkUUIDMap m) = IM.member (unwrap uuid) m
 
+--TODO: (UUID,a) instead of (Int,a)?
 instance ZFilterable (UUIDMap a) (Int, a) where
   zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (curry f) m
   zFilterM f (MkUUIDMap m) = MkUUIDMap . IM.fromAscList <$> filterM f (IM.toAscList m)
@@ -48,6 +64,7 @@ instance ZFilterable (UUIDMap a) (Int, a) where
 type instance IxValue (UUIDMap a) = a
 
 -- TODO: just reference IntMap implementation?
+-- FIXME: This could be causing slowdown?!?
 instance Ixed (UUIDMap a) where
   ix k f m =
     case zLookup k m of
@@ -57,6 +74,7 @@ instance Ixed (UUIDMap a) where
 type instance Index (UUIDMap a) = UUID
 
 -- TODO: just reference IntMap implementation?
+-- FIXME: This could be causing slowdown?!?
 instance At (UUIDMap a) where
   at k f m =
     f mv <&> \r ->

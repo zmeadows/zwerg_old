@@ -30,7 +30,7 @@ import GHC.Generics as EXPORTED (Generic)
 import Lens.Micro.Internal as EXPORTED (At(..), Ixed(..), Index, IxValue)
 import Lens.Micro.Platform as EXPORTED
        (makeClassy, makeLenses, makeFields, (%=), (^.), (.=), over, use,
-        view, to, set, Lens, Lens', (<&>))
+        view, to, set, Lens, Lens', (<&>), _1, _2)
 
 {-# SPECIALIZE show :: Show a => a -> Text  #-}
 {-# SPECIALIZE show :: Show a => a -> String  #-}

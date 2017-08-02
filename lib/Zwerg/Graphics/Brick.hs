@@ -17,6 +17,9 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Brick.Main as BM
 import qualified Brick.Types as BT
 import qualified Graphics.Vty as VTY
+import Data.Monoid ((<>))
+
+import qualified Data.Text.IO as T (putStrLn)
 
 handleEventZwerg :: HasCallStack
                  => ZwergState
@@ -50,11 +53,13 @@ handleEventZwerg a b = BM.resizeOrQuit a b
 
 theMap :: AttrMap
 theMap = attrMap VTY.defAttr
-    [ ("keyword1", fg VTY.magenta)
-    , ("keyword2", VTY.white `Brick.Util.on` VTY.blue)
-    , (customAttr, fg VTY.red)
-    , (progressCompleteAttr, VTY.black `on` VTY.green)
-    , (progressIncompleteAttr, VTY.black `on` VTY.red)
+    [ ("inventory" <> "focused"        , VTY.black `Brick.Util.on` VTY.white )
+    , ("inventory" <> "unfocused"      , VTY.white `Brick.Util.on` VTY.black )
+    , ("inventory" <> "drop_focused"   , VTY.black `Brick.Util.on` VTY.red   )
+    , ("inventory" <> "drop_unfocused" , VTY.white `Brick.Util.on` VTY.red   )
+    , ("logo" , fg VTY.red)
+    , (progressCompleteAttr            , VTY.black `on` VTY.green            )
+    , (progressIncompleteAttr          , VTY.black `on` VTY.red              )
     ]
 
 zwergApp :: BM.App ZwergState ZwergEvent ()
@@ -74,5 +79,14 @@ initBrick = do
   case s ^. errorMsg of
     Nothing -> return ()
     --TODO: write self contained function to print ZError
-    Just x -> liftIO $ putStrLn $ prettyCallStack $ x ^. stack
-
+    Just x -> do
+      liftIO $ putStrLn "## ERROR MESSAGE ##\n"
+      liftIO $ putStrLn "## ERROR MESSAGE ##\n"
+      liftIO $ putStrLn "## ERROR MESSAGE ##\n\n"
+      liftIO $ T.putStrLn $ x ^. explanation
+      liftIO $ putStrLn ""
+      liftIO $ putStrLn "## CALL STACK ###\n"
+      liftIO $ putStrLn "## CALL STACK ###\n"
+      liftIO $ putStrLn "## CALL STACK ###\n\n"
+      liftIO $ putStrLn $ prettyCallStack $ x ^. stack
+      liftIO $ putStrLn ""

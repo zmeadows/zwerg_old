@@ -1,5 +1,25 @@
-:: FOV algorithm and storing visible/fog of war glyph map ::
+:: HIGH :: make Distribution a * -> * kind and make Damage use a Distribution Int
+make sample return m a instead of m Double
 
+:: HIGH :: make generated random numbers all return Int, since that is all we use?
+
+
+:: HIGH :: Make function to select Menu focus by matching 'shortcut'
+Maybe call it MenuGroupSelect?
+type MenuGroupSelect a = Menu (Bool, a)
+with a pair of new mark/unmarkFocus functions
+
+:: HIGH :: Add PickupItems port
+Display a list of items
+
+:: HIGH :: Fix InventoryView port
+It should simply display a list of all items (don't worry about grouping all identical items),
+but with one additional feature: mark items for drop with 'd' then drop all with D.
+
+:: LOW :: Add ConfirmDropSelectedItems port
+Simple yes/no display, with a list of to-be-dropped items underneath.
+
+:: LOW :: FOV algorithm and fog of war
 Keep a separate GridMap Glyph of the last visible tile state for the whole level,
 where we store the highest priority INANIMATE glyph last seen,
 so basically anything that is not an enemy. This will be used to
@@ -15,18 +35,31 @@ and computed in the handleEventZwerg function (which is MonadIO context)
 Make a function to return the full Glyph for a player-visible tile,
 and call this in the relevant UIBuiler
 
-:: default components :: DONE
-This is tricky, perhaps.
-Make a function that takes EntityType as argument, and
-adds the 100% essential default components.
+:: LOW, ONGOING :: add HasCallStack to more contexts
+
+:: HIGH :: understand difference between INLINE and INLINABLE pragmas
+
+:: LOW :: make a printEntity function
+
+##################
+#### FINISHED ####
+##################
+
+:: HIGH, COMPLETE :: Default Components
+Make a function that takes EntityType as argument, and adds *only* the
+100% essential default components.
 This is one way to help guard against the problem of forgetting to update
 every generator when a new component is added.
 
-:: breakdown of Glyph :: DONE
+:: LOW, COMPLETE :: breakdown of Glyph
 separate Glyph into GlyphBasic and Glyph (which is just two GlyphBasic's,
 one for player visible and one for out of player vision range (fog))
 
-:: Errors :: DONE
-add StackTrace to ZError (only in GHC 8.2.X ?)
+:: HIGH, COMPLETE :: Stack trace in ZError
+add StackTrace to ZError (only in GHC 8.2.X ? Nope, it is in )
 
-:: add pick-up item port ::
+:: HIGHEST, COMPLETE :: Create a Menu variant where you can select/deselect groups of items
+Maybe call it MenuGroupSelect?
+type MenuGroupSelect a = Menu (Bool, a)
+with a pair of new mark/unmarkFocus functions
+and a 'getAllSelected' function

@@ -5,10 +5,12 @@ module Zwerg.Generator.Default
 
 import Zwerg.Generator as EXPORTED
 
-generateSkeleton :: UUID -> EntityType -> Generator' ()
-generateSkeleton entityUUID etype = do
+generateSkeleton :: EntityType -> Generator' UUID
+generateSkeleton etype = do
+  entityUUID <- popUUID
   addComp entityUUID entityType etype
   generateSkeleton' entityUUID etype
+  return entityUUID
 
 generateSkeleton' :: UUID -> EntityType -> Generator' ()
 generateSkeleton' enemyUUID Enemy = do
@@ -19,8 +21,7 @@ generateSkeleton' enemyUUID Enemy = do
 
 generateSkeleton' levelUUID Level = do
   emptyTileMap <- makeGridMapM $ \pos -> do
-      tileUUID <- popUUID
-      generateSkeleton tileUUID Tile
+      tileUUID <- generateSkeleton Tile
       addComp tileUUID position pos
       addComp tileUUID level levelUUID
       return tileUUID

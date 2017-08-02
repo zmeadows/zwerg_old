@@ -8,21 +8,23 @@ import Zwerg.Generator.Item.Weapon
 
 goblin :: Generator
 goblin = do
-    goblinUUID <- popUUID
-    generateSkeleton goblinUUID Enemy
-    generateGoblinName >>= addComp goblinUUID name
-    addComp goblinUUID description "It is foul-smelling and wrinkly."
-    addComp goblinUUID species "Goblin"
+    goblinUUID <- generateSkeleton Enemy
+    let (<@-) :: Component a -> a -> Generator' ()
+        (<@-) = addComp goblinUUID
 
-    goblinHP <- getRandomR (3, 7)
-    zConstruct (goblinHP, goblinHP) >>= addComp goblinUUID hp
+    newGoblinName <- generateGoblinName
+    newGoblinHP <- getRandomR (3,7) >>= \x -> zConstruct (x,x)
 
-    addComp goblinUUID glyph $ Glyph 'g' (CellColor Green0 Green3) Nothing
-    addComp goblinUUID ticks 1
-    addComp goblinUUID aiType SimpleMeleeCreature
-    addComp goblinUUID blocksPassage True
-    addComp goblinUUID blocksVision False
-    addComp goblinUUID viewRange 5
+    name          <@- newGoblinName
+    hp            <@- newGoblinHP
+    description   <@- "It is foul-smelling and wrinkly."
+    species       <@- "Goblin"
+    glyph         <@- (Glyph 'g' (CellColor Green0 Green3) Nothing)
+    ticks         <@- 100
+    aiType        <@- SimpleMeleeCreature
+    blocksPassage <@- True
+    blocksVision  <@- False
+    viewRange     <@- 5
 
     assignUniformRandomStat goblinUUID STR (1, 5)
     assignUniformRandomStat goblinUUID DEX (1, 5)
@@ -33,6 +35,7 @@ goblin = do
 
     swordUUID <- sword
     equipItem swordUUID goblinUUID
+
     verifyAndReturn goblinUUID
 
 generateGoblinName :: (MonadRandom m) => m Text

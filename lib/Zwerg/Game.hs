@@ -85,11 +85,7 @@ processNonPlayerEvents = do
       (minTick, uuids) <- getMinimumUUIDs ts
       (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
       if | notElem playerUUID uuids ->
-           forM_ uuids $ \i -> do
-             runAI i
-             processEvents
-             -- TODO: set ticks according to DEX + other things
-             setComp i ticks 100
+             forM_ uuids $ \i -> do runAI i >> processEvents >> setComp i ticks 100
          | otherwise -> return $! ()
       updateGlyphMap
     _ -> return $! ()
@@ -129,18 +125,25 @@ processUserInput' (MainScreen _:_) (DownArrow)   = processPlayerDirectionInput N
 processUserInput' (MainScreen _:_) (RightArrow)  = processPlayerDirectionInput East
 
 processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
-  inv <- zToList <$> inventory <@> playerUUID
-  menuItems <- forM inv $ \uuid -> do
-    d <- description <@> uuid
-    n <- name <@> uuid
-    return $! (n, InventoryMenuItem uuid d)
-  case menuItems of
+  uuids <- zToList <$> inventory <@> playerUUID
+  names <- mapM (name <@>) uuids
+  case zip names uuids of
     [] -> do
       pushLogMsgM "You don't have any items to look at."
       playerGoofed .= True
-    i:is -> portal .= (ViewInventory $ makeMenu $ i :| is) : p
+    i:is -> do
+      portal .= (ViewInventory $ makeMenuGroupSelect $ i :| is) : p
+
+processUserInput' (ViewInventory inv : ps) (KeyChar 'd') =
+  portal .= (ViewInventory $ toggleFocus inv) : ps
 
 processUserInput' (ViewInventory _ : ps) (KeyChar 'i') = portal .= ps
+
+processUserInput' (ViewInventory inv : ps) (KeyChar 'j') =
+  portal .= (ViewInventory $ next inv) : ps
+
+processUserInput' (ViewInventory inv : ps) (KeyChar 'k') =
+  portal .= (ViewInventory $ prev inv) : ps
 
 processUserInput' p@(MainScreen _ : _) (KeyChar 'x') = do
   playerPos <- position <@> playerUUID
@@ -255,6 +258,7 @@ processEvent (OutgoingDamageEvent ed) = do
   when stillAlive $ do
     modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
     newHP <- hp <@> (ed ^. defenderUUID)
+
     when (ed ^. attackerUUID == playerUUID || ed ^. defenderUUID == playerUUID) $ do
       attName <- name <@> (ed ^. attackerUUID)
       defName <- name <@> (ed ^. defenderUUID)
@@ -285,7 +289,15 @@ getGlyphMapUpdates = do
   return $ mkGlyphMap updatedGlyphs
 
 processPlayerDirectionInput :: Direction -> Game ()
-processPlayerDirectionInput dir =
-  readC (getPlayerAdjacentEnemy dir) >>= \case
-    Just attackedUUID -> $(newEvent "WeaponAttackAttempt") playerUUID attackedUUID
-    Nothing -> $(newEvent "MoveEntityDirection") playerUUID dir
+processPlayerDirectionInput dir = getPlayerAdjacentEnemy >>= \case
+      Just attackedUUID -> $(newEvent "WeaponAttackAttempt") playerUUID attackedUUID
+      Nothing -> $(newEvent "MoveEntityDirection") playerUUID dir
+  where getPlayerAdjacentEnemy = readC $ do
+          attackedTileUUID <- tileOn <~> playerUUID >>= getAdjacentTileUUID dir
+          case attackedTileUUID of
+            Just attackedTileUUID' -> do
+              zToList <$> getOccupantsOfType attackedTileUUID' Enemy >>= \case
+                [] -> return $! Nothing
+                [x] -> return $! Just x
+                _ -> $(throw) EngineFatal "found multiple enemies on same tile"
+            Nothing -> return $! Nothing

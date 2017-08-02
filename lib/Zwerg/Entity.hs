@@ -41,6 +41,7 @@ equipItem itemUUID entityUUID = do
   islot <- slot <@> itemUUID
   -- TODO add unequipped item to inventory
   -- TODO check that itemUUID has correct type
+  -- TODO set parent of item
   (_, newEquipment) <- equip islot itemUUID <$> equipment <@> entityUUID
   setComp entityUUID equipment newEquipment
 
@@ -117,17 +118,6 @@ tileBlocksPassage tileUUID = do
       occs <- occupants <~> tileUUID
       res <- anyM (blocksPassage <~>) (unwrap occs)
       return $! res
-
-getPlayerAdjacentEnemy :: Direction -> MonadCompRead (Maybe UUID)
-getPlayerAdjacentEnemy dir = do
-  attackedTileUUID <- tileOn <~> playerUUID >>= getAdjacentTileUUID dir
-  case attackedTileUUID of
-    Just attackedTileUUID' -> do
-      zToList <$> getOccupantsOfType attackedTileUUID' Enemy >>= \case
-        [] -> return $! Nothing
-        [x] -> return $! Just x
-        _ -> $(throw) EngineFatal "found multiple enemies on same tile"
-    Nothing -> return $! Nothing
 
 getAdjacentTileUUID :: Direction -> UUID -> MonadCompRead (Maybe UUID)
 getAdjacentTileUUID dir tileUUID = do
@@ -227,5 +217,6 @@ getTargetedUUIDs (Line _ _) mainDefenderUUID = return $! [mainDefenderUUID]
 getFearLevel :: UUID -> MonadCompRead Text
 getFearLevel _ = return $! "Terrifying"
 
+--TODO: make Stats instance of ZMapContainer
 getStat :: Stat -> UUID -> MonadCompRead Int
 getStat someStat entityUUID = lookupStat someStat <$> stats <~> entityUUID

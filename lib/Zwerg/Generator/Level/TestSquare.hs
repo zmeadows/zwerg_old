@@ -7,8 +7,7 @@ import Zwerg.Generator.Item.Weapon
 
 testSquareGenerator :: Generator
 testSquareGenerator = do
-    testSquareLevelUUID <- popUUID
-    generateSkeleton testSquareLevelUUID Level
+    testSquareLevelUUID <- generateSkeleton Level
     testSquareTiles <- tileMap <@> testSquareLevelUUID
     traverseWithPos_ testSquareTiles $ \pos tileUUID -> do
         let (x, y) = unwrap pos
@@ -29,5 +28,3 @@ testSquareGenerator = do
     replicateM_ 5 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
     replicateM_ 4 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
     return testSquareLevelUUID
-
-
