@@ -22,7 +22,6 @@ instance ZConstructable HP (Int, Int) where
 instance ZWrapped HP (Int, Int) where
   unwrap (MkHP hp) = hp
 
-{-# INLINABLE adjustHP #-}
 adjustHP :: (Int -> Int) -> HP -> HP
 adjustHP f (MkHP (curHP, maxHP))
   | newHP < 0 = MkHP (0, maxHP)
@@ -31,7 +30,6 @@ adjustHP f (MkHP (curHP, maxHP))
   where
     newHP = f curHP
 
-{-# INLINABLE adjustMaxHP #-}
 adjustMaxHP :: (Int -> Int) -> HP -> HP
 adjustMaxHP f (MkHP (curHP, maxHP))
   | newMaxHP < 0 = MkHP (1, 1)
@@ -39,6 +37,5 @@ adjustMaxHP f (MkHP (curHP, maxHP))
   | otherwise = MkHP (curHP, newMaxHP)
   where newMaxHP = f maxHP
 
-{-# INLINABLE fullHeal #-}
 fullHeal :: HP -> HP
 fullHeal (MkHP (_, maxHP)) = MkHP (maxHP, maxHP)

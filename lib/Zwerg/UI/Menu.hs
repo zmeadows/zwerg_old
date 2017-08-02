@@ -68,7 +68,6 @@ getAllSelected (MkMenu ls x rs) = toList $ (getMarked ls) >< focusMarked >< (get
         focusMarked = if (view (item . _2) x) then S.singleton (view (item . _1) x) else S.empty
 
 
-{-# INLINE next #-}
 next :: Menu a -> Menu a
 next m@(MkMenu ls x rs) =
   case S.viewl rs of
@@ -77,7 +76,6 @@ next m@(MkMenu ls x rs) =
                 a :< ls' -> MkMenu S.empty a (ls' |> x)
     a :< rs' -> MkMenu (ls |> x) a rs'
 
-{-# INLINE prev #-}
 prev :: Menu a -> Menu a
 prev m@(MkMenu ls x rs) =
   case S.viewr ls of
@@ -86,11 +84,9 @@ prev m@(MkMenu ls x rs) =
                 rs' :> a -> MkMenu (x <| rs') a S.empty
     ls' :> a -> MkMenu ls' a (x <| rs)
 
-{-# INLINE focus #-}
 focus :: Menu a -> MenuEntry a
 focus (MkMenu _ x _) = x
 
-{-# INLINE makeMenu #-}
 makeMenu :: NonEmpty (Text, a) -> Menu a
 makeMenu entries = makeMenu' entries []
 
@@ -113,6 +109,5 @@ getMenuLabels (MkMenu ls x rs) =
       focusLabel = view label x
   in toList $ (leftLabels |> focusLabel) >< rightLabels
 
-{-# INLINE getMenuFocusIndex #-}
 getMenuFocusIndex :: Menu a -> Int
 getMenuFocusIndex (MkMenu ls _ _) = S.length ls

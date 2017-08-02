@@ -33,28 +33,23 @@ newtype Equipment = MkEquipment (Map EquipmentSlot UUID)
   deriving (Show, Eq, Generic)
 instance Binary Equipment
 
-{-# INLINABLE emptyEquipment #-}
 emptyEquipment :: Equipment
 emptyEquipment = MkEquipment M.empty
 
-{-# INLINABLE equip #-}
 equip :: EquipmentSlot -> UUID -> Equipment -> ([UUID], Equipment)
 equip slot uuid eq =
     let (ueis, MkEquipment eq') = unequip slot eq
     in (ueis, MkEquipment $ M.insert slot uuid eq')
 
-{-# INLINABLE unequip #-}
 unequip :: EquipmentSlot -> Equipment -> ([UUID], Equipment)
 unequip (SingleHand LeftHand) eq  = unequipSlots [SingleHand LeftHand, BothHands] eq
 unequip (SingleHand RightHand) eq = unequipSlots [SingleHand RightHand, BothHands] eq
 unequip BothHands eq            = unequipSlots [SingleHand LeftHand, SingleHand RightHand, BothHands] eq
 unequip slot eq                 = unequipSlots [slot] eq
 
-{-# INLINABLE unequipSlots #-}
 unequipSlots :: [EquipmentSlot] -> Equipment -> ([UUID], Equipment)
 unequipSlots slots eq = unequipSlots' slots eq []
 
-{-# INLINABLE unequipSlots' #-}
 unequipSlots' :: [EquipmentSlot] -> Equipment -> [UUID] -> ([UUID], Equipment)
 unequipSlots' [] eq uis = (uis, eq)
 unequipSlots' (s:ss) (MkEquipment eq) uis =
@@ -63,7 +58,6 @@ unequipSlots' (s:ss) (MkEquipment eq) uis =
        Just uuid -> unequipSlots' ss eq' (uuid:uis)
        Nothing -> ([], eq')
 
-{-# INLINABLE getEquippedInSlot #-}
 getEquippedInSlot :: EquipmentSlot -> Equipment -> [UUID]
 
 getEquippedInSlot (SingleHand LeftHand) (MkEquipment eqMap)  =
@@ -77,6 +71,5 @@ getEquippedInSlot (BothHands) (MkEquipment eqMap)          =
 
 getEquippedInSlot slot (MkEquipment eqMap) = catMaybes [M.lookup slot eqMap]
 
-{-# INLINABLE getAllEquippedItems #-}
 getAllEquippedItems :: Equipment -> UUIDSet
 getAllEquippedItems (MkEquipment eq) = zFromList $ M.elems eq

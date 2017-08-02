@@ -24,18 +24,15 @@ import Control.Monad.Loops (anyM)
 import Data.Foldable (maximumBy)
 import Data.Ord (comparing)
 
-{-# INLINABLE getItemsOnEntityTile #-}
 getItemsOnEntityTile :: UUID -> MonadCompRead UUIDSet
 getItemsOnEntityTile entityUUID = tileOn <~> entityUUID >>= (`getOccupantsOfType` Item)
 
-{-# INLINABLE unequipItem #-}
 unequipItem :: UUID -> EquipmentSlot -> MonadCompState ()
 unequipItem entityUUID islot = do
 -- TODO add unequipped item to inventory
   (_, newEquipment) <- unequip islot <$> equipment <@> entityUUID
   setComp entityUUID equipment newEquipment
 
-{-# INLINABLE equipItem #-}
 equipItem :: UUID -> UUID -> MonadCompState ()
 equipItem itemUUID entityUUID = do
   islot <- slot <@> itemUUID
@@ -45,7 +42,6 @@ equipItem itemUUID entityUUID = do
   (_, newEquipment) <- equip islot itemUUID <$> equipment <@> entityUUID
   setComp entityUUID equipment newEquipment
 
-{-# INLINABLE getEquippedWeapon #-}
 getEquippedWeapon :: UUID -> MonadCompRead (Maybe UUID)
 getEquippedWeapon entityUUID = do
   uuids <- getEquippedInSlot (SingleHand RightHand) <$> equipment <~> entityUUID
@@ -54,7 +50,6 @@ getEquippedWeapon entityUUID = do
     [x] -> return $! Just x
     _ -> $(throw) EngineFatal "Entity has multiple weapons equipped, and dual-wielding is not yet implemented."
 
-{-# INLINABLE isItemType #-}
 isItemType :: ItemType -> UUID -> MonadCompRead Bool
 isItemType itypetest uuid =
   entityType <~> uuid >>= \case
@@ -94,7 +89,6 @@ getVisibleTiles uuid = do
   -- return $ zFromList $ intersect candidateTileUUIDs $ concat visibleLines
   return $! zFromList candidateTileUUIDs
 
-{-# INLINABLE tileBlocksVision #-}
 tileBlocksVision :: UUID -> MonadCompRead Bool
 tileBlocksVision tileUUID = do
   -- The tile might iself block vision (ex: stone column)
@@ -106,7 +100,6 @@ tileBlocksVision tileUUID = do
       occs <- occupants <~> tileUUID
       anyM (blocksVision <~>) (unwrap occs)
 
-{-# INLINABLE tileBlocksPassage #-}
 tileBlocksPassage :: UUID -> MonadCompRead Bool
 tileBlocksPassage tileUUID = do
   -- The tile might itself block passage
@@ -141,7 +134,6 @@ getPrimaryOccupant occupiedUUID = do
       let maxUUID = fst $ maximumBy (comparing snd) $ zip occs types
       return $! maxUUID
 
-{-# INLINABLE getOccupantsOfType #-}
 getOccupantsOfType :: UUID -> EntityType -> MonadCompRead UUIDSet
 getOccupantsOfType containerUUID eType = occupants <~> containerUUID >>= zFilterM isEtype
   where isEtype uuid = (eType ==) <$> entityType <~> uuid

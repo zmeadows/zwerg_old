@@ -136,49 +136,40 @@ popUUID = do
   return newUUID
 
 {-- STATE --}
-{-# INLINEABLE getComp #-}
 getComp :: UUID -> Component a -> MonadCompState (Maybe a)
 getComp uuid comp = use $ comp . uuidMap . at uuid
 
-{-# INLINEABLE hasComp #-}
 hasComp :: UUID -> Component a -> MonadCompState Bool
 hasComp uuid comp = use $ comp . uuidMap . to (zContains uuid)
 
-{-# INLINEABLE canViewComp #-}
 canViewComp :: UUID -> Component a -> MonadCompRead Bool
 canViewComp uuid comp = view $ comp . uuidMap . to (zContains uuid)
 
-{-# INLINEABLE addComp #-}
 addComp
   :: (HasComponents s, MonadState s m)
   => UUID -> Component a -> a -> m ()
 addComp uuid comp dat = (comp . uuidMap) %= zInsert uuid dat
 
-{-# INLINEABLE setComp #-}
 setComp
   :: (HasComponents s, MonadState s m)
   => UUID -> Component a -> a -> m ()
 setComp = addComp
 
-{-# INLINEABLE modComp #-}
 modComp
   :: (HasComponents s, MonadState s m)
   => UUID -> Component a -> (a -> a) -> m ()
 modComp uuid comp f = (comp . uuidMap) %= zAdjust f uuid
 
-{-# INLINEABLE deleteComp #-}
 deleteComp
   :: (HasComponents s, MonadState s m)
   => UUID -> Component a -> m ()
 deleteComp uuid comp = (comp . uuidMap) %= zRemoveAt uuid
 
-{-# INLINEABLE filterComp #-}
 filterComp
   :: (HasComponents s, MonadState s m)
   => Component a -> (a -> Bool) -> m ()
 filterComp comp f = (comp . uuidMap) %= zFilter (\(_, x) -> f x)
 
-{-# INLINEABLE demandComp #-}
 demandComp :: Component a -> UUID -> MonadCompState a
 demandComp comp uuid =
   getComp uuid comp >>= \case
@@ -187,7 +178,6 @@ demandComp comp uuid =
       cn <- use (comp . componentName)
       $(throw) EngineFatal $ append "Missing Component: " cn
 
-{-# INLINEABLE demandHasComp #-}
 demandHasComp :: UUID -> Component a -> MonadCompState ()
 demandHasComp uuid comp = do
   whenM (not <$> hasComp uuid comp) $ do
@@ -195,11 +185,9 @@ demandHasComp uuid comp = do
     $(throw) EngineFatal $ append "Missing Component: " cn
 
 {-- READER --}
-{-# INLINEABLE viewComp #-}
 viewComp :: UUID -> Component a -> MonadCompRead (Maybe a)
 viewComp uuid comp = view (comp . uuidMap . at uuid)
 
-{-# INLINEABLE demandViewComp #-}
 demandViewComp :: Component a -> UUID -> MonadCompRead a
 demandViewComp comp uuid =
   viewComp uuid comp >>= \case
@@ -208,21 +196,17 @@ demandViewComp comp uuid =
       cn <- view (comp . componentName)
       $(throw) EngineFatal $ append "Missing Component: " cn
 
-{-# INLINEABLE demandCanViewComp #-}
 demandCanViewComp :: Component a -> UUID -> MonadCompRead ()
 demandCanViewComp comp uuid =
   whenM (not <$> canViewComp uuid comp) $ do
     cn <- view (comp . componentName)
     $(throw) EngineFatal $ append "Missing Component: " cn
 
-{-# INLINEABLE (<@>) #-}
 (<@>) :: Component a -> UUID -> MonadCompState a
 (<@>) = demandComp
 
-{-# INLINEABLE (<~>) #-}
 (<~>) :: Component a -> UUID -> MonadCompRead a
 (<~>) = demandViewComp
 
-{-# INLINEABLE (<~?>) #-}
 (<~?>) :: UUID -> Component a -> MonadCompRead (Maybe a)
 (<~?>) = viewComp

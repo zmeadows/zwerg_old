@@ -53,13 +53,11 @@ data Rectangle = Rectangle
   , _recY :: Int
   } deriving (Show, Eq)
 
-{-# INLINABLE to1DIndex #-}
 to1DIndex :: Position -> Int
 to1DIndex pos =
   let (x, y) = unwrap pos
   in y * mapWidthINT + x
 
-{-# INLINABLE from1DIndex #-}
 from1DIndex :: Int -> Maybe Position
 from1DIndex i = validatePosition $ (mod i mapWidthINT, div i mapWidthINT)
 
@@ -69,7 +67,6 @@ instance ZConstructable Position (Int, Int) where
       then return . MkPosition $ pos
       else $(throw) EngineFatal "Attempted to construct an invalid Position"
 
-{-# INLINABLE distance #-}
 distance :: Metric -> Position -> Position -> Double
 distance metric (MkPosition (x1, y1)) (MkPosition (x2, y2)) =
   let x1' = fromIntegral x1
@@ -80,11 +77,9 @@ distance metric (MkPosition (x1, y1)) (MkPosition (x2, y2)) =
        Euclidean -> sqrt $ (x1' - x2') ** 2.0 + (y1' - y2') ** 2.0
        TaxiCab -> abs (x1' - x2') + abs (y1' - y2')
 
-{-# INLINABLE modPos #-}
 modPos :: (Int -> Int, Int -> Int) -> Position -> Maybe Position
 modPos (f, g) (MkPosition (x, y)) = validatePosition (f x, g y)
 
-{-# INLINABLE movePosDir #-}
 movePosDir :: Direction -> Position -> Maybe Position
 movePosDir dir (MkPosition (x, y)) =
   validatePosition $
@@ -93,11 +88,9 @@ movePosDir dir (MkPosition (x, y)) =
      | dir == North -> (x, y - 1)
      | dir == South -> (x, y + 1)
 
-{-# INLINABLE isValidPosition #-}
 isValidPosition :: (Int, Int) -> Bool
 isValidPosition (x, y) = x >= 0 && y >= 0 && x < mapWidthINT && y < mapHeightINT
 
-{-# INLINABLE validatePosition #-}
 validatePosition :: (Int, Int) -> Maybe Position
 validatePosition p =
   if isValidPosition p
