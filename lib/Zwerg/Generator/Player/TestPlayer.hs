@@ -29,5 +29,5 @@ testPlayerGenerator startLevelUUID = do
 
     putOnRandomEmptyTile startLevelUUID playerUUID
 
-    replicateM_ 3 $ generateAndHold sword playerUUID
+    generateAndHoldN 3 sword playerUUID
 

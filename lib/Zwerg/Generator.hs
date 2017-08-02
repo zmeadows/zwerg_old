@@ -8,6 +8,7 @@ module Zwerg.Generator
   , hasAll
   , generateAndEquip
   , generateAndHold
+  , generateAndHoldN
   ) where
 
 import Zwerg.Component as EXPORTED
@@ -72,6 +73,5 @@ generateAndEquip itemGen wearerUUID = itemGen >>= (flip equipItem) wearerUUID
 generateAndHold :: Generator -> UUID -> Generator' ()
 generateAndHold itemGen wearerUUID = (zAdd <$> itemGen) >>= modComp wearerUUID inventory
 
-
-
-
+generateAndHoldN :: Int -> Generator -> UUID -> Generator' ()
+generateAndHoldN n itemGen wearerUUID = replicateM_ n $ generateAndHold itemGen wearerUUID
