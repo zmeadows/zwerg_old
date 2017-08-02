@@ -16,4 +16,3 @@ import Zwerg.Component.Base
   x <- demandViewComp compA uuid
   y <- demandViewComp compB uuid
   return (x,y)
-

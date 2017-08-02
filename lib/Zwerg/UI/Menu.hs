@@ -46,28 +46,6 @@ instance Binary a => Binary (Menu a)
 
 type TextMenu = Menu ()
 
-type MenuGroupSelect a = Menu (a, Bool)
-type MenuGroupSelectEntry a = MenuEntry (a, Bool)
-
-isEntryMarked :: MenuGroupSelectEntry a -> Bool
-isEntryMarked = view (item . _2)
-
-makeMenuGroupSelect :: NonEmpty (Text, a) -> MenuGroupSelect a
-makeMenuGroupSelect entries = makeMenu' unmarkedEntries []
-  where unmarkedEntries = NE.map (\(name,val) -> (name, (val, False))) entries
-
-toggleFocus :: MenuGroupSelect a -> MenuGroupSelect a
-toggleFocus (MkMenu ls x rs) =
-  if (x ^. item ^._2)
-     then MkMenu ls (set (item . _2) False x) rs
-     else MkMenu ls (set (item . _2) True x) rs
-
-getAllSelected :: MenuGroupSelect a -> [a]
-getAllSelected (MkMenu ls x rs) = toList $ (getMarked ls) >< focusMarked >< (getMarked rs)
-  where getMarked s = fmap (view $ item . _1) $ S.filter (view $ item . _2) $ s
-        focusMarked = if (view (item . _2) x) then S.singleton (view (item . _1) x) else S.empty
-
-
 next :: Menu a -> Menu a
 next m@(MkMenu ls x rs) =
   case S.viewl rs of
@@ -111,3 +89,24 @@ getMenuLabels (MkMenu ls x rs) =
 
 getMenuFocusIndex :: Menu a -> Int
 getMenuFocusIndex (MkMenu ls _ _) = S.length ls
+
+type MenuGroupSelect a = Menu (a, Bool)
+type MenuGroupSelectEntry a = MenuEntry (a, Bool)
+
+isEntryMarked :: MenuGroupSelectEntry a -> Bool
+isEntryMarked = view (item . _2)
+
+makeMenuGroupSelect :: NonEmpty (Text, a) -> MenuGroupSelect a
+makeMenuGroupSelect entries = makeMenu' unmarkedEntries []
+  where unmarkedEntries = NE.map (\(name,val) -> (name, (val, False))) entries
+
+toggleFocus :: MenuGroupSelect a -> MenuGroupSelect a
+toggleFocus (MkMenu ls x rs) =
+  if (x ^. item ^._2)
+     then MkMenu ls (set (item . _2) False x) rs
+     else MkMenu ls (set (item . _2) True x) rs
+
+getAllSelected :: MenuGroupSelect a -> [a]
+getAllSelected (MkMenu ls x rs) = toList $ (getMarked ls) >< focusMarked >< (getMarked rs)
+  where getMarked s = fmap (view $ item . _1) $ S.filter (view $ item . _2) $ s
+        focusMarked = if (view (item . _2) x) then S.singleton (view (item . _1) x) else S.empty
