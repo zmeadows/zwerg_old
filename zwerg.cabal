@@ -32,6 +32,8 @@ library
 
   exposed-modules:     Zwerg
                        Zwerg.Component
+                       Zwerg.Component.Base
+                       Zwerg.Component.Sketchy
                        Zwerg.Data.Damage
                        Zwerg.Data.Equipment
                        Zwerg.Data.GridMap
