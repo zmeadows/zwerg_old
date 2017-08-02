@@ -1,3 +1,4 @@
+{-# LANGUAGE ImpredicativeTypes #-}
 module Zwerg.Component where
 
 import Zwerg.Prelude
@@ -219,9 +220,21 @@ demandCanViewComp comp uuid =
 (<@>) :: Component a -> UUID -> MonadCompState a
 (<@>) = demandComp
 
+(<@!!>) :: (Component a, Component b) -> UUID -> MonadCompState (a,b)
+(<@!!>) (compA, compB) uuid = do
+  x <- demandComp compA uuid
+  y <- demandComp compB uuid
+  return (x,y)
+
 {-# INLINEABLE (<~>) #-}
 (<~>) :: Component a -> UUID -> MonadCompRead a
 (<~>) = demandViewComp
+
+(<~!!>) :: (Component a, Component b) -> UUID -> MonadCompRead (a,b)
+(<~!!>) (compA, compB) uuid = do
+  x <- demandViewComp compA uuid
+  y <- demandViewComp compB uuid
+  return (x,y)
 
 {-# INLINEABLE (<~?>) #-}
 (<~?>) :: UUID -> Component a -> MonadCompRead (Maybe a)

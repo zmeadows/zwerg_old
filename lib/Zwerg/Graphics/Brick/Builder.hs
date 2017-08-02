@@ -90,8 +90,7 @@ buildPortUI (ViewInventory m) = do
 buildPortUI (ExamineTiles pos) = do
   tileUUID <- fmap (atPos pos) $ level <~> playerUUID >>= (<~>) tileMap
   occUUID <- getPrimaryOccupant tileUUID
-  _name <- name <~> occUUID
-  _desc <- description <~> occUUID
+  (_name, _desc) <- (name, description) <~!!> occUUID
   fear <- getFearLevel occUUID
   --TODO: only show description if player can see tile
   let (x,y) = unwrap pos
