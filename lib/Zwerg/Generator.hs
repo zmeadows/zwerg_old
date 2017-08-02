@@ -6,6 +6,7 @@ module Zwerg.Generator
   , assignUniformRandomStat
   , putOnRandomEmptyTile
   , hasAll
+  , generateAndEquip
   ) where
 
 import Zwerg.Component as EXPORTED
@@ -63,4 +64,7 @@ verify us cs = [| demandCanViewComp $(dyn cs) $(dyn us) |]
 hasAll :: String -> [String] -> Q Exp
 hasAll us css = DoE <$> (mapM (fmap NoBindS . verify us) css)
 
---TODO: generateAndEquip :: Generator -> UUID -> Generator' ()
+generateAndEquip :: Generator -> UUID -> Generator' ()
+generateAndEquip itemGen wearerUUID = itemGen >>= (flip equipItem) wearerUUID
+
+

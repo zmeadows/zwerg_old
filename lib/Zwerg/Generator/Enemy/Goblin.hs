@@ -33,8 +33,7 @@ goblin = do
     assignUniformRandomStat goblinUUID CON (1, 5)
     assignUniformRandomStat goblinUUID WIS (1, 5)
 
-    swordUUID <- sword
-    equipItem swordUUID goblinUUID
+    generateAndEquip sword goblinUUID
 
     verifyAndReturn goblinUUID
 
