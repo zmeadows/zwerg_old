@@ -219,12 +219,10 @@ demandCanViewComp comp uuid =
 (<@>) :: Component a -> UUID -> MonadCompState a
 (<@>) = demandComp
 
--- use @@! to get one component from two UUIDs
 {-# INLINEABLE (<~>) #-}
 (<~>) :: Component a -> UUID -> MonadCompRead a
 (<~>) = demandViewComp
 
---
 {-# INLINEABLE (<~?>) #-}
 (<~?>) :: UUID -> Component a -> MonadCompRead (Maybe a)
 (<~?>) = viewComp

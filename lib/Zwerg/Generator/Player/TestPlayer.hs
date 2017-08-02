@@ -1,20 +1,25 @@
 module Zwerg.Generator.Player.TestPlayer where
 
 import Zwerg.Generator
+import Zwerg.Generator.Default
 import Zwerg.Generator.Item.Weapon
 
 testPlayerGenerator :: UUID -> Generator' ()
 testPlayerGenerator startLevelUUID = do
-    let addPlayerComp = addComp playerUUID
-    addPlayerComp name "Bob"
-    addPlayerComp description "It's you."
-    addPlayerComp level startLevelUUID
-    addPlayerComp glyph $ Glyph '@' (CellColor Red0 Red0) Nothing
-    zConstruct (100, 100) >>= addPlayerComp hp
-    addPlayerComp entityType Player
-    addPlayerComp equipment emptyEquipment
+    generatePlayerSkeleton
+    let (<@-) :: Component a -> a -> Generator' ()
+        (<@-) = addComp playerUUID
 
-    addPlayerComp stats zeroStats
+    newHP <- zConstruct (100, 100)
+
+    name        <@- "Bob"
+    description <@- "It's you."
+    level       <@- startLevelUUID
+    entityType  <@- Player
+    viewRange   <@- 7.0
+    ticks       <@- 50
+    hp          <@- newHP
+
     assignUniformRandomStat playerUUID STR (1, 100)
     assignUniformRandomStat playerUUID DEX (2, 100)
     assignUniformRandomStat playerUUID INT (1, 100)
@@ -22,20 +27,7 @@ testPlayerGenerator startLevelUUID = do
     assignUniformRandomStat playerUUID CON (1, 100)
     assignUniformRandomStat playerUUID WIS (1, 100)
 
-    addPlayerComp viewRange 7.0
-    addPlayerComp ticks 50
-    addPlayerComp blocksPassage True
-    addPlayerComp blocksVision False
     putOnRandomEmptyTile startLevelUUID playerUUID
 
-    -- TODO: use tileOn for equipped items as well
-    swordUUID <- sword
-    equipItem swordUUID playerUUID
+    replicateM_ 3 $ generateAndHold sword playerUUID
 
-    addComp playerUUID inventory zEmpty
-
-    anotherSword <- sword
-    modComp playerUUID inventory (zAdd anotherSword)
-
-    anotherSword2 <- sword
-    modComp playerUUID inventory (zAdd anotherSword2)

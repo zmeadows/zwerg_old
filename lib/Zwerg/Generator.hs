@@ -7,6 +7,7 @@ module Zwerg.Generator
   , putOnRandomEmptyTile
   , hasAll
   , generateAndEquip
+  , generateAndHold
   ) where
 
 import Zwerg.Component as EXPORTED
@@ -65,6 +66,12 @@ hasAll :: String -> [String] -> Q Exp
 hasAll us css = DoE <$> (mapM (fmap NoBindS . verify us) css)
 
 generateAndEquip :: Generator -> UUID -> Generator' ()
+--TODO: check if slot is already filled (or wait... do this in equipItem?)
 generateAndEquip itemGen wearerUUID = itemGen >>= (flip equipItem) wearerUUID
+
+generateAndHold :: Generator -> UUID -> Generator' ()
+generateAndHold itemGen wearerUUID = (zAdd <$> itemGen) >>= modComp wearerUUID inventory
+
+
 
 
