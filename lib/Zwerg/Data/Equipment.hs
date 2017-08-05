@@ -11,11 +11,11 @@ module Zwerg.Data.Equipment
   ) where
 
 import Zwerg.Prelude
-import Zwerg.Data.UUIDSet
 
 import Data.Maybe (catMaybes)
 import Data.Map (Map)
 import qualified Data.Map as M (empty, insert, delete, lookup, elems)
+import qualified Data.List as L (nub)
 
 data ArmorSlot = Gloves | Head | Chest | Legs | Boots | Shoulders | Belt
   deriving (Show, Eq, Ord, Enum, Generic)
@@ -44,8 +44,8 @@ equip slot uuid eq =
 unequip :: EquipmentSlot -> Equipment -> ([UUID], Equipment)
 unequip (SingleHand LeftHand) eq  = unequipSlots [SingleHand LeftHand, BothHands] eq
 unequip (SingleHand RightHand) eq = unequipSlots [SingleHand RightHand, BothHands] eq
-unequip BothHands eq            = unequipSlots [SingleHand LeftHand, SingleHand RightHand, BothHands] eq
-unequip slot eq                 = unequipSlots [slot] eq
+unequip BothHands eq              = unequipSlots [SingleHand LeftHand, SingleHand RightHand, BothHands] eq
+unequip slot eq                   = unequipSlots [slot] eq
 
 unequipSlots :: [EquipmentSlot] -> Equipment -> ([UUID], Equipment)
 unequipSlots slots eq = unequipSlots' slots eq []
@@ -71,5 +71,5 @@ getEquippedInSlot (BothHands) (MkEquipment eqMap)          =
 
 getEquippedInSlot slot (MkEquipment eqMap) = catMaybes [M.lookup slot eqMap]
 
-getAllEquippedItems :: Equipment -> UUIDSet
-getAllEquippedItems (MkEquipment eq) = zFromList $ M.elems eq
+getAllEquippedItems :: Equipment -> [UUID]
+getAllEquippedItems (MkEquipment eq) = L.nub $ M.elems eq

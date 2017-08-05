@@ -15,7 +15,6 @@ module Zwerg.Entity where
 import Zwerg.Component
 import Zwerg.Data.Equipment
 import Zwerg.Data.Position
-import Zwerg.Data.GridMap
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Prelude
 import Zwerg.Util
@@ -70,7 +69,7 @@ isItemType itypetest uuid =
       return $! (itype == itypetest)
     _ -> $(throw) EngineFatal "attempted to compare ItemType for non-Item entity."
 
-getVisibleTiles :: UUID -> MonadCompRead UUIDSet
+getVisibleTiles :: UUID -> MonadCompRead [UUID]
 getVisibleTiles uuid = do
   -- TODO: use ST monad to implement classic impreative mutable algorithm?
   -- levelTiles <- level <~> uuid >>= (<~>) tiles
@@ -97,9 +96,9 @@ getVisibleTiles uuid = do
   candidatePOSs <-
     filter (\p -> distance Euclidean playerPOS p < fov) <$>
     mapM zConstruct [(x, y) | x <- [minX .. maxX], y <- [minY .. maxY]]
-  let candidateTileUUIDs = map (`atPos` levelTiles) candidatePOSs
+  let candidateTileUUIDs = map (zAt levelTiles) candidatePOSs
   -- return $ zFromList $ intersect candidateTileUUIDs $ concat visibleLines
-  return $! zFromList candidateTileUUIDs
+  return $! candidateTileUUIDs
 
 tileBlocksVision :: UUID -> MonadCompRead Bool
 tileBlocksVision tileUUID = do
@@ -132,11 +131,11 @@ getAdjacentTileUUID dir tileUUID = do
     Just adjPos -> do
       tileLevelUUID <- level <~> tileUUID
       levelTileMap <- tileMap <~> tileLevelUUID
-      return $! Just $ atPos adjPos levelTileMap
+      return $! Just $ zAt levelTileMap adjPos
 
 getPrimaryOccupant :: UUID -> MonadCompRead UUID
 getPrimaryOccupant occupiedUUID = do
-  occs <- zToList <$> occupants <~> occupiedUUID
+  occs <- unwrap <$> occupants <~> occupiedUUID
   if null occs
     then return $! occupiedUUID
     else do

@@ -1,9 +1,12 @@
 module Zwerg.Data.UUIDMap
   ( UUIDMap
   , getMinimumUUIDs
+  , makeUUIDSet
   ) where
 
 import Zwerg.Prelude
+
+import Zwerg.Data.UUIDSet (UUIDSet)
 
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IM
@@ -35,7 +38,8 @@ instance ZIsList (UUIDMap a) (UUID, a) where
   zFromList kvs = MkUUIDMap $ IM.fromList $ map ( \(x,y) -> (unwrap x, y) ) kvs
 
 instance ZFilterable (UUIDMap a) (UUID, a) where
-    zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (\x a -> curry f (fromJust $ wrap x) a) m
+    zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (\x -> curry f (fromJust $ wrap x)) m
+    zFilterM f (MkUUIDMap m) = (MkUUIDMap . IM.fromAscList) <$> (filterM (\(x,a) -> f (unsafeWrap x, a)) $ IM.toAscList m)
 
 type instance IxValue (UUIDMap a) = a
 
@@ -73,3 +77,6 @@ getMinimumUUIDs (MkUUIDMap um) =
       if | x == xmin -> (x, uuid : uuids)
          | x < xmin -> (x, [uuid])
          | otherwise -> (xmin, uuids)
+
+makeUUIDSet :: UUIDMap a -> UUIDSet
+makeUUIDSet m = unsafeWrap $ zKeys m

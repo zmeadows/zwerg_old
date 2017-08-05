@@ -1,5 +1,6 @@
 module Zwerg.Prelude.Class
   ( ZWrapped(..)
+  , unsafeWrap
   , ZIsList(..)
   , ZDefault(..)
   , ZEmptiable(..)
@@ -7,17 +8,23 @@ module Zwerg.Prelude.Class
   , ZCompleteMapContainer(..)
   , ZMapContainer(..)
   , ZFilterable(..)
-  , ZBuildable(..)
   , ZTraversable2(..)
   , zTraverseWithKey_
   ) where
 
-import Prelude (Bool, Monad, Int, Maybe, Applicative, Monad, ($), (<$>), filter)
-import Control.Monad (filterM, void)
+import Prelude (Bool, Monad, Int, Maybe, Monad, ($), (.))
+
+import Data.Maybe (fromJust)
+import Control.Monad (void)
 
 class ZWrapped wrapped unwrapped | wrapped -> unwrapped where
   unwrap :: wrapped -> unwrapped
   wrap   :: unwrapped -> Maybe wrapped
+
+-- primarily for use in conversions between newtypes or rare cases when
+-- we KNOW we cannot fail the wrapping condition (example: convert UUIDMap keys to a UUIDSet)
+unsafeWrap :: ZWrapped a b => b -> a
+unsafeWrap = fromJust . wrap
 
 class ZIsList listlike itemtype | listlike -> itemtype where
   zToList   :: listlike -> [itemtype]
@@ -47,21 +54,17 @@ class (ZEmptiable a) => ZMapContainer a b c | a -> b c where
 class ZCompleteMapContainer container key value | container -> key value where
   zAt     :: container -> key -> value
   zAdjust :: (value -> value) -> key -> container -> container
-
-class (ZCompleteMapContainer t k v) => ZBuildable t k v | t -> k v where
-  zBuild  :: (k -> v) -> t
-  zBuildM :: (k -> m v) -> m t
+  zBuild  :: (key -> value) -> container
+  zBuildM :: Monad m => (key -> m value) -> m container
 
 class ZTraversable2 container key | container -> key where
-  zTraverseWithKey :: Applicative t => container a -> (key -> a -> t b) -> t (container b)
+  zTraverseWithKey :: Monad m => container a -> (key -> a -> m b) -> m (container b)
 
-zTraverseWithKey_ :: (ZTraversable2 t k, Applicative t)
-                  => t a -> (k -> a -> t ()) -> t ()
+zTraverseWithKey_ :: (ZTraversable2 t k, Monad m)
+                  => t a -> (k -> a -> m ()) -> m ()
 zTraverseWithKey_ g f = void $ zTraverseWithKey g f
 
-class ZIsList a b => ZFilterable a b | a -> b where
+class ZFilterable a b | a -> b where
   zFilter  :: (b -> Bool) -> a -> a
-  zFilter f m = zFromList $ filter f $ zToList m
   zFilterM :: (Monad m) => (b -> m Bool) -> a -> m a
-  zFilterM f m = zFromList <$> filterM f (zToList m)
 

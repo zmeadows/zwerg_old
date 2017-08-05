@@ -31,13 +31,14 @@ generateSkeleton' enemyUUID Enemy = do
   addComp enemyUUID blocksVision False
 
 generateSkeleton' levelUUID Level = do
-  emptyTileMap <- makeGridMapM $ \pos -> do
+  setComp levelUUID tiles zDefault
+  emptyTileMap <- zBuildM $ \pos -> do
       tileUUID <- generateSkeleton Tile
       addComp tileUUID position pos
       addComp tileUUID level levelUUID
+      modComp levelUUID tiles (zAdd tileUUID)
       return tileUUID
   setComp levelUUID tileMap emptyTileMap
-  setComp levelUUID tiles $ zFromList $ gridMapElems emptyTileMap
   setComp levelUUID name "Test Square Level"
 
 generateSkeleton' tileUUID Tile = do

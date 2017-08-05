@@ -7,7 +7,6 @@ import Zwerg.Component
 import Zwerg.Entity
 import Zwerg.Game
 import Zwerg.Log
-import Zwerg.Data.GridMap
 import Zwerg.UI.GlyphMap
 import Zwerg.UI.Menu
 import Zwerg.UI.Port
@@ -88,7 +87,7 @@ buildPortUI (ViewInventory m) = do
 -- TODO: take background color from tile?
 -- TODO: check that name/description exist and just don't show them if they don't
 buildPortUI (ExamineTiles pos) = do
-  tileUUID <- fmap (atPos pos) $ level <~> playerUUID >>= (<~>) tileMap
+  tileUUID <- (`zAt` pos) <$> (level <~> playerUUID >>= (<~>) tileMap)
   occUUID <- getPrimaryOccupant tileUUID
   (_name, _desc) <- (name, description) <~!!> occUUID
   fear <- getFearLevel occUUID

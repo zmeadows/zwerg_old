@@ -9,7 +9,7 @@ testSquareGenerator :: Generator
 testSquareGenerator = do
     testSquareLevelUUID <- generateSkeleton Level
     testSquareTiles <- tileMap <@> testSquareLevelUUID
-    traverseWithPos_ testSquareTiles $ \pos tileUUID -> do
+    zTraverseWithKey_ testSquareTiles $ \pos tileUUID -> do
         let (x, y) = unwrap pos
             isWallTile = x == 0 || x == mapWidthINT - 1 || y == 0 || y == mapHeightINT - 1
         if isWallTile

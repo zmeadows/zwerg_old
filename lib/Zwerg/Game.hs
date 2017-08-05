@@ -126,7 +126,7 @@ processUserInput' (MainScreen _:_) (DownArrow)   = processPlayerDirectionInput N
 processUserInput' (MainScreen _:_) (RightArrow)  = processPlayerDirectionInput East
 
 processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
-  uuids <- zToList <$> inventory <@> playerUUID
+  uuids <- unwrap <$> inventory <@> playerUUID
   names <- mapM (name <@>) uuids
   case zip names uuids of
     [] -> do
@@ -202,7 +202,7 @@ processEvent (MoveEntityDirectionEvent ed) = do
 processEvent (MoveEntityEvent ed) = do
   oldTileUUID <- tileOn <@> (ed ^. moverUUID)
   levelTiles <- level <@> (ed ^. moverUUID) >>= (<@>) tileMap
-  let newTileUUID = atPos (ed ^. newPosition) levelTiles
+  let newTileUUID = zAt levelTiles (ed ^. newPosition)
   newTileBlocked <- readC $ tileBlocksPassage newTileUUID
 
   if newTileBlocked
@@ -277,10 +277,10 @@ processEvent _ = return ()
 getGlyphMapUpdates :: MonadCompState GlyphMap
 getGlyphMapUpdates = do
   visibleTiles <- readC $ getVisibleTiles playerUUID
-  tilesWithUpdatedNeeded <- zFilterM (needsRedraw <@>) visibleTiles
+  tilesWithUpdatedNeeded <- filterM (needsRedraw <@>) visibleTiles
 
   updatedGlyphs <-
-    forM (zToList tilesWithUpdatedNeeded) $ \tileUUID -> do
+    forM tilesWithUpdatedNeeded $ \tileUUID -> do
       pos <- position <@> tileUUID
       occUUID <- readC $ getPrimaryOccupant tileUUID
       gly <- glyph <@> occUUID
@@ -297,7 +297,7 @@ processPlayerDirectionInput dir = getPlayerAdjacentEnemy >>= \case
           attackedTileUUID <- tileOn <~> playerUUID >>= getAdjacentTileUUID dir
           case attackedTileUUID of
             Just attackedTileUUID' -> do
-              zToList <$> getOccupantsOfType attackedTileUUID' Enemy >>= \case
+              unwrap <$> getOccupantsOfType attackedTileUUID' Enemy >>= \case
                 [] -> return $! Nothing
                 [x] -> return $! Just x
                 _ -> $(throw) EngineFatal "found multiple enemies on same tile"

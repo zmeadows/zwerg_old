@@ -1,7 +1,6 @@
 #######################
 #### HIGH PRIORITY ####
 #######################
-
 :: convert GlyphMap to GridMap
 
 :: Add pickupItem and pickAllItemsOnGround function
