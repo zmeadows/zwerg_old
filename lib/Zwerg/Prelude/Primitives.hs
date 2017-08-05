@@ -1,10 +1,8 @@
 module Zwerg.Prelude.Primitives
-  ( UUID
-  , worldUUID
-  , playerUUID
-  , incUUID
-  , Direction(..)
+  ( Direction(..)
   , cardinalDirections
+  , diagonalDirections
+  , allDirections
   , TargetType(..)
   , Color(..)
   , CellColor(..)
@@ -15,7 +13,6 @@ module Zwerg.Prelude.Primitives
   , visible
   , fogged
   , EntityType(..)
-  , Parent(..)
   , TileType(..)
   , Stat(..)
   , Stats(..)
@@ -32,35 +29,11 @@ module Zwerg.Prelude.Primitives
 
 import Prelude
 
-import Zwerg.Prelude.Class
-import Zwerg.Data.ZError
-
-import GHC.Generics (Generic)
 import Data.Binary as EXPORTED (Binary)
-
+import GHC.Generics (Generic)
+import Lens.Micro.Platform as EXPORTED (makeFields)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-
-import Lens.Micro.Platform as EXPORTED (makeFields)
-
-newtype UUID = MkUUID Int
-  deriving (Show, Eq, Bounded, Enum, Ord, Generic, Binary)
--- instance Binary UUID
-
-instance ZWrapped UUID Int where
-  unwrap (MkUUID uuid) = uuid
-
-instance ZConstructable UUID Int where
-  zConstruct x =
-    if | x >= 0 -> return $ MkUUID x
-       | otherwise -> $(throw) EngineFatal "Attempted to construct UUID < 0"
-
-playerUUID, worldUUID :: UUID
-worldUUID = MkUUID 0
-playerUUID = MkUUID 1
-
-incUUID :: UUID -> UUID
-incUUID (MkUUID i) = MkUUID $ i + 1
 
 data Direction
   = North
@@ -76,6 +49,12 @@ instance Binary Direction
 
 cardinalDirections :: [Direction]
 cardinalDirections = [North,South,East,West]
+
+diagonalDirections :: [Direction]
+diagonalDirections = [NorthWest,SouthWest,NorthEast,SouthEast]
+
+allDirections :: [Direction]
+allDirections = cardinalDirections ++ diagonalDirections
 
 data TargetType
   = SingleTarget
@@ -121,10 +100,6 @@ data EntityType
   | Player
   deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary EntityType
-
-data Parent = Alive UUID | Dead
-  deriving (Show, Eq, Generic)
-instance Binary Parent
 
 data TileType = Floor | Wall | Door | Void
   deriving (Show, Eq, Generic)

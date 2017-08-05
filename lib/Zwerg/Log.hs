@@ -1,7 +1,6 @@
 module Zwerg.Log
   ( Log
   , HasLog(..)
-  , emptyLog
   , pushLogMsg
   , pushLogMsgM
   , splitLog
@@ -23,9 +22,10 @@ class HasLog s where
 
 instance ZWrapped Log (Seq Text) where
   unwrap (MkLog l) = l
+  wrap l = Just $ MkLog l
 
-emptyLog :: Log
-emptyLog = MkLog S.empty
+instance ZDefault Log where
+    zDefault = MkLog S.empty
 
 pushLogMsgM
   :: (HasLog s, MonadState s m)

@@ -1,11 +1,11 @@
 module Zwerg.Event.Queue
-  ( ZwergEventQueue
-  , HasZwergEventQueue(..)
-  , popEvent
-  , pushEventM
-  , mergeEventsM
-  , module EXPORTED
-  ) where
+    ( ZwergEventQueue
+    , HasZwergEventQueue(..)
+    , popEvent
+    , pushEventM
+    , mergeEventsM
+    , module EXPORTED
+    ) where
 
 import Zwerg.Prelude
 
@@ -15,33 +15,34 @@ import Data.Sequence (Seq, (|>), ViewL(..), (><))
 import qualified Data.Sequence as S (viewl, empty, length, null)
 
 newtype ZwergEventQueue = MkZwergEventQueue (Seq ZwergEvent)
-  deriving (Show, Eq, Generic)
+    deriving (Show, Eq, Generic)
 instance Binary ZwergEventQueue
 
 class HasZwergEventQueue s where
-  eventQueue :: Lens' s ZwergEventQueue
+    eventQueue :: Lens' s ZwergEventQueue
 
 instance HasZwergEventQueue ZwergEventQueue where
-  eventQueue = id
-
-instance ZWrapped ZwergEventQueue (Seq ZwergEvent) where
-  unwrap (MkZwergEventQueue eq) = eq
+    eventQueue = id
 
 instance ZEmptiable ZwergEventQueue where
-  zEmpty  = MkZwergEventQueue S.empty
-  zIsNull = S.null . unwrap
-  zSize   = S.length . unwrap
+    zIsNull (MkZwergEventQueue q) = S.null q
+    zSize (MkZwergEventQueue q) = S.length q
+
+instance ZDefault ZwergEventQueue where
+    zDefault = MkZwergEventQueue S.empty
 
 popEvent :: (HasZwergEventQueue s, MonadState s m) => m (Maybe ZwergEvent)
-popEvent =
-  S.viewl <$> unwrap <$> use eventQueue >>= \case
-    EmptyL -> return Nothing
-    evt :< eq' -> do
-      eventQueue .= MkZwergEventQueue eq'
-      return $ Just evt
+popEvent = do
+    (MkZwergEventQueue q) <- use eventQueue
+    case S.viewl q of
+      EmptyL -> return Nothing
+      evt :< eq' -> do
+          eventQueue .= MkZwergEventQueue eq'
+          return $ Just evt
 
 pushEventM :: (HasZwergEventQueue s, MonadState s m) => ZwergEvent -> m ()
-pushEventM evt = eventQueue %= MkZwergEventQueue . (|> evt) . unwrap
+pushEventM evt = eventQueue %= \(MkZwergEventQueue q) -> MkZwergEventQueue $ q |> evt
 
 mergeEventsM :: (HasZwergEventQueue s, MonadState s m) => ZwergEventQueue -> m ()
-mergeEventsM evts = eventQueue %= MkZwergEventQueue . (><) (unwrap evts) . unwrap
+mergeEventsM (MkZwergEventQueue q') =
+    eventQueue %= \(MkZwergEventQueue q) -> MkZwergEventQueue $ q >< q'

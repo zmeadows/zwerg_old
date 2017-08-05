@@ -1,69 +1,46 @@
 module Zwerg.Data.UUIDMap
-  ( UUIDMap(..)
-  , NamedUUIDMap(..)
-  , HasNamedUUIDMap(..)
+  ( UUIDMap
   , getMinimumUUIDs
   ) where
 
 import Zwerg.Prelude
 
---TODO: don't export constructors for newtypes
-
 import Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IM
-  ( adjust
-  , insert
-  , delete
-  , filterWithKey
-  , fromAscList
-  , toAscList
-  , empty
-  , size
-  , lookup
-  , member
-  , foldrWithKey
-  )
+import Data.Maybe (fromJust)
 
 newtype UUIDMap a = MkUUIDMap (IntMap a)
-  deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Monoid, Semigroup, Generic)
+    deriving (Show, Eq, Functor, Generic)
+
 instance Binary a => Binary (UUIDMap a)
 
---TODO: switch to newtype tuple above, no need for new data type
-data NamedUUIDMap a = NamedUUIDMap
-  { _componentName :: Text
-  , _uuidMap :: UUIDMap a
-  } deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)
-makeClassy ''NamedUUIDMap
-instance Binary a => Binary (NamedUUIDMap a)
+instance ZDefault (UUIDMap a) where
+  zDefault = MkUUIDMap IM.empty
 
 instance ZEmptiable (UUIDMap a) where
-  zEmpty = MkUUIDMap IM.empty
-  zIsNull (MkUUIDMap um) = IM.size um == 0
-  zSize (MkUUIDMap um) = IM.size um
+  zIsNull (MkUUIDMap m) = IM.null m
+  zSize (MkUUIDMap m) = IM.size m
 
-instance ZWrapped (UUIDMap a) (IntMap a) where
-  unwrap (MkUUIDMap um) = um
-
-instance ZIsList (UUIDMap a) (Int, a) where
-  zToList (MkUUIDMap um) = toList um
-  zFromList = MkUUIDMap . fromList
-
--- TODO: remove these classes... they dillute the point of newtype?
 instance ZMapContainer (UUIDMap a) UUID a where
   zLookup uuid (MkUUIDMap m) = IM.lookup (unwrap uuid) m
-  zAdjust f uuid (MkUUIDMap m) = MkUUIDMap $ IM.adjust f (unwrap uuid) m
-  zInsert uuid x (MkUUIDMap m) = MkUUIDMap $ IM.insert (unwrap uuid) x m
+  zModify f uuid (MkUUIDMap m) = MkUUIDMap $ IM.adjust f (unwrap uuid) m
+  zInsert uuid val (MkUUIDMap m) = MkUUIDMap $ IM.insert (unwrap uuid) val m
   zRemoveAt uuid (MkUUIDMap m) = MkUUIDMap $ IM.delete (unwrap uuid) m
   zContains uuid (MkUUIDMap m) = IM.member (unwrap uuid) m
+  zElems (MkUUIDMap m) = IM.elems m
+  zKeys (MkUUIDMap m) = (catMaybes . map wrap) $ IM.keys m
 
---TODO: (UUID,a) instead of (Int,a)?
-instance ZFilterable (UUIDMap a) (Int, a) where
-  zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (curry f) m
-  zFilterM f (MkUUIDMap m) = MkUUIDMap . IM.fromAscList <$> filterM f (IM.toAscList m)
+instance ZIsList (UUIDMap a) (UUID, a) where
+  zToList m = zip (zKeys m) (zElems m)
+  zFromList kvs = MkUUIDMap $ IM.fromList $ map ( \(x,y) -> (unwrap x, y) ) kvs
+
+instance ZFilterable (UUIDMap a) (UUID, a) where
+    zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (\x a -> curry f (fromJust $ wrap x) a) m
 
 type instance IxValue (UUIDMap a) = a
 
 -- TODO: just reference IntMap implementation?
+-- TODO: try to derive?
 -- FIXME: This could be causing slowdown?!?
 instance Ixed (UUIDMap a) where
   ix k f m =
@@ -74,6 +51,7 @@ instance Ixed (UUIDMap a) where
 type instance Index (UUIDMap a) = UUID
 
 -- TODO: just reference IntMap implementation?
+-- TODO: try to derive?
 -- FIXME: This could be causing slowdown?!?
 instance At (UUIDMap a) where
   at k f m =

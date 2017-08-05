@@ -39,8 +39,7 @@ runAI uuid = do
   let (AI a) = enact uuid ait
       (err, evts) =
         runReader
-          (runStateT (evalRandT (runExceptT a) $ pureRanGen ranWord) zEmpty)
-          cmps
+          (runStateT (evalRandT (runExceptT a) $ pureRanGen ranWord) zDefault) cmps
   case err of
     Left zErr -> throwError zErr
     Right () -> mergeEventsM evts

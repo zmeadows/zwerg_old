@@ -13,8 +13,10 @@ instance Binary UUIDSet
 
 instance ZWrapped UUIDSet [UUID] where
   unwrap (MkUUIDSet us) = us
+  wrap uuids = if | (length $ L.nub uuids) == length uuids -> Just $ MkUUIDSet $ L.nub uuids
+                  | otherwise -> Nothing
 
-instance ZContainer UUIDSet UUID where
+instance ZSetContainer UUIDSet UUID where
   zAdd uuid (MkUUIDSet us) =
     if uuid `elem` us
        then MkUUIDSet us
@@ -27,9 +29,11 @@ instance ZFilterable UUIDSet UUID where
   zFilterM f (MkUUIDSet us) = CM.liftM MkUUIDSet $ CM.filterM f us
 
 instance ZEmptiable UUIDSet where
-  zEmpty = MkUUIDSet []
   zIsNull (MkUUIDSet us) = null us
   zSize (MkUUIDSet us) = length us
+
+instance ZDefault UUIDSet where
+    zDefault = MkUUIDSet []
 
 instance ZIsList UUIDSet UUID where
   zToList (MkUUIDSet us) = us

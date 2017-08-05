@@ -10,17 +10,19 @@ import Zwerg.Prelude
 newtype HP = MkHP (Int, Int)
   deriving (Show, Eq, Ord, Generic)
 
+validHP :: (Int,Int) -> Bool
+validHP (curHP, maxHP) = curHP >= 0 && curHP <= maxHP && maxHP > 0
+
 instance Binary HP
 
 instance ZConstructable HP (Int, Int) where
-  zConstruct (curHP, maxHP) =
-    if | curHP >= 0 && curHP <= maxHP && maxHP > 0 ->
-         return $ MkHP (curHP, maxHP)
-       | otherwise ->
-         $(throw) EngineFatal "Attempted to create an invalid HP object"
+    zConstruct intPair = if | validHP intPair -> return $ MkHP intPair
+                            | otherwise -> $(throw) EngineFatal
+                                           "Attempted to create an invalid HP object"
 
 instance ZWrapped HP (Int, Int) where
   unwrap (MkHP hp) = hp
+  wrap intPair = if validHP intPair then Just (MkHP intPair) else Nothing
 
 adjustHP :: (Int -> Int) -> HP -> HP
 adjustHP f (MkHP (curHP, maxHP))

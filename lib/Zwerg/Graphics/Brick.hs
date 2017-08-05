@@ -43,7 +43,7 @@ handleEventZwerg zs (BT.VtyEvent ev) =
            Nothing ->
              if badPlayerInput
                 then BM.continue
-                     $ set (gameState . eventQueue) zEmpty
+                     $ set (gameState . eventQueue) zDefault
                      $ set (gameState . userLog) (view (gameState . userLog) zs')
                      $ zs
                 else BM.continue zs'

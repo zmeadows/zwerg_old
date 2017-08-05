@@ -2,6 +2,8 @@
 #### HIGH PRIORITY ####
 #######################
 
+:: convert GlyphMap to GridMap
+
 :: Add pickupItem and pickAllItemsOnGround function
 
 :: Add ConfirmDropSelectedItems port
@@ -14,6 +16,10 @@ Mostly we will have Distribution Int, but some Doubles may be required
 ######################
 #### LOW PRIORITY ####
 ######################
+
+:: remove Log newtype (not needed)
+
+:: remove ZWrapped instances if possible
 
 :: Make function to select Menu focus by matching 'shortcut'
 
@@ -34,6 +40,12 @@ instead of a GridMap,
 and computed in the handleEventZwerg function (which is MonadIO context)
 Make a function to return the full Glyph for a player-visible tile,
 and call this in the relevant UIBuiler
+
+:: Add system to auto-explore by pressing the 'Tab' key
+This will be difficult.
+
+:: Add 'entitiesInVisionOf' function
+will be useful in many future contexts
 
 ##################
 #### FINISHED ####

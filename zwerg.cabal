@@ -39,6 +39,7 @@ library
                        Zwerg.Data.GridMap
                        Zwerg.Data.HP
                        Zwerg.Data.Position
+                       Zwerg.Data.UUID
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
                        Zwerg.Data.ZError
@@ -79,6 +80,7 @@ library
                        bytestring,
                        containers,
                        deepseq,
+                       non-negative,
                        filepath,
                        mersenne-random-pure64,
                        microlens,

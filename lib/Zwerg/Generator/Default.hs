@@ -10,7 +10,7 @@ generatePlayerSkeleton :: Generator' ()
 generatePlayerSkeleton = do
   --TODO: check if player already exists and throw error if it does
   addComp playerUUID equipment emptyEquipment
-  addComp playerUUID inventory zEmpty
+  addComp playerUUID inventory zDefault
   addComp playerUUID stats zeroStats
   addComp playerUUID glyph $ Glyph '@' (CellColor Red0 Red0) Nothing
   addComp playerUUID blocksPassage True
@@ -42,7 +42,7 @@ generateSkeleton' levelUUID Level = do
 
 generateSkeleton' tileUUID Tile = do
   addComp tileUUID tileType Void
-  addComp tileUUID occupants zEmpty
+  addComp tileUUID occupants zDefault
   addComp tileUUID blocksPassage True
   addComp tileUUID needsRedraw True
 

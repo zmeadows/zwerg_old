@@ -12,20 +12,12 @@ import Zwerg.Prelude
 import Zwerg.Data.Position
 
 import Data.IntMap.Strict (IntMap)
-import qualified Data.IntMap.Strict as M (traverseWithKey, lookup, fromList, size, elems)
+import qualified Data.IntMap.Strict as M (traverseWithKey, lookup, fromList, elems)
 import Data.Maybe (fromJust)
 
 newtype GridMap a = MkGridMap (IntMap a)
     deriving (Eq, Show, Generic)
 instance Binary a => Binary (GridMap a)
-
-instance ZConstructable (GridMap a) [(Position,a)] where
-  zConstruct l =
-    let m = M.fromList $ map (\(pos,x) -> (to1DIndex pos, x)) l
-    in if (M.size m == mapHeightINT * mapWidthINT)
-         then return $ MkGridMap m
-         else $(throw) EngineFatal
-              "Attempted to construct a TileMap with number of tiles not equal to mapWidth * mapHeight"
 
 makeGridMapM :: Monad m => (Position -> m a) -> m (GridMap a)
 makeGridMapM f = MkGridMap . M.fromList <$> mapM (\p -> (to1DIndex p,) <$> f p) allPositions

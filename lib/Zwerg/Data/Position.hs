@@ -42,6 +42,7 @@ instance Binary Position
 
 instance ZWrapped Position (Int, Int) where
   unwrap (MkPosition p) = p
+  wrap = validatePosition
 
 data Metric = Euclidean | TaxiCab
   deriving (Show, Eq)
@@ -105,6 +106,8 @@ allPositions =
 
 isNeighborPos :: Position -> Position -> Bool
 isNeighborPos (MkPosition (x1,y1)) (MkPosition (x2,y2)) =
-  let yn = abs (y1 - y2) == 1
-      xn = abs (x1 - x2) == 1
-  in yn && xn
+    (yn && xs) || (xn && ys)
+  where yn = abs (y1 - y2) == 1
+        xn = abs (x1 - x2) == 1
+        xs = x1 == x2
+        ys = y1 == y2

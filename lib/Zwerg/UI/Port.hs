@@ -21,6 +21,9 @@ data Port
   deriving (Show, Eq, Generic)
 instance Binary Port
 
+instance ZDefault Port where
+    zDefault = initMainMenu
+
 type Portal = [Port]
 
 class HasPortal s where

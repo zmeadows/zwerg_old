@@ -24,6 +24,18 @@ import Control.Monad.Loops (anyM)
 import Data.Foldable (maximumBy)
 import Data.Ord (comparing)
 
+{-
+addToInventory :: UUID -> UUID -> MonadCompState ()
+addToInventory itemUUID holderUUID = do
+  -- parent <@> itemUUID >>= \case
+  --   Alive itemParentUUID -> modComp itemParentUUID inventory $ zDelete itemUUID
+  --   _ -> return ()
+
+  zAdd itemUUID <$> modComp holderUUID inventory
+  setComp itemUUID parent $ Alive holderUUID
+  (tileOn, position, zLevel) <@@===> (holderUUID, itemUUID)
+-}
+
 getItemsOnEntityTile :: UUID -> MonadCompRead UUIDSet
 getItemsOnEntityTile entityUUID = tileOn <~> entityUUID >>= (`getOccupantsOfType` Item)
 
@@ -167,6 +179,7 @@ eraseEntity uuid = do
   entityTileUUID <- tileOn <@> uuid
   modComp entityTileUUID occupants (zDelete uuid)
   setComp entityTileUUID needsRedraw True
+
   deleteComp uuid name
   deleteComp uuid glyph
   deleteComp uuid hp

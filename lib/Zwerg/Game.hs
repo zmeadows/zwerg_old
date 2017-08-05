@@ -43,10 +43,10 @@ instance HasZwergEventQueue GameState where
 emptyGameState :: GameState
 emptyGameState =
   GameState
-  { _gsComponents = emptyComponents
-  , _gsLog        = emptyLog
-  , _gsPortal     = [initMainMenu]
-  , _gsEventQueue = zEmpty
+  { _gsComponents = zDefault
+  , _gsLog        = zDefault
+  , _gsPortal     = [zDefault]
+  , _gsEventQueue = zDefault
   , _playerGoofed = False
   }
 
@@ -81,9 +81,8 @@ processNonPlayerEvents :: Game ()
 processNonPlayerEvents = do
   use portal >>= \case
     MainScreen _ : _ -> do
-      ts <- use (ticks . uuidMap)
-      (minTick, uuids) <- getMinimumUUIDs ts
-      (ticks . uuidMap) %= fmap (\x -> max (x - minTick) 0)
+      (minTick, uuids) <- use (ticks . _2) >>= getMinimumUUIDs
+      (ticks . _2) %= fmap (\x -> max (x - minTick) 0)
       if | notElem playerUUID uuids ->
              forM_ uuids $ \i -> do runAI i >> processEvents >> setComp i ticks 100
          | otherwise -> return $! ()
@@ -95,7 +94,9 @@ processUserInput k = do
   playerGoofed .= False
   p <- use portal
   processUserInput' p k
-  whenM (not <$> use playerGoofed) $ do
+  playerGeneratedEvent <- (not . zIsNull) <$> use eventQueue
+  playerScrewedUp <- use playerGoofed
+  when (not playerScrewedUp && playerGeneratedEvent) $ do
     processEvents
     resetTicks playerUUID
     processNonPlayerEvents
