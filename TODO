@@ -1,6 +1,10 @@
 #######################
 #### HIGH PRIORITY ####
 #######################
+
+:: Remove exceptions from code!
+Handle errors explicitely and log messages to describe things that shouldn't have happened!
+
 :: convert GlyphMap to GridMap
 
 :: Add pickupItem and pickAllItemsOnGround function

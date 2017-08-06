@@ -13,7 +13,8 @@ circle' (x0, y0) (x, y) err s =
   let err' = if err <= 0 then err + 2 * y + 1 else err - (2 * x + 1)
       x' = if err <= 0 then x else x - 1
       y' = y + 1
-      go (p1, p2) ps = if p1 >= 0 && p2 >= 0 then (p1, p2) : ps else ps
+      --go (p1, p2) ps = if p1 >= 0 && p2 >= 0 then (p1, p2) : ps else ps
+      go (p1, p2) ps = (p1, p2) : ps
       s' = go (x0 + x, y0 + y) $
            go (x0 + y, y0 + x) $
            go (x0 - x, y0 + y) $

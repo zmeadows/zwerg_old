@@ -3,13 +3,16 @@ module Zwerg.Data.GridMap (GridMap) where
 import Zwerg.Prelude
 import Zwerg.Data.Position
 
-import Data.IntMap.Strict (IntMap)
-import qualified Data.IntMap.Strict as M (traverseWithKey, lookup, fromList, adjust)
+import Data.IntMap.Lazy (IntMap)
+import qualified Data.IntMap.Lazy as M (traverseWithKey, lookup, fromList, adjust, empty)
 import Data.Maybe (fromJust)
 
 newtype GridMap a = MkGridMap (IntMap a)
     deriving (Eq, Show, Generic)
 instance Binary a => Binary (GridMap a)
+
+instance ZDefault (GridMap a) where
+    zDefault = MkGridMap M.empty
 
 instance ZCompleteMapContainer (GridMap a) Position a where
     zAt (MkGridMap m) pos = fromJust $ M.lookup (to1DIndex pos) m
@@ -19,3 +22,8 @@ instance ZCompleteMapContainer (GridMap a) Position a where
 
 instance ZTraversable2 GridMap Position where
     zTraverseWithKey (MkGridMap gm) f = MkGridMap <$> M.traverseWithKey (f . fromJust . from1DIndex) gm
+
+-- mergeUpdates :: GridMap a -> [(Position, a)] -> GridMap a
+-- mergeUpdates (MkGridMap m) ps = MkGridMap $ M.union (M.fromList $ map convert ps) m
+--     where convert (p,x) = (to1DIndex p,x)
+

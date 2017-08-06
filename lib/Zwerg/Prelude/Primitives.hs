@@ -16,7 +16,6 @@ module Zwerg.Prelude.Primitives
   , TileType(..)
   , Stat(..)
   , Stats(..)
-  , zeroStats
   , lookupStat
   , replaceStat
   , AIType(..)
@@ -29,11 +28,13 @@ module Zwerg.Prelude.Primitives
 
 import Prelude
 
+import Zwerg.Prelude.Class
+
 import Data.Binary as EXPORTED (Binary)
 import GHC.Generics (Generic)
 import Lens.Micro.Platform as EXPORTED (makeFields)
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.Map.Lazy (Map)
+import qualified Data.Map.Lazy as M
 
 data Direction
   = North
@@ -91,6 +92,9 @@ data Glyph = Glyph
 makeFields ''Glyph
 instance Binary Glyph
 
+instance ZDefault Glyph where
+    zDefault = Glyph 'X' (CellColor Red0 White0) Nothing
+
 data EntityType
   = Level
   | Container
@@ -100,6 +104,9 @@ data EntityType
   | Player
   deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary EntityType
+
+instance ZDefault EntityType where
+    zDefault = Enemy
 
 data TileType = Floor | Wall | Door | Void
   deriving (Show, Eq, Generic)
@@ -113,8 +120,8 @@ newtype Stats = MkStats (Map Stat Int)
   deriving (Show, Eq, Generic)
 instance Binary Stats
 
-zeroStats :: Stats
-zeroStats = MkStats $ M.fromList $ fmap (, 0) $ enumFrom $ toEnum 0
+instance ZDefault Stats where
+    zDefault = MkStats $ M.fromList $ fmap (, 0) $ enumFrom $ toEnum 0
 
 lookupStat :: Stat -> Stats -> Int
 lookupStat s (MkStats m) = m M.! s
@@ -125,13 +132,19 @@ replaceStat s v (MkStats m) = MkStats $ M.insert s v m
 -- TODO: modifyStat (Int -> Int)
 -- TODO: maximum stat == 100?
 
-data ItemType = Armor | Weapon | Potion | Scroll
+data ItemType = Weapon | Armor | Potion | Scroll | Gold
   deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary ItemType
+
+instance ZDefault ItemType where
+    zDefault = Weapon
 
 data AIType = SimpleMeleeCreature | SimpleRangedCreature
   deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary AIType
+
+instance ZDefault AIType where
+    zDefault = SimpleMeleeCreature
 
 ------------
 -- CONSTS --

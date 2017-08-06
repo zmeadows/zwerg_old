@@ -1,6 +1,7 @@
 module Zwerg.Prelude.Class
   ( ZWrapped(..)
   , unsafeWrap
+  , wrapOrDefault
   , ZIsList(..)
   , ZDefault(..)
   , ZEmptiable(..)
@@ -12,14 +13,20 @@ module Zwerg.Prelude.Class
   , zTraverseWithKey_
   ) where
 
-import Prelude (Bool, Monad, Int, Maybe, Monad, ($), (.))
+import Prelude
 
 import Data.Maybe (fromJust)
 import Control.Monad (void)
+import Data.Text (Text)
 
 class ZWrapped wrapped unwrapped | wrapped -> unwrapped where
   unwrap :: wrapped -> unwrapped
   wrap   :: unwrapped -> Maybe wrapped
+
+wrapOrDefault :: (ZDefault a, ZWrapped a b) => b -> a
+wrapOrDefault x = case wrap x of
+                    Just y -> y
+                    Nothing -> zDefault
 
 -- primarily for use in conversions between newtypes or rare cases when
 -- we KNOW we cannot fail the wrapping condition (example: convert UUIDMap keys to a UUIDSet)
@@ -33,15 +40,28 @@ class ZIsList listlike itemtype | listlike -> itemtype where
 class ZDefault t where
   zDefault :: t
 
+instance ZDefault Text where
+  zDefault = "defaultText"
+
+instance ZDefault Int where
+  zDefault = 1
+
+instance ZDefault Bool where
+  zDefault = False
+
+instance ZDefault [a] where
+    zDefault = []
+
 class ZEmptiable container where
   zIsNull :: container -> Bool
   zSize   :: container -> Int
 
-class ZSetContainer container itemtype | container -> itemtype where
+class (ZEmptiable container) => ZSetContainer container itemtype | container -> itemtype where
   zAdd    :: itemtype -> container -> container
   zDelete :: itemtype -> container -> container
   zMember :: itemtype -> container -> Bool
 
+--TODO: use more descriptive type variables than a b c
 class (ZEmptiable a) => ZMapContainer a b c | a -> b c where
   zLookup   :: b -> a -> Maybe c
   zInsert   :: b -> c -> a -> a
@@ -67,4 +87,6 @@ zTraverseWithKey_ g f = void $ zTraverseWithKey g f
 class ZFilterable a b | a -> b where
   zFilter  :: (b -> Bool) -> a -> a
   zFilterM :: (Monad m) => (b -> m Bool) -> a -> m a
+
+--TODO: ZFilterableToList ?
 

@@ -6,8 +6,8 @@ import Zwerg.Util
 
 --TODO: convert to GridMap and remove this module
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M (empty, fromList, union, elems, map)
+import Data.Map.Lazy (Map)
+import qualified Data.Map.Lazy as M (empty, fromList, union, elems, map)
 
 newtype GlyphMap = MkGlyphMap (Map Position (Glyph, Bool))
   deriving (Show, Eq, Generic)
@@ -22,13 +22,13 @@ emptyGlyphMap = MkGlyphMap M.empty
 mkGlyphMap :: [(Position, (Glyph, Bool))] -> GlyphMap
 mkGlyphMap = MkGlyphMap . M.fromList
 
-blankGlyphMap :: MonadError ZError m => m GlyphMap
-blankGlyphMap = do
+blankGlyphMap :: GlyphMap
+blankGlyphMap =
   let xs = [0 .. mapWidthINT - 1]
       ys = [0 .. mapHeightINT - 1]
       emptyGlyph = Glyph ' ' (CellColor Black0 Black0) $ Just (CellColor Black0 Black0)
-  ts <- mapM zConstruct [(x, y) | x <- xs, y <- ys]
-  return $ mkGlyphMap $ map (\p -> (p, (emptyGlyph, False))) ts
+      ts = map unsafeWrap [(x, y) | x <- xs, y <- ys]
+  in mkGlyphMap $ map (\p -> (p, (emptyGlyph, False))) ts
 
 mergeGlyphMaps :: GlyphMap -> GlyphMap -> GlyphMap
 mergeGlyphMaps (MkGlyphMap gmUpdated) (MkGlyphMap gmMain) =

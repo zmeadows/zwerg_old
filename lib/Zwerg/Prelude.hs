@@ -7,14 +7,13 @@ import Prelude as EXPORTED hiding (show, Monoid(..))
 import qualified Prelude as P (show)
 
 import Zwerg.Data.UUID as EXPORTED
-import Zwerg.Data.ZError as EXPORTED
 import Zwerg.Prelude.Class as EXPORTED
 import Zwerg.Prelude.Primitives as EXPORTED
 
 import Control.Monad.Except as EXPORTED
 import Control.Monad.Random.Class as EXPORTED hiding (fromList)
 import Control.Monad.Reader as EXPORTED
-import Control.Monad.State.Strict as EXPORTED
+import Control.Monad.State.Lazy as EXPORTED
 
 import Data.Binary as EXPORTED (Binary)
 import Data.List.NonEmpty as EXPORTED (NonEmpty(..))

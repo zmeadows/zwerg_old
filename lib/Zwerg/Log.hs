@@ -27,9 +27,8 @@ instance ZWrapped Log (Seq Text) where
 instance ZDefault Log where
     zDefault = MkLog S.empty
 
-pushLogMsgM
-  :: (HasLog s, MonadState s m)
-  => Text -> m ()
+pushLogMsgM :: (HasLog s, MonadState s m)
+            => Text -> m ()
 pushLogMsgM message = userLog %= pushLogMsg message
 
 pushLogMsg :: Text -> Log -> Log

@@ -9,7 +9,7 @@ import Zwerg.Data.HP
 import Zwerg.Data.Position
 import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
-import Zwerg.Util
+import Zwerg.Debug
 
 import Data.Text (append)
 
@@ -39,7 +39,7 @@ data Components = Components
   , _blocksVision  :: (Text, UUIDMap Bool)
   , _aiType        :: (Text, UUIDMap AIType)
   , _damageChain   :: (Text, UUIDMap DamageChain)
-  , _viewRange     :: (Text, UUIDMap Double)
+  , _viewRange     :: (Text, UUIDMap Int)
   , _slot          :: (Text, UUIDMap EquipmentSlot)
   , _itemType      :: (Text, UUIDMap ItemType)
   , _needsRedraw   :: (Text, UUIDMap Bool)
@@ -57,40 +57,30 @@ type Component a = forall s. HasComponents s => Lens' s (Text, UUIDMap a)
 type MonadCompState a = forall s m. ( HasCallStack
                                     , HasComponents s
                                     , MonadState s m
-                                    , MonadError ZError m
-                                    ) =>
-                                      m a
+                                    ) => m a
 
 type MonadCompStateRand a = forall s m. ( HasCallStack
                                         , HasComponents s
                                         , MonadState s m
-                                        , MonadError ZError m
                                         , MonadRandom m
-                                        ) =>
-                                          m a
+                                        ) => m a
 
 type MonadCompRead a = forall s m. ( HasCallStack
                                    , HasComponents s
                                    , MonadReader s m
-                                   , MonadError ZError m
-                                   ) =>
-                                     m a
+                                   ) => m a
 
 type MonadCompReadRand a = forall s m. ( HasCallStack
                                        , HasComponents s
                                        , MonadReader s m
-                                       , MonadError ZError m
                                        , MonadRandom m
-                                       ) =>
-                                         m a
+                                       ) => m a
 
 -- For running a MonadCompRead function inside the MonadCompState context
 readC :: MonadCompRead a -> MonadCompState a
 readC x = do
   cs <- use components
-  case runReader (runExceptT x) cs of
-    Left err -> throwError err
-    Right q -> return q
+  return $ runReader x cs
 
 emptyComponents :: Components
 emptyComponents =
@@ -137,7 +127,6 @@ popUUID = do
   nextUUID %= incUUID
   return newUUID
 
-{-- STATE --}
 getComp :: UUID -> Component a -> MonadCompState (Maybe a)
 getComp uuid comp = use $ comp . _2 . at uuid
 
@@ -147,70 +136,55 @@ hasComp uuid comp = use $ comp . _2 . to (zContains uuid)
 canViewComp :: UUID -> Component a -> MonadCompRead Bool
 canViewComp uuid comp = view $ comp . _2 . to (zContains uuid)
 
-addComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component a -> a -> m ()
+addComp :: (HasComponents s, MonadState s m)
+        => UUID -> Component a -> a -> m ()
 addComp uuid comp dat = (comp . _2) %= zInsert uuid dat
 
-setComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component a -> a -> m ()
+setComp :: (HasComponents s, MonadState s m)
+        => UUID -> Component a -> a -> m ()
 setComp = addComp
 
-modComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component a -> (a -> a) -> m ()
+modComp :: (HasComponents s, MonadState s m)
+        => UUID -> Component a -> (a -> a) -> m ()
 modComp uuid comp f = (comp . _2) %= zModify f uuid
 
-deleteComp
-  :: (HasComponents s, MonadState s m)
-  => UUID -> Component a -> m ()
+deleteComp :: (HasComponents s, MonadState s m)
+           => UUID -> Component a -> m ()
 deleteComp uuid comp = (comp . _2) %= zRemoveAt uuid
 
-filterComp
-  :: (HasComponents s, MonadState s m)
-  => Component a -> (a -> Bool) -> m ()
+filterComp :: (HasComponents s, MonadState s m)
+           => Component a -> (a -> Bool) -> m ()
 filterComp comp f = (comp . _2) %= zFilter (\(_, x) -> f x)
 
-demandComp :: Component a -> UUID -> MonadCompState a
+demandComp :: ZDefault a => Component a -> UUID -> MonadCompState a
 demandComp comp uuid =
   getComp uuid comp >>= \case
     Just x -> return x
     Nothing -> do
       cn <- use (comp . _1)
-      $(throw) EngineFatal $ append "Missing Component: " cn
+      debug (append "Missing Component: " cn)
+      return zDefault
 
-demandHasComp :: UUID -> Component a -> MonadCompState ()
-demandHasComp uuid comp = do
-  whenM (not <$> hasComp uuid comp) $ do
-    cn <- use (comp . _1)
-    $(throw) EngineFatal $ append "Missing Component: " cn
-
-{-- READER --}
 viewComp :: UUID -> Component a -> MonadCompRead (Maybe a)
 viewComp uuid comp = view (comp . _2 . at uuid)
 
-demandViewComp :: Component a -> UUID -> MonadCompRead a
+demandViewComp :: ZDefault a => Component a -> UUID -> MonadCompRead a
 demandViewComp comp uuid =
   viewComp uuid comp >>= \case
     Just x -> return x
     Nothing -> do
       cn <- view (comp . _1)
-      $(throw) EngineFatal $ append "Missing Component: " cn
+      debug (append "Missing Component: " cn)
+      return zDefault
 
-demandCanViewComp :: Component a -> UUID -> MonadCompRead ()
-demandCanViewComp comp uuid =
-  whenM (not <$> canViewComp uuid comp) $ do
-    cn <- view (comp . _1)
-    $(throw) EngineFatal $ append "Missing Component: " cn
 
-(<@>) :: Component a -> UUID -> MonadCompState a
+(<@>) :: ZDefault a => Component a -> UUID -> MonadCompState a
 (<@>) = demandComp
 
 (<@?>) :: UUID -> Component a -> MonadCompState (Maybe a)
 (<@?>) = getComp
 
-(<~>) :: Component a -> UUID -> MonadCompRead a
+(<~>) :: ZDefault a => Component a -> UUID -> MonadCompRead a
 (<~>) = demandViewComp
 
 (<~?>) :: UUID -> Component a -> MonadCompRead (Maybe a)

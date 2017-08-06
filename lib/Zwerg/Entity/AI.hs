@@ -3,6 +3,7 @@ module Zwerg.Entity.AI
   ) where
 
 import Zwerg.Component
+-- import Zwerg.Debug
 import Zwerg.Data.Position
 import Zwerg.Entity
 import Zwerg.Event.Queue
@@ -14,12 +15,11 @@ import Control.Monad.Random (RandT, evalRandT)
 import Data.Maybe (fromJust, catMaybes)
 
 newtype AI a =
-  AI (ExceptT ZError (RandT RanGen (StateT ZwergEventQueue (Reader Components))) a)
+  AI (RandT RanGen (StateT ZwergEventQueue (Reader Components)) a)
   deriving ( Functor
            , Applicative
            , Monad
            , MonadReader Components
-           , MonadError ZError
            , MonadState ZwergEventQueue
            , MonadRandom
            )
@@ -27,7 +27,6 @@ newtype AI a =
 runAI
   :: ( HasComponents s
      , HasZwergEventQueue s
-     , MonadError ZError m
      , MonadState s m
      , MonadRandom m
      )
@@ -37,12 +36,8 @@ runAI uuid = do
   ait <- aiType <@> uuid
   ranWord <- getRandom
   let (AI a) = enact uuid ait
-      (err, evts) =
-        runReader
-          (runStateT (evalRandT (runExceptT a) $ pureRanGen ranWord) zDefault) cmps
-  case err of
-    Left zErr -> throwError zErr
-    Right () -> mergeEventsM evts
+      ((), evts) = runReader (runStateT (evalRandT a $ pureRanGen ranWord) zDefault) cmps
+  mergeEventsM evts
 
 enact :: UUID -> AIType -> AI ()
 

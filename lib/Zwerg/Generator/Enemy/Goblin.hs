@@ -13,7 +13,7 @@ goblin = do
         (<@-) = addComp goblinUUID
 
     newGoblinName <- generateGoblinName
-    newGoblinHP <- getRandomR (3,7) >>= \x -> zConstruct (x,x)
+    newGoblinHP <- getRandomR (3,7) >>= \x -> return $ wrapOrDefault (x,x)
 
     name          <@- newGoblinName
     hp            <@- newGoblinHP

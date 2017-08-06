@@ -16,7 +16,7 @@ library
   default-language:    Haskell2010
 
   ghc-options:         -Wall
-                       -Werror
+                       -- -Werror
                        -optc-O3
                        -optc-ffast-math
                        -funbox-strict-fields
@@ -42,9 +42,9 @@ library
                        Zwerg.Data.UUID
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
-                       Zwerg.Data.ZError
                        Zwerg.Entity
                        Zwerg.Entity.AI
+                       Zwerg.Entity.Compare
                        Zwerg.Event
                        Zwerg.Event.Queue
                        Zwerg.Game
@@ -57,9 +57,11 @@ library
                        Zwerg.Generator.Player.TestPlayer
                        Zwerg.Generator.Verify
                        Zwerg.Geometry
+                       Zwerg.Geometry.FOV
                        Zwerg.Graphics.Brick
                        Zwerg.Graphics.Brick.Builder
                        Zwerg.Log
+                       Zwerg.Debug
                        Zwerg.Options
                        Zwerg.Prelude
                        Zwerg.Prelude.Class
@@ -120,7 +122,6 @@ library
                       RankNTypes,
                       ScopedTypeVariables,
                       StandaloneDeriving,
-                      Strict,
                       TemplateHaskell,
                       TupleSections,
                       TypeFamilies,

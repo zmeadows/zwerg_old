@@ -9,9 +9,9 @@ import Zwerg.Generator as EXPORTED
 generatePlayerSkeleton :: Generator' ()
 generatePlayerSkeleton = do
   --TODO: check if player already exists and throw error if it does
-  addComp playerUUID equipment emptyEquipment
+  addComp playerUUID equipment zDefault
   addComp playerUUID inventory zDefault
-  addComp playerUUID stats zeroStats
+  addComp playerUUID stats zDefault
   addComp playerUUID glyph $ Glyph '@' (CellColor Red0 Red0) Nothing
   addComp playerUUID blocksPassage True
   addComp playerUUID blocksVision False
@@ -25,8 +25,8 @@ generateSkeleton etype = do
 
 generateSkeleton' :: UUID -> EntityType -> Generator' ()
 generateSkeleton' enemyUUID Enemy = do
-  addComp enemyUUID equipment emptyEquipment
-  addComp enemyUUID stats zeroStats
+  addComp enemyUUID equipment zDefault
+  addComp enemyUUID stats zDefault
   addComp enemyUUID blocksPassage True
   addComp enemyUUID blocksVision False
 

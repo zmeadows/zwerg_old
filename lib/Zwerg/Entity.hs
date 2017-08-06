@@ -2,7 +2,7 @@
 Module      : Zwerg.Entity
 Description : Generic functions that operate at the level of entities.
 Copyright   : (c) Zac Meadows, 2016
-License     : GPL-3
+License     : MIT
 Maintainer  : zmeadows@gmail.com
 Stability   : experimental
 Portability : POSIX
@@ -13,15 +13,16 @@ commentary with @some markup@.
 module Zwerg.Entity where
 
 import Zwerg.Component
+import Zwerg.Debug
+import Zwerg.Data.GridMap
 import Zwerg.Data.Equipment
 import Zwerg.Data.Position
 import Zwerg.Data.UUIDSet (UUIDSet)
+import Zwerg.Geometry.FOV
 import Zwerg.Prelude
 import Zwerg.Util
 
 import Control.Monad.Loops (anyM)
-import Data.Foldable (maximumBy)
-import Data.Ord (comparing)
 
 {-
 addToInventory :: UUID -> UUID -> MonadCompState ()
@@ -34,6 +35,13 @@ addToInventory itemUUID holderUUID = do
   setComp itemUUID parent $ Alive holderUUID
   (tileOn, position, zLevel) <@@===> (holderUUID, itemUUID)
 -}
+
+getVisionBlockedTiles :: UUID -> MonadCompRead (GridMap Bool)
+getVisionBlockedTiles levelUUID = do
+    whenM (not . (== Level) <$> entityType <~> levelUUID) $
+        debug "Tried to compute vision-blocked tile map for entity that isn't a Level."
+    tm <- tileMap <~> levelUUID
+    zBuildM $ \pos -> tileBlocksVision (zAt tm pos)
 
 getItemsOnEntityTile :: UUID -> MonadCompRead UUIDSet
 getItemsOnEntityTile entityUUID = tileOn <~> entityUUID >>= (`getOccupantsOfType` Item)
@@ -58,54 +66,33 @@ getEquippedWeapon entityUUID = do
   uuids <- getEquippedInSlot (SingleHand RightHand) <$> equipment <~> entityUUID
   filterM (isItemType Weapon) uuids >>= \case
     [] -> return Nothing
-    [x] -> return $! Just x
-    _ -> $(throw) EngineFatal "Entity has multiple weapons equipped, and dual-wielding is not yet implemented."
+    [x] -> return $ Just x
+    xs -> do
+        debug "Entity has multiple weapons equipped, and dual-wielding is not yet implemented."
+        return $ Just $ head xs
 
 isItemType :: ItemType -> UUID -> MonadCompRead Bool
-isItemType itypetest uuid =
-  entityType <~> uuid >>= \case
-    Item -> do
-      itype <- itemType <~> uuid
-      return $! (itype == itypetest)
-    _ -> $(throw) EngineFatal "attempted to compare ItemType for non-Item entity."
+isItemType itypetest uuid = entityType <~> uuid >>= \case
+    Item -> (== itypetest) <$> itemType <~> uuid
+    _ -> debug "attempted to compare ItemType for non-Item entity." *> return False
 
 getVisibleTiles :: UUID -> MonadCompRead [UUID]
 getVisibleTiles uuid = do
-  -- TODO: use ST monad to implement classic impreative mutable algorithm?
-  -- levelTiles <- level <~> uuid >>= (<~>) tiles
-  playerPOS <- position <~> uuid
-  fov <- viewRange <~> uuid
-  levelTiles <- level <~> uuid >>= (<~>) tileMap
-  let (playerX, playerY) = unwrap playerPOS
-      minX, minY, maxX, maxY :: Int
-      minX = round $ max (fromIntegral playerX - fov) 0.0
-      minY = round $ max (fromIntegral playerY - fov) 0.0
-      maxX = round $ min (fromIntegral playerX + fov) $ mapWidthDOUBLE - 1.0
-      maxY = round $ min (fromIntegral playerY + fov) $ mapHeightDOUBLE - 1.0
-      -- fovEdges =
-      --   filter (\(x,y) -> x >= minX && x <= maxX && y >= minY && y <= maxY)
-      --   $ circle (playerX, playerY) (round $ 1.4 * fov)
-      -- linesToFovEdges = map (unsafeTail . (line (playerX, playerY))) fovEdges
-  -- tileUUIDlinesToFovEdges <-
-  --   (mapM . mapM)
-  --     (zConstruct >=> flip tileUUIDatPosition levelTiles)
-  --     linesToFovEdges
-  -- visibleLines <-
-  --   forM tileUUIDlinesToFovEdges $
-  --   takeWhileM1 (tileBlocksPassage >=> return . not)
-  candidatePOSs <-
-    filter (\p -> distance Euclidean playerPOS p < fov) <$>
-    mapM zConstruct [(x, y) | x <- [minX .. maxX], y <- [minY .. maxY]]
-  let candidateTileUUIDs = map (zAt levelTiles) candidatePOSs
-  -- return $ zFromList $ intersect candidateTileUUIDs $ concat visibleLines
-  return $! candidateTileUUIDs
+    --TODO: use operator
+    playerPOS <- position <~> uuid
+    fov <- viewRange <~> uuid
+    levelUUID <- level <~> uuid
+    levelBlockedTiles <- getVisionBlockedTiles levelUUID
+    let visibleTiles = getFOV playerPOS fov levelBlockedTiles
+    levelTileMap <- tileMap <~> levelUUID
+    return $ map (zAt levelTileMap) visibleTiles
 
 tileBlocksVision :: UUID -> MonadCompRead Bool
 tileBlocksVision tileUUID = do
   -- The tile might iself block vision (ex: stone column)
   tileBlocks <- blocksVision <~> tileUUID
   if tileBlocks
-    then return $! True
+    then return True
     else do
       -- or one of the occupants might (ex: really fat goblin)
       occs <- occupants <~> tileUUID
@@ -116,34 +103,22 @@ tileBlocksPassage tileUUID = do
   -- The tile might itself block passage
   tileBlocks <- blocksPassage <~> tileUUID
   if tileBlocks
-    then return $! True
+    then return True
     else do
       -- or one the tiles occupants might block passage
       occs <- occupants <~> tileUUID
       res <- anyM (blocksPassage <~>) (unwrap occs)
-      return $! res
+      return res
 
 getAdjacentTileUUID :: Direction -> UUID -> MonadCompRead (Maybe UUID)
 getAdjacentTileUUID dir tileUUID = do
   tilePosition <- position <~> tileUUID
   case movePosDir dir tilePosition of
-    Nothing -> return $! Nothing
+    Nothing -> return Nothing
     Just adjPos -> do
       tileLevelUUID <- level <~> tileUUID
       levelTileMap <- tileMap <~> tileLevelUUID
-      return $! Just $ zAt levelTileMap adjPos
-
-getPrimaryOccupant :: UUID -> MonadCompRead UUID
-getPrimaryOccupant occupiedUUID = do
-  occs <- unwrap <$> occupants <~> occupiedUUID
-  if null occs
-    then return $! occupiedUUID
-    else do
-      types <- forM occs ((<~>) entityType)
-      -- TODO: if multiple of same max entity type, further sort somehow
-      -- TODO: factor out a 'sortOccupantsByViewPriority' function?
-      let maxUUID = fst $ maximumBy (comparing snd) $ zip occs types
-      return $! maxUUID
+      return $ Just $ zAt levelTileMap adjPos
 
 getOccupantsOfType :: UUID -> EntityType -> MonadCompRead UUIDSet
 getOccupantsOfType containerUUID eType = occupants <~> containerUUID >>= zFilterM isEtype
@@ -154,7 +129,7 @@ transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
   let addOccupant = do
         occupiedType <- entityType <@> newContainerUUID
         if occupiedType `notElem` [Tile, Container]
-          then $(throw) EngineFatal "Attempted to add an occupant to an entity that doesn't support it"
+          then debug "Attempted to add an occupant to an entity that doesn't support it"
           else do
             --TODO: change z-level hasn't changed?
             modComp newContainerUUID occupants $ zAdd transfereeUUID
@@ -165,7 +140,7 @@ transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
       removeOccupant oldContainerUUID' = do
         occupiedType <- entityType <@> oldContainerUUID'
         if occupiedType `notElem` [Tile, Container]
-          then $(throw) EngineFatal "Attempted to remove an occupant from an entity that doesn't support it"
+          then debug "Attempted to remove an occupant from an entity that doesn't support it"
           else do
             modComp oldContainerUUID' occupants $ zDelete transfereeUUID
             when (occupiedType == Tile) $ setComp oldContainerUUID' needsRedraw True
@@ -214,12 +189,12 @@ resetTicks uuid = setComp uuid ticks 100
 
 getTargetedUUIDs :: TargetType -> UUID -> MonadCompRead [UUID]
 -- TODO: fix AOE/Line implementation (same as SingleTarget for now)
-getTargetedUUIDs SingleTarget mainDefenderUUID = return $! [mainDefenderUUID]
-getTargetedUUIDs (AOE _) mainDefenderUUID = return $! [mainDefenderUUID]
-getTargetedUUIDs (Line _ _) mainDefenderUUID = return $! [mainDefenderUUID]
+getTargetedUUIDs SingleTarget mainDefenderUUID = return [mainDefenderUUID]
+getTargetedUUIDs (AOE _) mainDefenderUUID = return [mainDefenderUUID]
+getTargetedUUIDs (Line _ _) mainDefenderUUID = return [mainDefenderUUID]
 
 getFearLevel :: UUID -> MonadCompRead Text
-getFearLevel _ = return $! "Terrifying"
+getFearLevel _ = return "Terrifying"
 
 --TODO: make Stats instance of ZMapContainer
 getStat :: Stat -> UUID -> MonadCompRead Int

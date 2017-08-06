@@ -3,7 +3,6 @@ module Zwerg.Data.Equipment
     EquipmentSlot(..),
     HandSlot(..),
     ArmorSlot(..),
-    emptyEquipment,
     equip,
     unequip,
     getAllEquippedItems,
@@ -29,12 +28,15 @@ data EquipmentSlot = Body ArmorSlot | SingleHand HandSlot | BothHands
   deriving (Show, Eq, Ord, Generic)
 instance Binary EquipmentSlot
 
+instance ZDefault EquipmentSlot where
+    zDefault = SingleHand RightHand
+
 newtype Equipment = MkEquipment (Map EquipmentSlot UUID)
   deriving (Show, Eq, Generic)
 instance Binary Equipment
 
-emptyEquipment :: Equipment
-emptyEquipment = MkEquipment M.empty
+instance ZDefault Equipment where
+    zDefault = MkEquipment M.empty
 
 equip :: EquipmentSlot -> UUID -> Equipment -> ([UUID], Equipment)
 equip slot uuid eq =

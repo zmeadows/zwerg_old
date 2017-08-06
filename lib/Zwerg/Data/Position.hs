@@ -8,6 +8,7 @@ module Zwerg.Data.Position
   , distance
   , modPos
   , movePosDir
+  , isValidPosition
   , validatePosition
   , allPositions
   , isNeighborPos
@@ -19,15 +20,11 @@ newtype ZLevel = MkZLevel Int
   deriving (Show, Eq, Ord, Generic)
 instance Binary ZLevel
 
-instance ZConstructable ZLevel Int where
-  zConstruct z =
-    if z >= 0
-      then return $ MkZLevel z
-      else $(throw) EngineFatal "Attempted to construct an invalid ZLevel."
-
-newtype Position =
-  MkPosition (Int, Int)
+newtype Position = MkPosition (Int, Int)
   deriving (Show, Eq, Generic)
+
+instance ZDefault Position where
+    zDefault = MkPosition (0,0)
 
 --NOTE: this Ord instance is important, as it keeps the
 --GlyphMap position ordering automatic so we don't have to
@@ -61,12 +58,6 @@ to1DIndex pos =
 
 from1DIndex :: Int -> Maybe Position
 from1DIndex i = validatePosition $ (mod i mapWidthINT, div i mapWidthINT)
-
-instance ZConstructable Position (Int, Int) where
-  zConstruct pos =
-    if isValidPosition pos
-      then return . MkPosition $ pos
-      else $(throw) EngineFatal "Attempted to construct an invalid Position"
 
 distance :: Metric -> Position -> Position -> Double
 distance metric (MkPosition (x1, y1)) (MkPosition (x2, y2)) =

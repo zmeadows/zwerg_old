@@ -19,8 +19,6 @@ import qualified Brick.Types as BT
 import qualified Graphics.Vty as VTY
 import Data.Monoid ((<>))
 
-import qualified Data.Text.IO as T (putStrLn)
-
 handleEventZwerg :: HasCallStack
                  => ZwergState
                  -> BT.BrickEvent () ZwergEvent
@@ -35,18 +33,15 @@ handleEventZwerg zs (BT.VtyEvent ev) =
        Just Escape -> BM.halt zs
        Just key -> do
          let st = view gameState zs
-             (st', err, gen') = runGame (processUserInput key) (view ranGen zs) st
-             zs' = set gameState st' $ set ranGen gen' zs
+             st' = runGame (processUserInput key) (view ranGen zs) st
+             zs' = set gameState st' zs
              badPlayerInput = view (gameState . playerGoofed) zs'
-         case err of
-           Just x -> BM.halt $ set errorMsg (Just x) zs'
-           Nothing ->
-             if badPlayerInput
-                then BM.continue
-                     $ set (gameState . eventQueue) zDefault
-                     $ set (gameState . userLog) (view (gameState . userLog) zs')
-                     $ zs
-                else BM.continue zs'
+         if badPlayerInput
+           then BM.continue
+                $ set (gameState . eventQueue) zDefault
+                $ set (gameState . userLog) (view (gameState . userLog) zs')
+                $ zs
+           else BM.continue zs'
        _ -> BM.continue zs
 
 handleEventZwerg a b = BM.resizeOrQuit a b
@@ -74,19 +69,4 @@ zwergApp = BM.App
 initBrick :: (HasCallStack, MonadIO m) => m ()
 initBrick = do
   gen <- newPureRanGen
-  --TODO: is there an alternative 'main' that returns possible error?
-  s <- liftIO $ BM.defaultMain zwergApp $ set ranGen gen initZwergState
-  case s ^. errorMsg of
-    Nothing -> return ()
-    --TODO: write self contained function to print ZError
-    Just x -> do
-      liftIO $ putStrLn "## ERROR MESSAGE ##\n"
-      liftIO $ putStrLn "## ERROR MESSAGE ##\n"
-      liftIO $ putStrLn "## ERROR MESSAGE ##\n\n"
-      liftIO $ T.putStrLn $ x ^. explanation
-      liftIO $ putStrLn ""
-      liftIO $ putStrLn "## CALL STACK ###\n"
-      liftIO $ putStrLn "## CALL STACK ###\n"
-      liftIO $ putStrLn "## CALL STACK ###\n\n"
-      liftIO $ putStrLn $ prettyCallStack $ x ^. stack
-      liftIO $ putStrLn ""
+  void $ liftIO $ BM.defaultMain zwergApp $ set ranGen gen initZwergState

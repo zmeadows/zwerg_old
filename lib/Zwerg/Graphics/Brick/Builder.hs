@@ -5,6 +5,7 @@ import Zwerg.Prelude hiding ((<>))
 import Zwerg
 import Zwerg.Component
 import Zwerg.Entity
+import Zwerg.Entity.Compare
 import Zwerg.Game
 import Zwerg.Log
 import Zwerg.UI.GlyphMap
@@ -12,7 +13,6 @@ import Zwerg.UI.Menu
 import Zwerg.UI.Port
 import Zwerg.Util
 
-import Data.Either (either)
 import Data.Foldable (foldl1)
 import Data.Monoid ((<>))
 import Data.Text (append)
@@ -41,24 +41,23 @@ menuToBrickList m =
   let allLabels = getMenuLabels m
   in BL.listMoveTo (getMenuFocusIndex m) $ BL.list () (V.fromList allLabels) 1
 
-newtype UIBuilder' a = UIBuilder (ExceptT ZError (Reader GameState) a)
-  deriving (Functor , Applicative , Monad , MonadReader GameState, MonadError ZError)
+newtype UIBuilder' a = UIBuilder (Reader GameState a)
+  deriving (Functor, Applicative, Monad, MonadReader GameState)
 
 type UIBuilder a = HasCallStack => UIBuilder' a
 
-runUIBuilder :: UIBuilder a -> GameState -> Either ZError a
-runUIBuilder (UIBuilder x) gs = runReader (runExceptT x) gs
+runUIBuilder :: UIBuilder a -> GameState -> a
+runUIBuilder (UIBuilder x) gs = runReader x gs
 
 buildZwergUI :: ZwergState -> [BT.Widget ()]
-buildZwergUI zs =
-  either (const []) id $ runUIBuilder (concat <$> (mapM buildPortUI (view portal zs))) $ view gameState zs
+buildZwergUI zs = runUIBuilder (concat <$> (mapM buildPortUI (view portal zs))) $ view gameState zs
 
 --FIXME: refactor
 buildPortUI :: Port -> UIBuilder [BT.Widget ()]
 
-buildPortUI (DeathScreen deathMsg) = return $! [BC.vCenter $ BC.hCenter $ txt deathMsg]
+buildPortUI (DeathScreen deathMsg) = return $ [BC.vCenter $ BC.hCenter $ txt deathMsg]
 
-buildPortUI (MainMenu m) = return $! [ui]
+buildPortUI (MainMenu m) = return $ [ui]
   where
     l = menuToBrickList m
     box = BB.border $ hLimit 24 $ vLimit 5 $ BL.renderList listDrawElement True l
@@ -97,7 +96,7 @@ buildPortUI (ExamineTiles pos) = do
       sometext  = translateBy (BT.Location (0,mapHeightINT+1))
                     $ vBox [txt _name, txt _desc, txt fear]
       blankLog  = translateBy (BT.Location (0,mapHeightINT+1)) (padBottom BT.Max $ padRight BT.Max $ fill ' ')
-  return $! [tileMaker, sometext, blankLog]
+  return $ [tileMaker, sometext, blankLog]
 
 buildPortUI (MainScreen gm) = do
   _name  <- name <~> playerUUID
@@ -133,7 +132,7 @@ buildPortUI (MainScreen gm) = do
 
       nameWidget = markup $ _name @@ fg VTY.yellow :: BT.Widget ()
 
-  return $! [
+  return $ [
     vLimit mapHeightINT (
       mapWidget <+> BB.vBorder <+> (
         nameWidget <=> hpWidget <=> statsWidget
@@ -141,7 +140,7 @@ buildPortUI (MainScreen gm) = do
     ) <=> (BB.hBorder <=> logWidget)
     ]
 
-buildPortUI _ = return $! [emptyWidget]
+buildPortUI _ = return [emptyWidget]
 
 zwergLogo :: BT.Widget ()
 zwergLogo = vBox $ map (withAttr "logo")

@@ -28,6 +28,9 @@ data DamageAttribute
 
 instance Binary DamageAttribute
 
+instance ZDefault DamageAttribute where
+    zDefault = Slash
+
 data DamageData = DamageData
   { _damageDataTargetType   :: TargetType
   , _damageDataAttribute    :: DamageAttribute
@@ -35,6 +38,9 @@ data DamageData = DamageData
   } deriving (Show, Eq, Generic)
 makeFields ''DamageData
 instance Binary DamageData
+
+instance ZDefault DamageData where
+    zDefault = DamageData SingleTarget zDefault $ Uniform 0 0
 
 type DamageChain = [DamageData]
 

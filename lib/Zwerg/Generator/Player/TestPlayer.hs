@@ -10,15 +10,13 @@ testPlayerGenerator startLevelUUID = do
     let (<@-) :: Component a -> a -> Generator' ()
         (<@-) = addComp playerUUID
 
-    newHP <- zConstruct (100, 100)
-
     name        <@- "Bob"
     description <@- "It's you."
     level       <@- startLevelUUID
     entityType  <@- Player
-    viewRange   <@- 7.0
+    viewRange   <@- 7
     ticks       <@- 50
-    hp          <@- newHP
+    hp          <@- unsafeWrap (100,100)
 
     assignUniformRandomStat playerUUID STR (1, 100)
     assignUniformRandomStat playerUUID DEX (2, 100)

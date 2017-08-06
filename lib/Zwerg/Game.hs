@@ -4,8 +4,10 @@ module Zwerg.Game where
 import Zwerg.Component
 import Zwerg.Data.Position
 import Zwerg.Data.UUIDMap
+-- import Zwerg.Debug
 import Zwerg.Entity
 import Zwerg.Entity.AI
+import Zwerg.Entity.Compare
 import Zwerg.Event.Queue
 import Zwerg.Generator
 import Zwerg.Generator.Level.TestSquare
@@ -26,10 +28,8 @@ data GameState = GameState
   , _gsPortal     :: Portal
   , _gsEventQueue :: ZwergEventQueue
   , _playerGoofed :: Bool
-  } deriving (Show, Eq, Generic)
+  }
 makeClassy ''GameState
-
-instance Binary GameState
 
 instance HasComponents GameState where
   components = gsComponents
@@ -41,8 +41,7 @@ instance HasZwergEventQueue GameState where
   eventQueue = gsEventQueue
 
 emptyGameState :: GameState
-emptyGameState =
-  GameState
+emptyGameState = GameState
   { _gsComponents = zDefault
   , _gsLog        = zDefault
   , _gsPortal     = [zDefault]
@@ -52,24 +51,18 @@ emptyGameState =
 
 -- Highest level purely-functional context which encapsulates
 -- all game logic/state/error handling
-newtype Game' a =
-  Game (ExceptT ZError (RandT RanGen (State GameState)) a)
+newtype Game' a = Game (RandT RanGen (State GameState) a)
   deriving ( Functor
            , Applicative
            , Monad
            , MonadState GameState
-           , MonadError ZError
            , MonadRandom
            )
 
 type Game a = HasCallStack => Game' a
 
-runGame :: Game () -> RanGen -> GameState -> (GameState, Maybe ZError, RanGen)
-runGame (Game a) gen st =
-  let ((e, gen'), st') = runState (runRandT (runExceptT a) gen) st
-  in case e of
-       Left err -> (st', Just err, gen')
-       Right () -> (st', Nothing, gen')
+runGame :: Game () -> RanGen -> GameState -> GameState
+runGame (Game a) gen st = execState (runRandT a gen) st
 
 -- TODO: factor out into Generator.World module
 generateGame :: Game ()
@@ -81,13 +74,13 @@ processNonPlayerEvents :: Game ()
 processNonPlayerEvents = do
   use portal >>= \case
     MainScreen _ : _ -> do
-      (minTick, uuids) <- use (ticks . _2) >>= getMinimumUUIDs
+      (minTick, uuids) <- getMinimumUUIDs <$> use (ticks . _2)
       (ticks . _2) %= fmap (\x -> max (x - minTick) 0)
       if | notElem playerUUID uuids ->
              forM_ uuids $ \i -> do runAI i >> processEvents >> setComp i ticks 100
-         | otherwise -> return $! ()
+         | otherwise -> return ()
       updateGlyphMap
-    _ -> return $! ()
+    _ -> return ()
 
 processUserInput :: KeyCode -> Game ()
 processUserInput k = do
@@ -110,11 +103,10 @@ processUserInput' (MainMenu m:_) Return =
   case focus m ^. label of
     "new game" -> do
       generateGame
-      gm <- blankGlyphMap
-      portal .= [MainScreen gm]
+      portal .= [MainScreen blankGlyphMap]
       updateGlyphMap
     "exit" -> portal .= [ExitScreen]
-    _ -> return $! ()
+    _ -> return ()
 
 processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput West
 processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput South
@@ -155,24 +147,24 @@ processUserInput' (ExamineTiles _ : ps) (KeyChar 'x') = portal .= ps
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'h') = do
   case movePosDir West pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return $! ()
+    Nothing -> return ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'j') = do
   case movePosDir South pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return $! ()
+    Nothing -> return ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'k') = do
   case movePosDir North pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return $! ()
+    Nothing -> return ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') = do
   case movePosDir East pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return $! ()
+    Nothing -> return ()
 
-processUserInput' _ _ = return $! ()
+processUserInput' _ _ = return ()
 
 updateGlyphMap :: Game ()
 updateGlyphMap = do
@@ -180,13 +172,13 @@ updateGlyphMap = do
     MainScreen gm : ps -> do
       updatedGlyphs <- getGlyphMapUpdates
       portal .= (MainScreen $ mergeGlyphMaps updatedGlyphs gm) : ps
-    _ -> return $! ()
+    _ -> return ()
 
 processEvents :: Game ()
 processEvents =
-  whenJustM popEvent $! \nextEvent -> do
-    processEvent nextEvent
-    processEvents
+    whenJustM popEvent $ \nextEvent -> do
+        processEvent nextEvent
+        processEvents
 
 processEvent :: ZwergEvent -> Game ()
 
@@ -207,7 +199,7 @@ processEvent (MoveEntityEvent ed) = do
 
   if newTileBlocked
      then if (ed ^. moverUUID) /= playerUUID
-             then $(throw) EngineFatal "NPC Entity attempted to move to blocked tile"
+             then debug "NPC Entity attempted to move to blocked tile"
              else do
                pushLogMsgM "You cannot move into a blocked tile."
                playerGoofed .= True
@@ -234,7 +226,7 @@ processEvent (WeaponAttackAttemptEvent ed) = do
 processEvent (WeaponAttackHitEvent ed) = do
   readC (getEquippedWeapon $ ed ^. attackerUUID) >>= \case
     --TODO: decide how to handle unarmed attacks
-    Nothing -> return $! ()
+    Nothing -> return ()
     Just weaponUUID -> do
       chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do
@@ -245,7 +237,7 @@ processEvent (WeaponAttackHitEvent ed) = do
                                        (damageData ^. attribute)
                                        (damageData ^. distribution)
 
-processEvent (WeaponAttackMissEvent _) = return $! ()
+processEvent (WeaponAttackMissEvent _) = return ()
 
 processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
 
@@ -277,10 +269,9 @@ processEvent _ = return ()
 getGlyphMapUpdates :: MonadCompState GlyphMap
 getGlyphMapUpdates = do
   visibleTiles <- readC $ getVisibleTiles playerUUID
-  tilesWithUpdatedNeeded <- filterM (needsRedraw <@>) visibleTiles
 
   updatedGlyphs <-
-    forM tilesWithUpdatedNeeded $ \tileUUID -> do
+    forM visibleTiles $ \tileUUID -> do
       pos <- position <@> tileUUID
       occUUID <- readC $ getPrimaryOccupant tileUUID
       gly <- glyph <@> occUUID
@@ -298,7 +289,9 @@ processPlayerDirectionInput dir = getPlayerAdjacentEnemy >>= \case
           case attackedTileUUID of
             Just attackedTileUUID' -> do
               unwrap <$> getOccupantsOfType attackedTileUUID' Enemy >>= \case
-                [] -> return $! Nothing
-                [x] -> return $! Just x
-                _ -> $(throw) EngineFatal "found multiple enemies on same tile"
-            Nothing -> return $! Nothing
+                [] -> return Nothing
+                [x] -> return $ Just x
+                xs -> do
+                    debug "found multiple enemies on same tile"
+                    return $ Just $ head xs
+            Nothing -> return Nothing

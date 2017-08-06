@@ -21,7 +21,6 @@ data ZwergState = ZwergState
   , _ranGen      :: RanGen
   , _quitting    :: Bool
   , _pastState   :: [ByteString]
-  , _errorMsg    :: Maybe ZError
   }
 makeClassy ''ZwergState
 
@@ -40,7 +39,6 @@ initZwergState = ZwergState
   , _ranGen      = pureRanGen 0
   , _quitting    = False
   , _pastState   = []
-  , _errorMsg    = Nothing
   }
 
 
