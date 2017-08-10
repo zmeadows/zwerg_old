@@ -3,9 +3,15 @@
 #######################
 
 :: Remove exceptions from code!
-Handle errors explicitely and log messages to describe things that shouldn't have happened!
+Handle errors explicitely and log messages to describe things that shouldn't have happened.
+For fatal errors that should never happen, log dramatic message and do some sort of default
+behavior just to keep the program running for debugging purposes.
 
-:: convert GlyphMap to GridMap
+It would be more fun for the end users any way if the game just got really weird after it broke,
+rather than simply exiting immediately.
+
+:: convert GlyphMap to GridMap and re-do vision system
+Don't keep enemy glyphs in the fog
 
 :: Add pickupItem and pickAllItemsOnGround function
 
@@ -20,13 +26,13 @@ Mostly we will have Distribution Int, but some Doubles may be required
 #### LOW PRIORITY ####
 ######################
 
-:: remove Log newtype (not needed)
+:: remove Log newtype (not needed, sequence of messages just fine)
 
-:: remove ZWrapped instances if possible
+:: comment unused Z* class instances
 
 :: Make function to select Menu focus by matching 'shortcut'
 
-:: make a printEntity function
+:: make a printEntity function for debugging
 
 :: add HasCallStack to more contexts
 

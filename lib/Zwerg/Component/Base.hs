@@ -46,18 +46,18 @@ data Components = Components
   , _zLevel        :: (Text, UUIDMap ZLevel)
   , _nextUUID      :: UUID
   } deriving (Show, Eq, Generic)
-
 makeClassy ''Components
-
 instance Binary Components
 
 type Component a = forall s. HasComponents s => Lens' s (Text, UUIDMap a)
 
+-- TODO: turn these into classes
 -- purely for convenience, type synonyms for commonly various monad contexts
-type MonadCompState a = forall s m. ( HasCallStack
-                                    , HasComponents s
-                                    , MonadState s m
-                                    ) => m a
+type MonadCompState a =
+    forall s m. ( HasComponents s
+                , MonadState s m
+                , HasCallStack
+                ) => m a
 
 type MonadCompStateRand a = forall s m. ( HasCallStack
                                         , HasComponents s
@@ -123,9 +123,9 @@ instance ZDefault Components where
 
 popUUID :: MonadCompState UUID
 popUUID = do
-  newUUID <- use nextUUID
-  nextUUID %= incUUID
-  return newUUID
+    newUUID <- use nextUUID
+    nextUUID %= incUUID
+    return newUUID
 
 getComp :: UUID -> Component a -> MonadCompState (Maybe a)
 getComp uuid comp = use $ comp . _2 . at uuid
@@ -162,7 +162,7 @@ demandComp comp uuid =
     Just x -> return x
     Nothing -> do
       cn <- use (comp . _1)
-      debug (append "Missing Component: " cn)
+      debug $ "Missing Component: " <> cn
       return zDefault
 
 viewComp :: UUID -> Component a -> MonadCompRead (Maybe a)
@@ -174,9 +174,8 @@ demandViewComp comp uuid =
     Just x -> return x
     Nothing -> do
       cn <- view (comp . _1)
-      debug (append "Missing Component: " cn)
+      debug $ "Missing Component: " <> cn
       return zDefault
-
 
 (<@>) :: ZDefault a => Component a -> UUID -> MonadCompState a
 (<@>) = demandComp

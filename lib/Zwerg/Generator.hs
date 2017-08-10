@@ -5,7 +5,6 @@ module Zwerg.Generator
   , getRandomEmptyTile
   , assignUniformRandomStat
   , putOnRandomEmptyTile
-  , hasAll
   , generateAndEquip
   , generateAndHold
   , generateAndHoldN
@@ -56,19 +55,14 @@ putOnRandomEmptyTile levelUUID entityUUID = do
       Just tileUUID -> do
           addComp entityUUID level levelUUID
           transferOccupant entityUUID Nothing tileUUID
-      Nothing -> debug "Couldn't find empty tile to place entity"
+      Nothing -> debug $ "Couldn't find empty tile to place entity with UUID: "
+                         <> show entityUUID
 
-verifyComponent :: Component a -> UUID -> MonadCompRead ()
-verifyComponent comp uuid =
-  whenM (not <$> canViewComp uuid comp) $ do
-    cn <- view (comp . _1)
-    debug $ append "VERIFICATION FAILURE: " cn
-
-verify :: String -> String -> Q Exp
-verify us cs = [| verifyComponent $(dyn cs) $(dyn us) |]
-
-hasAll :: String -> [String] -> Q Exp
-hasAll us css = DoE <$> (mapM (fmap NoBindS . verify us) css)
+-- verify :: String -> String -> Q Exp
+-- verify us cs = [| verifyComponent $(dyn cs) $(dyn us) |]
+-- 
+-- hasAll :: String -> [String] -> Q Exp
+-- hasAll us css = DoE <$> (mapM (fmap NoBindS . verify us) css)
 
 generateAndEquip :: Generator -> UUID -> Generator' ()
 --TODO: check if slot is already filled (or wait... do this in equipItem?)

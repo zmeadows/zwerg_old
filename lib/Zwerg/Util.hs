@@ -3,7 +3,6 @@ module Zwerg.Util where
 import Zwerg.Prelude
 import Paths_zwerg (getDataFileName)
 
-import Control.Exception.Base (assert)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Text (Text)
 import qualified Data.Text as T (replicate, append, length)
@@ -14,9 +13,6 @@ takeUntil p (x:xs) = x : if p x then takeUntil p xs else []
 
 getAsset :: MonadIO m => Text -> m Text
 getAsset path = pack <$> liftIO (getDataFileName $ "assets/" ++ unpack path)
-
-assertfM :: Monad m => a -> (a -> m Bool) -> m ()
-assertfM x f = f x >>= flip assert (return ())
 
 whenJust :: Applicative m => Maybe a -> (a -> m ()) -> m ()
 whenJust mg f = maybe (pure ()) f mg

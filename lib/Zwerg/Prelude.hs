@@ -10,7 +10,6 @@ import Zwerg.Data.UUID as EXPORTED
 import Zwerg.Prelude.Class as EXPORTED
 import Zwerg.Prelude.Primitives as EXPORTED
 
-import Control.Monad.Except as EXPORTED
 import Control.Monad.Random.Class as EXPORTED hiding (fromList)
 import Control.Monad.Reader as EXPORTED
 import Control.Monad.State.Lazy as EXPORTED

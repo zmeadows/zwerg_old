@@ -17,18 +17,14 @@ compareEntitiesForVisibility' :: UUID -> UUID -> EntityType -> MonadCompRead Ord
 compareEntitiesForVisibility' uuid1 uuid2 Item = do
     (itype1,itype2) <- itemType <~~!> (uuid1,uuid2)
     if itype1 /= itype2
+       --TODO: further if/then/else compare same ItemType
        then return (compare itype1 itype2)
        else return GT
 
-compareEntitiesForVisibility' _ _ Tile = do
-    debug "should never be comparing the visibility preference for two Tiles."
+compareEntitiesForVisibility' _ _ etype = do
+    debug $ "should never be comparing the visibility preference for two entities of type: "
+            <> show etype
     return GT
-
-compareEntitiesForVisibility' _ _ Enemy = do
-    debug "should never be comparing the visibility preference for two Enemies."
-    return GT
-
-compareEntitiesForVisibility' _ _ _ = return GT
 
 getPrimaryOccupant :: UUID -> MonadCompRead UUID
 getPrimaryOccupant occupiedUUID = do

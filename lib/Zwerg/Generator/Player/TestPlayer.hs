@@ -19,7 +19,7 @@ testPlayerGenerator startLevelUUID = do
     hp          <@- unsafeWrap (100,100)
 
     assignUniformRandomStat playerUUID STR (1, 100)
-    assignUniformRandomStat playerUUID DEX (2, 100)
+    assignUniformRandomStat playerUUID DEX (1, 100)
     assignUniformRandomStat playerUUID INT (1, 100)
     assignUniformRandomStat playerUUID CHA (1, 100)
     assignUniformRandomStat playerUUID CON (1, 100)

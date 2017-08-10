@@ -1,6 +1,5 @@
 module Zwerg.Generator.Enemy.Goblin (goblin) where
 
-import Data.Text (append)
 import Zwerg.Generator
 import Zwerg.Generator.Default
 import Zwerg.Generator.Verify
@@ -43,4 +42,4 @@ generateGoblinName =
       firstNameSecondSyllables = "ith" :| ["xul", "nix", "oth"]
   in do f1 <- pickRandom firstNameFirstSyllables
         f2 <- pickRandom firstNameSecondSyllables
-        return $ append f1 f2
+        return $ f1 <> f2

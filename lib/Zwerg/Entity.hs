@@ -78,7 +78,7 @@ isItemType itypetest uuid = entityType <~> uuid >>= \case
 
 getVisibleTiles :: UUID -> MonadCompRead [UUID]
 getVisibleTiles uuid = do
-    --TODO: use operator
+    --TODO: use multi getter operator
     playerPOS <- position <~> uuid
     fov <- viewRange <~> uuid
     levelUUID <- level <~> uuid
@@ -180,8 +180,8 @@ eraseEntity uuid = do
   deleteComp uuid needsRedraw
   deleteComp uuid zLevel
 
---TODO: placeholder. Need to look at creatures Dex, etc
---TODO: define maximum Statu value
+--TODO: placeholder. Need to look at creatures DEX, etc
+--TODO: define maximum Stat value
 resetTicks :: UUID -> MonadCompState ()
 resetTicks uuid = setComp uuid ticks 100
   -- dex <- lookupStat DEX <$> stats <~> uuid

@@ -18,6 +18,8 @@ import Zwerg.UI.Input
 import Zwerg.UI.Menu
 import Zwerg.UI.Port
 
+import Debug.Trace (traceM)
+
 import qualified Data.Text as T (concat)
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)

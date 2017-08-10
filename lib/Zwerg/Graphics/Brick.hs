@@ -19,30 +19,33 @@ import qualified Brick.Types as BT
 import qualified Graphics.Vty as VTY
 import Data.Monoid ((<>))
 
+import System.IO (hFlush, stderr)
+
 handleEventZwerg :: HasCallStack
                  => ZwergState
                  -> BT.BrickEvent () ZwergEvent
                  -> BT.EventM () (BT.Next ZwergState)
-handleEventZwerg zs (BT.VtyEvent ev) =
+handleEventZwerg zs (BT.VtyEvent ev) = do
+  liftIO $ hFlush stderr
   let eventVTYtoZwergInput :: VTY.Event -> Maybe KeyCode
       eventVTYtoZwergInput (VTY.EvKey VTY.KEsc []) = Just Escape
       eventVTYtoZwergInput (VTY.EvKey (VTY.KChar ch) []) = Just $ KeyChar ch
       eventVTYtoZwergInput (VTY.EvKey VTY.KEnter []) = Just Return
       eventVTYtoZwergInput _ = Nothing
-  in case eventVTYtoZwergInput ev of
-       Just Escape -> BM.halt zs
-       Just key -> do
-         let st = view gameState zs
-             st' = runGame (processUserInput key) (view ranGen zs) st
-             zs' = set gameState st' zs
-             badPlayerInput = view (gameState . playerGoofed) zs'
-         if badPlayerInput
-           then BM.continue
-                $ set (gameState . eventQueue) zDefault
-                $ set (gameState . userLog) (view (gameState . userLog) zs')
-                $ zs
-           else BM.continue zs'
-       _ -> BM.continue zs
+  case eventVTYtoZwergInput ev of
+    Just Escape -> BM.halt zs
+    Just key -> do
+      let st = view gameState zs
+          st' = runGame (processUserInput key) (view ranGen zs) st
+          zs' = set gameState st' zs
+          badPlayerInput = view (gameState . playerGoofed) zs'
+      if badPlayerInput
+        then BM.continue
+             $ set (gameState . eventQueue) zDefault
+             $ set (gameState . userLog) (view (gameState . userLog) zs')
+             $ zs
+        else BM.continue zs'
+    _ -> BM.continue zs
 
 handleEventZwerg a b = BM.resizeOrQuit a b
 
