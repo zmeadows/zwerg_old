@@ -2,6 +2,7 @@ module Zwerg.Generator.Level.TestSquare where
 
 import Zwerg.Generator
 import Zwerg.Generator.Default
+import Zwerg.Generator.Verify
 import Zwerg.Generator.Enemy.Goblin
 import Zwerg.Generator.Item.Weapon
 
@@ -9,24 +10,31 @@ testSquareGenerator :: Generator
 testSquareGenerator = do
     testSquareLevelUUID <- generateSkeleton Level
     testSquareTiles <- tileMap <@> testSquareLevelUUID
+
+    let wallGlyph = Glyph 'X' (CellColor White2 White0) $ Just (CellColor Black1 Black0)
+        floorGlyph = Glyph '·' (CellColor White2 White0) $ Just (CellColor Black2 Black0)
+
     zTraverseWithKey_ testSquareTiles $ \pos tileUUID -> do
         let (x, y) = unwrap pos
             isWallTile = x == 0 || x == mapWidthINT - 1 || y == 0 || y == mapHeightINT - 1
+            (<.-) :: Component a -> a -> Generator' ()
+            (<.-) = setComp tileUUID
         if isWallTile
           then do
-            setComp tileUUID tileType Wall
-            setComp tileUUID blocksPassage True
-            setComp tileUUID blocksVision True
-            setComp tileUUID glyph $ Glyph 'X' (CellColor White2 White0) $ Just (CellColor Black1 Black0)
-            setComp tileUUID name "Wall tile"
-            setComp tileUUID description "It is a wall."
+            tileType      <.- Wall
+            blocksPassage <.- True
+            blocksVision  <.- True
+            glyph         <.- wallGlyph
+            name          <.- "Wall tile in the test level"
+            description   <.- "It is a wall."
           else do
-            setComp tileUUID tileType Floor
-            setComp tileUUID blocksPassage False
-            setComp tileUUID blocksVision False
-            setComp tileUUID glyph $ Glyph '·' (CellColor White2 White0) $ Just (CellColor Black2 Black0)
-            setComp tileUUID name "Floor tile"
-            setComp tileUUID description "It is a floor."
+            tileType      <.- Floor
+            blocksPassage <.- False
+            blocksVision  <.- False
+            glyph         <.- floorGlyph
+            name          <.- "Floor tile in the test level"
+            description   <.- "It is a floor."
+
     replicateM_ 5 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
     replicateM_ 4 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
-    return testSquareLevelUUID
+    verifyAndReturn testSquareLevelUUID

@@ -27,7 +27,7 @@ circle' (x0, y0) (x, y) err s =
         | otherwise -> s'
 
 line :: (Int, Int) -> (Int, Int) -> [(Int, Int)]
-line p1 p2 = takeWhile (/= p2) (bla p1 p2) ++ [p2]
+line p1 p2 = bla p1 p2
 
 -- | Bresenham's line algorithm.
 -- Includes the first point and goes through the second to infinity.
@@ -47,4 +47,3 @@ balancedWord :: Int -> Int -> Int -> [Int]
 balancedWord p q eps
   | eps + p < q = 0 : balancedWord p q (eps + p)
   | otherwise = 1 : balancedWord p q (eps + p - q)
-

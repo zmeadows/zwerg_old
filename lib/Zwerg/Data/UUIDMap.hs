@@ -24,18 +24,16 @@ instance ZEmptiable (UUIDMap a) where
   zIsNull (MkUUIDMap m) = IM.null m
   zSize (MkUUIDMap m) = IM.size m
 
-instance ZMapContainer (UUIDMap a) UUID a where
+instance ZMapContainer UUIDMap UUID where
+  zModifyAt f uuid (MkUUIDMap m)   = MkUUIDMap $ IM.adjust f (unwrap uuid) m
+  zElems (MkUUIDMap m)           = IM.elems m
+
+instance ZIncompleteMapContainer UUIDMap UUID where
   zLookup uuid (MkUUIDMap m)     = IM.lookup (unwrap uuid) m
-  zModify f uuid (MkUUIDMap m)   = MkUUIDMap $ IM.adjust f (unwrap uuid) m
   zInsert uuid val (MkUUIDMap m) = MkUUIDMap $ IM.insert (unwrap uuid) val m
   zRemoveAt uuid (MkUUIDMap m)   = MkUUIDMap $ IM.delete (unwrap uuid) m
   zContains uuid (MkUUIDMap m)   = IM.member (unwrap uuid) m
-  zElems (MkUUIDMap m)           = IM.elems m
   zKeys (MkUUIDMap m)            = (catMaybes . map wrap) $ IM.keys m
-
-instance ZIsList (UUIDMap a) (UUID, a) where
-  zToList m = zip (zKeys m) (zElems m)
-  zFromList kvs = MkUUIDMap $ IM.fromList $ map ( \(x,y) -> (unwrap x, y) ) kvs
 
 instance ZFilterable (UUIDMap a) (UUID, a) where
     zFilter f (MkUUIDMap m) = MkUUIDMap $ IM.filterWithKey (\x -> curry f (fromJust $ wrap x)) m

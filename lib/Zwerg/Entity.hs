@@ -38,7 +38,7 @@ addToInventory itemUUID holderUUID = do
 
 getVisionBlockedTiles :: UUID -> MonadCompRead (GridMap Bool)
 getVisionBlockedTiles levelUUID = do
-    whenM (not . (== Level) <$> entityType <~> levelUUID) $
+    whenM ((/= Level) <$> entityType <~> levelUUID) $
         debug "Tried to compute vision-blocked tile map for entity that isn't a Level."
     tm <- tileMap <~> levelUUID
     zBuildM $ \pos -> tileBlocksVision (zAt tm pos)
@@ -78,10 +78,7 @@ isItemType itypetest uuid = entityType <~> uuid >>= \case
 
 getVisibleTiles :: UUID -> MonadCompRead [UUID]
 getVisibleTiles uuid = do
-    --TODO: use multi getter operator
-    playerPOS <- position <~> uuid
-    fov <- viewRange <~> uuid
-    levelUUID <- level <~> uuid
+    (playerPOS, fov, levelUUID) <- (position, viewRange, level) <~!!!> uuid
     levelBlockedTiles <- getVisionBlockedTiles levelUUID
     let visibleTiles = getFOV playerPOS fov levelBlockedTiles
     levelTileMap <- tileMap <~> levelUUID
@@ -107,8 +104,7 @@ tileBlocksPassage tileUUID = do
     else do
       -- or one the tiles occupants might block passage
       occs <- occupants <~> tileUUID
-      res <- anyM (blocksPassage <~>) (unwrap occs)
-      return res
+      anyM (blocksPassage <~>) (unwrap occs)
 
 getAdjacentTileUUID :: Direction -> UUID -> MonadCompRead (Maybe UUID)
 getAdjacentTileUUID dir tileUUID = do
@@ -124,7 +120,7 @@ getOccupantsOfType :: UUID -> EntityType -> MonadCompRead UUIDSet
 getOccupantsOfType containerUUID eType = occupants <~> containerUUID >>= zFilterM isEtype
   where isEtype uuid = (eType ==) <$> entityType <~> uuid
 
-transferOccupant :: UUID -> (Maybe UUID) -> UUID -> MonadCompState ()
+transferOccupant :: UUID -> Maybe UUID -> UUID -> MonadCompState ()
 transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
   let addOccupant = do
         occupiedType <- entityType <@> newContainerUUID

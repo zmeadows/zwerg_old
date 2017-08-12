@@ -24,6 +24,14 @@ import Zwerg.Component.Base
   y <- demandViewComp compB uuid
   return (x,y)
 
+(<~!!!>) :: (ZDefault a, ZDefault b, ZDefault c)
+         => (Component a, Component b, Component c) -> UUID -> MonadCompRead (a,b,c)
+(<~!!!>) (compA, compB, compC) uuid = do
+  x <- demandViewComp compA uuid
+  y <- demandViewComp compB uuid
+  z <- demandViewComp compC uuid
+  return (x,y,z)
+
 (<~~!>) :: ZDefault a => Component a -> (UUID,UUID) -> MonadCompRead (a,a)
 (<~~!>) comp (uuidA,uuidB) = do
   x <- demandViewComp comp uuidA

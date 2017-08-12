@@ -1,10 +1,12 @@
-module Zwerg.Entity.Compare (getPrimaryOccupant) where
+module Zwerg.Entity.Compare (getPrimaryOccupant, getPrimaryNonEnemyOccupant) where
 
 import Zwerg.Prelude
 
 import Zwerg.Component
 import Zwerg.Debug
 import Zwerg.Util
+
+import Control.Monad.Loops (firstM)
 
 compareEntitiesForVisibility :: UUID -> UUID -> MonadCompRead Ordering
 compareEntitiesForVisibility uuid1 uuid2 = do
@@ -27,7 +29,18 @@ compareEntitiesForVisibility' _ _ etype = do
     return GT
 
 getPrimaryOccupant :: UUID -> MonadCompRead UUID
-getPrimaryOccupant occupiedUUID = do
+getPrimaryOccupant occupiedUUID =
     unwrap <$> occupants <~> occupiedUUID >>= \case
         [] -> return occupiedUUID
-        occs -> head <$> (sortByM compareEntitiesForVisibility occs)
+        occs -> head <$> sortByM compareEntitiesForVisibility occs
+
+getPrimaryNonEnemyOccupant :: UUID -> MonadCompRead UUID
+getPrimaryNonEnemyOccupant occupiedUUID =
+    unwrap <$> occupants <~> occupiedUUID >>= \case
+        [] -> return occupiedUUID
+        occs -> do
+            sortedOccs <- sortByM compareEntitiesForVisibility occs
+            firstM (\uuid -> (/= Enemy) <$> entityType <~> uuid) sortedOccs >>= \case
+                Nothing -> return occupiedUUID
+                Just x -> return x
+                

@@ -24,19 +24,18 @@ newtype AI a =
            , MonadRandom
            )
 
-runAI
-  :: ( HasComponents s
-     , HasZwergEventQueue s
-     , MonadState s m
-     , MonadRandom m
-     )
-  => UUID -> m ()
+runAI :: ( HasCallStack
+         , HasComponents s
+         , HasZwergEventQueue s
+         , MonadState s m
+         , MonadRandom m
+         ) => UUID -> m ()
 runAI uuid = do
   cmps <- use components
   ait <- aiType <@> uuid
   ranWord <- getRandom
-  let (AI a) = enact uuid ait
-      ((), evts) = runReader (runStateT (evalRandT a $ pureRanGen ranWord) zDefault) cmps
+  let (AI a)   = enact uuid ait
+      (_,evts) = runReader (runStateT (evalRandT a $ pureRanGen ranWord) zDefault) cmps
   mergeEventsM evts
 
 enact :: UUID -> AIType -> AI ()

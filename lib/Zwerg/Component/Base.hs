@@ -11,8 +11,6 @@ import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Debug
 
-import Data.Text (append)
-
 data Components = Components
   { _name          :: (Text, UUIDMap Text)
   , _description   :: (Text, UUIDMap Text)
@@ -146,7 +144,7 @@ setComp = addComp
 
 modComp :: (HasComponents s, MonadState s m)
         => UUID -> Component a -> (a -> a) -> m ()
-modComp uuid comp f = (comp . _2) %= zModify f uuid
+modComp uuid comp f = (comp . _2) %= zModifyAt f uuid
 
 deleteComp :: (HasComponents s, MonadState s m)
            => UUID -> Component a -> m ()

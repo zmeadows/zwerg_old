@@ -22,7 +22,7 @@ import Data.Text.Markup ((@@))
 -- import Brick.AttrMap
 import Brick.Markup (markup)
 import Brick.Util (on, fg)
-import Brick.Widgets.Core
+import Brick.Widgets.Core hiding (visible)
 import qualified Brick.Types as BT
 import qualified Brick.Widgets.Border as BB
 import qualified Brick.Widgets.Center as BC
@@ -105,13 +105,8 @@ buildPortUI (MainScreen gm) = do
   mylog <- view (gameState . userLog)
   let mapWidget :: BT.Widget ()
       mapWidget =
-        let rows = glyphMapToRows gm :: [[(Glyph, Bool)]]
-            glyphToVtyImage :: (Glyph, Bool) -> VTY.Image
-            glyphToVtyImage (Glyph c (CellColor fgC _) _, isVis) =
-              if isVis
-                then VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 220) c
-                else VTY.char (zwergColorToVtyColor fgC `on` VTY.Color240 0) c
-            mkImageRow :: [(Glyph, Bool)] -> VTY.Image
+        let rows = glyphMapToRows gm :: [[CellData]]
+            mkImageRow :: [CellData] -> VTY.Image
             mkImageRow row = foldl1 (VTY.<|>) $ map glyphToVtyImage row
          in raw $ foldl1 (VTY.<->) $ map mkImageRow rows
 
@@ -178,3 +173,11 @@ zwergColorToVtyColor zc =
        Black1 -> VTY.Color240 217
        Black2 -> VTY.Color240 220
        Black3 -> VTY.Color240 223
+
+glyphToVtyImage :: CellData -> VTY.Image
+glyphToVtyImage (CellData isVis fogGlyph visGlyph) =
+  if isVis
+     then VTY.char (zwergColorToVtyColor fgvC `on` VTY.Color240 220) vC
+     else VTY.char (zwergColorToVtyColor fgfC  `on` VTY.Color240 0) fC
+ where (Glyph fC (CellColor fgfC _) _) = fogGlyph
+       (Glyph vC (CellColor fgvC _) _) = visGlyph

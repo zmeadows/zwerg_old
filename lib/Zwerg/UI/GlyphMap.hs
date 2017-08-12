@@ -1,39 +1,29 @@
 module Zwerg.UI.GlyphMap where
 
-import Zwerg.Data.Position
+-- import Zwerg.Data.Position
 import Zwerg.Prelude
+import Zwerg.Data.GridMap
 import Zwerg.Util
 
---TODO: convert to GridMap and remove this module
+data CellData = CellData
+    { _isVisible :: Bool
+    , _fogged    :: Glyph
+    , _visible   :: Glyph
+    } deriving (Generic)
 
-import Data.Map.Lazy (Map)
-import qualified Data.Map.Lazy as M (empty, fromList, union, elems, map)
+instance Binary CellData
+makeClassy ''CellData
 
-newtype GlyphMap = MkGlyphMap (Map Position (Glyph, Bool))
-  deriving (Show, Eq, Generic)
-instance Binary GlyphMap
+type GlyphMap = GridMap CellData
 
 class HasGlyphMap s where
   glyphMap :: Lens' s GlyphMap
 
-emptyGlyphMap :: GlyphMap
-emptyGlyphMap = MkGlyphMap M.empty
-
-mkGlyphMap :: [(Position, (Glyph, Bool))] -> GlyphMap
-mkGlyphMap = MkGlyphMap . M.fromList
-
 blankGlyphMap :: GlyphMap
-blankGlyphMap =
-  let xs = [0 .. mapWidthINT - 1]
-      ys = [0 .. mapHeightINT - 1]
-      emptyGlyph = Glyph ' ' (CellColor Black0 Black0) $ Just (CellColor Black0 Black0)
-      ts = map unsafeWrap [(x, y) | x <- xs, y <- ys]
-  in mkGlyphMap $ map (\p -> (p, (emptyGlyph, False))) ts
+blankGlyphMap = zBuild (const emptyCellData)
+  where emptyGlyph = Glyph ' ' (CellColor Black0 Black0) $ Just (CellColor Black0 Black0)
+        emptyCellData = CellData False emptyGlyph emptyGlyph
 
-mergeGlyphMaps :: GlyphMap -> GlyphMap -> GlyphMap
-mergeGlyphMaps (MkGlyphMap gmUpdated) (MkGlyphMap gmMain) =
-  MkGlyphMap (M.union gmUpdated $ M.map (\(g, _) -> (g, False)) gmMain)
-
-glyphMapToRows :: GlyphMap -> [[(Glyph, Bool)]]
-glyphMapToRows (MkGlyphMap gm) = chunksOf mapWidthINT (M.elems gm)
+glyphMapToRows :: GlyphMap -> [[CellData]]
+glyphMapToRows = chunksOf mapWidthINT . zElems
 

@@ -29,7 +29,7 @@ verifyAndReturn' uuid Enemy = do
   --  ]
   -- )
 
-verifyAndReturn' uuid Level = return ()
+verifyAndReturn' _ Level = return ()
     -- $(hasAll "uuid"
     -- $([ "name" , "description", "entityType" ]
    -- $(

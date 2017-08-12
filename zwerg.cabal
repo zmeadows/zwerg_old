@@ -42,6 +42,7 @@ library
                        Zwerg.Data.UUID
                        Zwerg.Data.UUIDMap
                        Zwerg.Data.UUIDSet
+                       Zwerg.Debug
                        Zwerg.Entity
                        Zwerg.Entity.AI
                        Zwerg.Entity.Compare
@@ -61,7 +62,6 @@ library
                        Zwerg.Graphics.Brick
                        Zwerg.Graphics.Brick.Builder
                        Zwerg.Log
-                       Zwerg.Debug
                        Zwerg.Options
                        Zwerg.Prelude
                        Zwerg.Prelude.Class
@@ -125,7 +125,8 @@ library
                       TemplateHaskell,
                       TupleSections,
                       TypeFamilies,
-                      TypeOperators
+                      TypeOperators,
+                      InstanceSigs
                       -- UnboxedSums, in ghc 8.2!
 
 executable zwerg

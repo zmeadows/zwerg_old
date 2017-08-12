@@ -18,8 +18,6 @@ import Zwerg.UI.Input
 import Zwerg.UI.Menu
 import Zwerg.UI.Port
 
-import Debug.Trace (traceM)
-
 import qualified Data.Text as T (concat)
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
@@ -146,22 +144,22 @@ processUserInput' p@(MainScreen _ : _) (KeyChar 'x') = do
 
 processUserInput' (ExamineTiles _ : ps) (KeyChar 'x') = portal .= ps
 
-processUserInput' (ExamineTiles pos : ps) (KeyChar 'h') = do
+processUserInput' (ExamineTiles pos : ps) (KeyChar 'h') =
   case movePosDir West pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
 
-processUserInput' (ExamineTiles pos : ps) (KeyChar 'j') = do
+processUserInput' (ExamineTiles pos : ps) (KeyChar 'j') =
   case movePosDir South pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
 
-processUserInput' (ExamineTiles pos : ps) (KeyChar 'k') = do
+processUserInput' (ExamineTiles pos : ps) (KeyChar 'k') =
   case movePosDir North pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
 
-processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') = do
+processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') =
   case movePosDir East pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
@@ -169,11 +167,11 @@ processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') = do
 processUserInput' _ _ = return ()
 
 updateGlyphMap :: Game ()
-updateGlyphMap = do
+updateGlyphMap =
   use portal >>= \case
     MainScreen gm : ps -> do
-      updatedGlyphs <- getGlyphMapUpdates
-      portal .= (MainScreen $ mergeGlyphMaps updatedGlyphs gm) : ps
+        updatedGlyphs <- readC getGlyphMapUpdates
+        portal .= (MainScreen $ mergeUpdates (zMap (set isVisible False) gm) updatedGlyphs) : ps
     _ -> return ()
 
 processEvents :: Game ()
@@ -234,10 +232,7 @@ processEvent (WeaponAttackHitEvent ed) = do
       forM_ chain $ \damageData -> do
         targetedUUIDs <- readC $ getTargetedUUIDs (damageData ^. targetType) (ed ^. defenderUUID)
         forM_ targetedUUIDs $ \targetUUID ->
-          $(newEvent "IncomingDamage") (ed ^. attackerUUID)
-                                       targetUUID
-                                       (damageData ^. attribute)
-                                       (damageData ^. distribution)
+          $(newEvent "IncomingDamage") (ed ^. attackerUUID) targetUUID (damageData ^. attribute) (damageData ^. distribution)
 
 processEvent (WeaponAttackMissEvent _) = return ()
 
@@ -268,19 +263,14 @@ processEvent _ = return ()
 
 -- FIXME: need to make distinction between visible/needsRedraw tiles...
 -- FIXME: this should be MonadCompReader?
-getGlyphMapUpdates :: MonadCompState GlyphMap
+getGlyphMapUpdates :: MonadCompRead [(Position,CellData)]
 getGlyphMapUpdates = do
-  visibleTiles <- readC $ getVisibleTiles playerUUID
-
-  updatedGlyphs <-
-    forM visibleTiles $ \tileUUID -> do
-      pos <- position <@> tileUUID
-      occUUID <- readC $ getPrimaryOccupant tileUUID
-      gly <- glyph <@> occUUID
-      --setComp tileUUID needsRedraw False
-      return (pos, (gly, True))
-
-  return $ mkGlyphMap updatedGlyphs
+  visibleTiles <- getVisibleTiles playerUUID
+  forM visibleTiles $ \tileUUID -> do
+    pos <- position <~> tileUUID
+    glyph1 <- getPrimaryOccupant tileUUID >>= (<~>) glyph
+    glyph2 <- getPrimaryNonEnemyOccupant tileUUID >>= (<~>) glyph
+    return (pos, CellData True glyph2 glyph1)
 
 processPlayerDirectionInput :: Direction -> Game ()
 processPlayerDirectionInput dir = getPlayerAdjacentEnemy >>= \case

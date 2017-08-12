@@ -22,18 +22,19 @@ goblin = do
     ticks         <@- 100
     aiType        <@- SimpleMeleeCreature
     blocksPassage <@- True
-    blocksVision  <@- False
+    blocksVision  <@- True
     viewRange     <@- 5
 
-    assignUniformRandomStat goblinUUID STR (1, 5)
-    assignUniformRandomStat goblinUUID DEX (1, 5)
-    assignUniformRandomStat goblinUUID INT (1, 5)
-    assignUniformRandomStat goblinUUID CHA (1, 5)
-    assignUniformRandomStat goblinUUID CON (1, 5)
-    assignUniformRandomStat goblinUUID WIS (1, 5)
+    assignUniformRandomStats goblinUUID
+      [ (STR,(1, 5))
+      , (DEX,(1, 5))
+      , (INT,(1, 5))
+      , (CHA,(1, 5))
+      , (CON,(1, 5))
+      , (WIS,(1, 5))
+      ]
 
     generateAndEquip sword goblinUUID
-
     verifyAndReturn goblinUUID
 
 generateGoblinName :: (MonadRandom m) => m Text

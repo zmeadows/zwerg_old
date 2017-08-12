@@ -2,17 +2,6 @@
 #### HIGH PRIORITY ####
 #######################
 
-:: Remove exceptions from code!
-Handle errors explicitely and log messages to describe things that shouldn't have happened.
-For fatal errors that should never happen, log dramatic message and do some sort of default
-behavior just to keep the program running for debugging purposes.
-
-It would be more fun for the end users any way if the game just got really weird after it broke,
-rather than simply exiting immediately.
-
-:: convert GlyphMap to GridMap and re-do vision system
-Don't keep enemy glyphs in the fog
-
 :: Add pickupItem and pickAllItemsOnGround function
 
 :: Add ConfirmDropSelectedItems port
@@ -36,19 +25,6 @@ Mostly we will have Distribution Int, but some Doubles may be required
 
 :: add HasCallStack to more contexts
 
-:: FOV algorithm and fog of war
-Keep a separate GridMap Glyph of the last visible tile state for the whole level,
-where we store the highest priority INANIMATE glyph last seen,
-so basically anything that is not an enemy. This will be used to
-assign a glyph to the tiles outside of visible range
-Furthermore, keep a separate GridMap Bool that is updated each player turn
-that keeps track of visibility
-and a GridMap Bool that keeps track of which tiles are vision-blocking
-Potentially this could be isolated to some ST/IO mutable hash table
-instead of a GridMap,
-and computed in the handleEventZwerg function (which is MonadIO context)
-Make a function to return the full Glyph for a player-visible tile,
-and call this in the relevant UIBuiler
 
 :: Add system to auto-explore by pressing the 'Tab' key
 This will be difficult.
@@ -82,3 +58,27 @@ and a 'getAllSelected' function
 :: Fix InventoryView port
 It should simply display a list of all items (don't worry about grouping all identical items),
 but with one additional feature: mark items for drop with 'd' then drop all with D.
+
+:: Remove exceptions from code!
+Handle errors explicitely and log messages to describe things that shouldn't have happened.
+For fatal errors that should never happen, log dramatic message and do some sort of default
+behavior just to keep the program running for debugging purposes.
+It would be more fun for the end users any way if the game just got really weird after it broke,
+rather than simply exiting immediately.
+
+:: convert GlyphMap to GridMap and re-do vision system
+Don't keep enemy glyphs in the fog
+
+:: FOV algorithm and fog of war
+Keep a separate GridMap Glyph of the last visible tile state for the whole level,
+where we store the highest priority INANIMATE glyph last seen,
+so basically anything that is not an enemy. This will be used to
+assign a glyph to the tiles outside of visible range
+Furthermore, keep a separate GridMap Bool that is updated each player turn
+that keeps track of visibility
+and a GridMap Bool that keeps track of which tiles are vision-blocking
+Potentially this could be isolated to some ST/IO mutable hash table
+instead of a GridMap,
+and computed in the handleEventZwerg function (which is MonadIO context)
+Make a function to return the full Glyph for a player-visible tile,
+and call this in the relevant UIBuiler

@@ -6,12 +6,7 @@ module Zwerg.Prelude.Primitives
   , TargetType(..)
   , Color(..)
   , CellColor(..)
-  , foreground
-  , background
   , Glyph(..)
-  , char
-  , visible
-  , fogged
   , EntityType(..)
   , TileType(..)
   , Stat(..)
@@ -32,7 +27,6 @@ import Zwerg.Prelude.Class
 
 import Data.Binary as EXPORTED (Binary)
 import GHC.Generics (Generic)
-import Lens.Micro.Platform as EXPORTED (makeFields)
 import Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as M
 
@@ -81,7 +75,6 @@ data CellColor = CellColor
   { _cellColorForeground :: Color
   , _cellColorBackground :: Color
   } deriving (Show, Eq, Generic)
-makeFields ''CellColor
 instance Binary CellColor
 
 data Glyph = Glyph
@@ -89,7 +82,6 @@ data Glyph = Glyph
   , _glyphVisible :: CellColor
   , _glyphFogged  :: Maybe CellColor
   } deriving (Show, Eq, Generic)
-makeFields ''Glyph
 instance Binary Glyph
 
 instance ZDefault Glyph where

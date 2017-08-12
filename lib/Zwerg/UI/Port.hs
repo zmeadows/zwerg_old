@@ -18,7 +18,7 @@ data Port
   | ExamineTiles Position
   | DeathScreen Text
   | ExitScreen
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary Port
 
 instance ZDefault Port where

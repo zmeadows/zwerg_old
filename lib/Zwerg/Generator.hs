@@ -4,30 +4,28 @@ module Zwerg.Generator
   , Generator'
   , getRandomEmptyTile
   , assignUniformRandomStat
+  , assignUniformRandomStats
   , putOnRandomEmptyTile
   , generateAndEquip
   , generateAndHold
   , generateAndHoldN
   ) where
 
-import Zwerg.Component as EXPORTED
-import Zwerg.Data.Damage as EXPORTED
+import Zwerg.Component      as EXPORTED
+import Zwerg.Data.Damage    as EXPORTED
 import Zwerg.Data.Equipment as EXPORTED
-import Zwerg.Data.GridMap as EXPORTED
-import Zwerg.Data.HP as EXPORTED
-import Zwerg.Data.Position as EXPORTED
-import Zwerg.Data.UUIDSet as EXPORTED
-import Zwerg.Debug as EXPORTED
-import Zwerg.Entity as EXPORTED
-import Zwerg.Event as EXPORTED
-import Zwerg.Prelude as EXPORTED
-import Zwerg.Random as EXPORTED
-import Zwerg.Util as EXPORTED
+import Zwerg.Data.GridMap   as EXPORTED
+import Zwerg.Data.HP        as EXPORTED
+import Zwerg.Data.Position  as EXPORTED
+import Zwerg.Data.UUIDSet   as EXPORTED
+import Zwerg.Debug          as EXPORTED
+import Zwerg.Entity         as EXPORTED
+import Zwerg.Event          as EXPORTED
+import Zwerg.Prelude        as EXPORTED
+import Zwerg.Random         as EXPORTED
+import Zwerg.Util           as EXPORTED
 
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
-import Data.Text(append)
-import Language.Haskell.TH
-
 
 type Generator' a = forall s m. ( HasCallStack
                                 , HasComponents s
@@ -48,6 +46,10 @@ assignUniformRandomStat :: UUID -> Stat -> (Int, Int) -> Generator' ()
 assignUniformRandomStat targetUUID stat bounds = do
   newStat <- getRandomR bounds
   modComp targetUUID stats (replaceStat stat newStat)
+
+assignUniformRandomStats :: UUID -> [(Stat,(Int,Int))] -> Generator' ()
+assignUniformRandomStats targetUUID =
+    mapM_ (\(stat, rs) -> assignUniformRandomStat targetUUID stat rs)
 
 putOnRandomEmptyTile :: UUID -> UUID -> Generator' ()
 putOnRandomEmptyTile levelUUID entityUUID = do
@@ -73,3 +75,5 @@ generateAndHold itemGen wearerUUID = (zAdd <$> itemGen) >>= modComp wearerUUID i
 
 generateAndHoldN :: Int -> Generator -> UUID -> Generator' ()
 generateAndHoldN n itemGen wearerUUID = replicateM_ n $ generateAndHold itemGen wearerUUID
+
+
