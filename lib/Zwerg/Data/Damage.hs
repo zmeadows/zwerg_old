@@ -24,7 +24,7 @@ data DamageAttribute
   | Bludgeon
   | Holy
   | Evil
-  deriving (Show, Eq, Ord, Bounded, Generic)
+  deriving (Generic)
 
 instance Binary DamageAttribute
 
@@ -35,7 +35,7 @@ data DamageData = DamageData
   { _damageDataTargetType   :: TargetType
   , _damageDataAttribute    :: DamageAttribute
   , _damageDataDistribution :: Distribution
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''DamageData
 instance Binary DamageData
 
@@ -46,7 +46,7 @@ type DamageChain = [DamageData]
 
 --TODO: make newtype of Int
 newtype Resistance = MkResistance Int
-  deriving (Show, Eq, Ord, Bounded, Generic)
+  deriving (Generic)
 instance Binary Resistance
 
 -- increaseResistance :: Resistance -> Int -> Resistance
@@ -56,7 +56,7 @@ instance Binary Resistance
 -- decreaseResistance (MkResistance r) i = MkResistance $ max (-10) $ r - i
 
 newtype Resistances = MkResistances (Map DamageAttribute Resistance)
-  deriving (Show, Eq, Ord, Generic)
+  deriving (Generic)
 instance Binary Resistances
 
 

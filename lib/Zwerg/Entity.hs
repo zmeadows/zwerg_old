@@ -42,6 +42,22 @@ getVisionBlockedTiles levelUUID = do
         debug "Tried to compute vision-blocked tile map for entity that isn't a Level."
     tm <- tileMap <~> levelUUID
     zBuildM $ \pos -> tileBlocksVision (zAt tm pos)
+  where tileBlocksVision :: UUID -> MonadCompRead Bool
+        tileBlocksVision tileUUID = do
+          tileBlocks <- blocksVision <~> tileUUID
+          if tileBlocks
+            then return True
+            else do
+              occs <- occupants <~> tileUUID
+              anyM (blocksVision <~>) (unwrap occs)
+
+getVisibleTiles :: UUID -> MonadCompRead [UUID]
+getVisibleTiles uuid = do
+    (playerPOS, fov, levelUUID) <- (position, viewRange, level) <~!!!> uuid
+    levelBlockedTiles <- getVisionBlockedTiles levelUUID
+    let visibleTiles = getFOV playerPOS fov levelBlockedTiles
+    levelTileMap <- tileMap <~> levelUUID
+    return $ map (zAt levelTileMap) visibleTiles
 
 getItemsOnEntityTile :: UUID -> MonadCompRead UUIDSet
 getItemsOnEntityTile entityUUID = tileOn <~> entityUUID >>= (`getOccupantsOfType` Item)
@@ -76,24 +92,6 @@ isItemType itypetest uuid = entityType <~> uuid >>= \case
     Item -> (== itypetest) <$> itemType <~> uuid
     _ -> debug "attempted to compare ItemType for non-Item entity." *> return False
 
-getVisibleTiles :: UUID -> MonadCompRead [UUID]
-getVisibleTiles uuid = do
-    (playerPOS, fov, levelUUID) <- (position, viewRange, level) <~!!!> uuid
-    levelBlockedTiles <- getVisionBlockedTiles levelUUID
-    let visibleTiles = getFOV playerPOS fov levelBlockedTiles
-    levelTileMap <- tileMap <~> levelUUID
-    return $ map (zAt levelTileMap) visibleTiles
-
-tileBlocksVision :: UUID -> MonadCompRead Bool
-tileBlocksVision tileUUID = do
-  -- The tile might iself block vision (ex: stone column)
-  tileBlocks <- blocksVision <~> tileUUID
-  if tileBlocks
-    then return True
-    else do
-      -- or one of the occupants might (ex: really fat goblin)
-      occs <- occupants <~> tileUUID
-      anyM (blocksVision <~>) (unwrap occs)
 
 tileBlocksPassage :: UUID -> MonadCompRead Bool
 tileBlocksPassage tileUUID = do

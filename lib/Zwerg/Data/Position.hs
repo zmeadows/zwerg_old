@@ -2,7 +2,6 @@ module Zwerg.Data.Position
   ( Position
   , ZLevel
   , Metric(..)
-  , Rectangle
   , to1DIndex
   , from1DIndex
   , distance
@@ -17,11 +16,11 @@ module Zwerg.Data.Position
 import Zwerg.Prelude
 
 newtype ZLevel = MkZLevel Int
-  deriving (Show, Eq, Ord, Generic)
+  deriving (Eq, Generic)
 instance Binary ZLevel
 
 newtype Position = MkPosition (Int, Int)
-  deriving (Show, Eq, Generic)
+    deriving (Eq, Generic)
 
 instance ZDefault Position where
     zDefault = MkPosition (0,0)
@@ -42,14 +41,13 @@ instance ZWrapped Position (Int, Int) where
   wrap = validatePosition
 
 data Metric = Euclidean | TaxiCab
-  deriving (Show, Eq)
 
-data Rectangle = Rectangle
-  { _recW :: Int
-  , _recH :: Int
-  , _recX :: Int
-  , _recY :: Int
-  } deriving (Show, Eq)
+-- data Rectangle = Rectangle
+--   { _recW :: Int
+--   , _recH :: Int
+--   , _recX :: Int
+--   , _recY :: Int
+--   }
 
 to1DIndex :: Position -> Int
 to1DIndex pos =
@@ -73,12 +71,16 @@ modPos :: (Int -> Int, Int -> Int) -> Position -> Maybe Position
 modPos (f, g) (MkPosition (x, y)) = validatePosition (f x, g y)
 
 movePosDir :: Direction -> Position -> Maybe Position
-movePosDir dir (MkPosition (x, y)) =
-  validatePosition $
-  if | dir == West -> (x - 1, y)
-     | dir == East -> (x + 1, y)
-     | dir == North -> (x, y - 1)
-     | dir == South -> (x, y + 1)
+movePosDir dir (MkPosition (x, y)) = validatePosition $
+    case dir of
+        West      -> (x - 1, y)
+        East      -> (x + 1, y)
+        North     -> (x, y - 1)
+        South     -> (x, y + 1)
+        NorthWest -> (x - 1, y + 1)
+        NorthEast -> (x + 1, y + 1)
+        SouthWest -> (x - 1, y - 1)
+        SouthEast -> (x + 1, y - 1)
 
 isValidPosition :: (Int, Int) -> Bool
 isValidPosition (x, y) = x >= 0 && y >= 0 && x < mapWidthINT && y < mapHeightINT

@@ -32,7 +32,7 @@ data MenuEntry a = MenuEntry
   { _shortcut :: Char
   , _label    :: Text
   , _item     :: a
-  } deriving (Show, Eq, Functor, Foldable, Traversable, Generic)
+  } deriving (Functor, Foldable, Traversable, Generic)
 makeLenses ''MenuEntry
 instance Binary a => Binary (MenuEntry a)
 
@@ -40,7 +40,7 @@ data Menu a =
   MkMenu (Seq (MenuEntry a))
          (MenuEntry a)
          (Seq (MenuEntry a))
-  deriving (Show, Eq, Functor, Foldable, Traversable, Generic)
+  deriving (Functor, Foldable, Traversable, Generic)
 
 instance Binary a => Binary (Menu a)
 

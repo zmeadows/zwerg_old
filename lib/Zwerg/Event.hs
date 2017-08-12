@@ -13,7 +13,7 @@ data IncomingDamageEventData = IncomingDamageEventData
   , _incomingDamageEventDataDefenderUUID :: UUID
   , _incomingDamageEventDataDamageAttribute :: DamageAttribute
   , _incomingDamageEventDataDamageDistribution :: Distribution
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''IncomingDamageEventData
 instance Binary IncomingDamageEventData
 
@@ -21,71 +21,71 @@ data OutgoingDamageEventData = OutgoingDamageEventData
   { _outgoingDamageEventDataAttackerUUID :: UUID
   , _outgoingDamageEventDataDefenderUUID :: UUID
   , _outgoingDamageEventDataDamageAmount :: Int
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''OutgoingDamageEventData
 instance Binary OutgoingDamageEventData
 
 data WeaponAttackAttemptEventData = WeaponAttackAttemptEventData
   { _weaponAttackAttemptEventDataAttackerUUID :: UUID
   , _weaponAttackAttemptEventDataDefenderUUID :: UUID
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''WeaponAttackAttemptEventData
 instance Binary WeaponAttackAttemptEventData
 
 data WeaponAttackHitEventData = WeaponAttackHitEventData
   { _weaponAttackHitEventDataAttackerUUID :: UUID
   , _weaponAttackHitEventDataDefenderUUID :: UUID
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''WeaponAttackHitEventData
 instance Binary WeaponAttackHitEventData
 
 data WeaponAttackMissEventData = WeaponAttackMissEventData
   { _weaponAttackMissEventDataAttackerUUID :: UUID
   , _weaponAttackMissEventDataDefenderUUID :: UUID
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''WeaponAttackMissEventData
 instance Binary WeaponAttackMissEventData
 
 data DeathEventData = DeathEventData
   { _deathEventDataDyingUUID :: UUID
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''DeathEventData
 instance Binary DeathEventData
 
 data GenerateEntityEventData = GenerateEntityEventData Int Int
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary GenerateEntityEventData
 
 data MoveEntityDirectionEventData = MoveEntityDirectionEventData
   { _moveEntityDirectionEventDataMoverUUID :: UUID
   , _moveEntityDirectionEventDataDirection :: Direction
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''MoveEntityDirectionEventData
 instance Binary MoveEntityDirectionEventData
 
 data MoveEntityEventData = MoveEntityEventData
   { _moveEntityEventDataMoverUUID :: UUID
   , _moveEntityEventDataNewPosition :: Position
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''MoveEntityEventData
 instance Binary MoveEntityEventData
 
 data EntityLeftTileEventData = EntityLeftTileEventData
   { _entityLeftTileEventDataLeaverUUID :: UUID
   , _entityLeftTileEventDataLeftTileUUID :: UUID
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''EntityLeftTileEventData
 instance Binary EntityLeftTileEventData
 
 data EntityReachedTileEventData = EntityReachedTileEventData
   { _entityLeftTileEventDataReacherUUID :: UUID
   , _entityLeftTileEventDataReachedTileUUID :: UUID
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeFields ''EntityReachedTileEventData
 instance Binary EntityReachedTileEventData
 
 data TickEventData = TickEventData Int
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary TickEventData
 
 data ZwergEvent
@@ -101,7 +101,7 @@ data ZwergEvent
   | TickEvent TickEventData
   | EntityLeftTileEvent EntityLeftTileEventData
   | EntityReachedTileEvent EntityReachedTileEventData
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary ZwergEvent
 
 -- | This template haskell is purely for avoiding boiler plate code.

@@ -58,7 +58,7 @@ putOnRandomEmptyTile levelUUID entityUUID = do
           addComp entityUUID level levelUUID
           transferOccupant entityUUID Nothing tileUUID
       Nothing -> debug $ "Couldn't find empty tile to place entity with UUID: "
-                         <> show entityUUID
+                         <> show (unwrap entityUUID)
 
 -- verify :: String -> String -> Q Exp
 -- verify us cs = [| verifyComponent $(dyn cs) $(dyn us) |]

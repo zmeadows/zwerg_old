@@ -7,7 +7,6 @@ module Zwerg.Prelude.Class
   , ZIsList(..)
   , ZDefault(..)
   , ZEmptiable(..)
-  , ZFoldable(..)
   , ZSetContainer(..)
   , ZMapContainer(..)
   , ZIncompleteMapContainer(..)
@@ -58,9 +57,6 @@ class (ZEmptiable s) => ZSetContainer s v | s -> v where
   zAdd    :: v -> s -> s
   zDelete :: v -> s -> s
   zMember :: v -> s -> Bool
-
-class ZFoldable f where
-    zMap :: (a -> b) -> f a -> f b
 
 class ZMapContainer f k | f -> k where
   zModifyAt :: (a -> a) -> k -> f a -> f a

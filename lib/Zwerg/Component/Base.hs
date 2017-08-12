@@ -43,7 +43,7 @@ data Components = Components
   , _needsRedraw   :: (Text, UUIDMap Bool)
   , _zLevel        :: (Text, UUIDMap ZLevel)
   , _nextUUID      :: UUID
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 makeClassy ''Components
 instance Binary Components
 

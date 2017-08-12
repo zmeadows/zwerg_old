@@ -39,7 +39,7 @@ data Direction
   | NorthEast
   | SouthWest
   | SouthEast
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary Direction
 
 cardinalDirections :: [Direction]
@@ -55,7 +55,7 @@ data TargetType
   = SingleTarget
   | AOE Double
   | Line Direction Int
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary TargetType
 
 --TODO: map this onto 256 color?
@@ -66,7 +66,7 @@ data Color
   | Red0   | Red1   | Red2   | Red3
   | Black0 | Black1 | Black2 | Black3
   | White0 | White1 | White2 | White3
-  deriving (Eq, Show, Generic)
+  deriving (Generic)
 instance Binary Color
 
 -- type ColoredText = [(Color, Text)]
@@ -74,42 +74,42 @@ instance Binary Color
 data CellColor = CellColor
   { _cellColorForeground :: Color
   , _cellColorBackground :: Color
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 instance Binary CellColor
 
 data Glyph = Glyph
   { _glyphChar    :: Char
   , _glyphVisible :: CellColor
   , _glyphFogged  :: Maybe CellColor
-  } deriving (Show, Eq, Generic)
+  } deriving (Generic)
 instance Binary Glyph
 
 instance ZDefault Glyph where
     zDefault = Glyph 'X' (CellColor Red0 White0) Nothing
 
 data EntityType
-  = Level
+  = Player
+  | Enemy
+  | Item
   | Container
   | Tile
-  | Item
-  | Enemy
-  | Player
-  deriving (Show, Eq, Ord, Enum, Generic)
+  | Level
+  deriving (Eq, Ord, Show, Generic)
 instance Binary EntityType
 
 instance ZDefault EntityType where
     zDefault = Enemy
 
 data TileType = Floor | Wall | Door | Void
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary TileType
 
 data Stat = STR | DEX | INT | CHA | CON | WIS
-  deriving (Show, Eq, Ord, Enum, Generic)
+    deriving (Show, Eq, Ord, Enum, Generic)
 instance Binary Stat
 
 newtype Stats = MkStats (Map Stat Int)
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary Stats
 
 instance ZDefault Stats where
@@ -125,14 +125,14 @@ replaceStat s v (MkStats m) = MkStats $ M.insert s v m
 -- TODO: maximum stat == 100?
 
 data ItemType = Weapon | Armor | Potion | Scroll | Gold
-  deriving (Show, Eq, Ord, Enum, Generic)
+  deriving (Eq, Ord, Generic)
 instance Binary ItemType
 
 instance ZDefault ItemType where
     zDefault = Weapon
 
 data AIType = SimpleMeleeCreature | SimpleRangedCreature
-  deriving (Show, Eq, Ord, Enum, Generic)
+  deriving (Generic)
 instance Binary AIType
 
 instance ZDefault AIType where

@@ -171,7 +171,7 @@ updateGlyphMap =
   use portal >>= \case
     MainScreen gm : ps -> do
         updatedGlyphs <- readC getGlyphMapUpdates
-        portal .= (MainScreen $ mergeUpdates (zMap (set isVisible False) gm) updatedGlyphs) : ps
+        portal .= (MainScreen $ mergeUpdates (fmap (set isVisible False) gm) updatedGlyphs) : ps
     _ -> return ()
 
 processEvents :: Game ()

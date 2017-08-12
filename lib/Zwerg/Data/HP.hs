@@ -7,7 +7,7 @@ module Zwerg.Data.HP
 import Zwerg.Prelude
 
 newtype HP = MkHP (Int, Int)
-  deriving (Show, Eq, Ord, Generic)
+  deriving (Generic)
 
 validHP :: (Int,Int) -> Bool
 validHP (curHP, maxHP) = curHP >= 0 && curHP <= maxHP && maxHP > 0

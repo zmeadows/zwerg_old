@@ -15,7 +15,7 @@ import qualified Data.Random.RVar as RV
 data Distribution
   = Uniform Double Double
   | Normal Double Double
-  deriving (Show, Read, Eq, Ord, Generic)
+  deriving (Generic)
 
 instance Binary Distribution
 

@@ -14,7 +14,7 @@ import Data.Binary (Binary)
 import GHC.Generics (Generic)
 
 newtype UUID = MkUUID Int
-  deriving (Show, Eq, Bounded, Enum, Ord, Generic, Binary)
+  deriving (Eq, Generic, Binary)
 
 instance ZDefault UUID where
     zDefault = MkUUID (-1)
@@ -31,5 +31,5 @@ incUUID :: UUID -> UUID
 incUUID (MkUUID uuid) = MkUUID $ uuid + 1
 
 data Parent = Alive UUID | Dead | NoParent
-  deriving (Show, Eq, Generic)
+  deriving (Eq, Generic)
 instance Binary Parent

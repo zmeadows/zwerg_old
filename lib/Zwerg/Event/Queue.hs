@@ -15,7 +15,7 @@ import Data.Sequence (Seq, (|>), ViewL(..), (><))
 import qualified Data.Sequence as S (viewl, empty, length, null)
 
 newtype ZwergEventQueue = MkZwergEventQueue (Seq ZwergEvent)
-    deriving (Show, Eq, Generic)
+    deriving (Generic)
 instance Binary ZwergEventQueue
 
 class HasZwergEventQueue s where

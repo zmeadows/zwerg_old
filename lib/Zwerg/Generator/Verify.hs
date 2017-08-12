@@ -6,7 +6,7 @@ verifyComponent :: Component a -> UUID -> MonadCompRead ()
 verifyComponent !comp !uuid =
   whenM (not <$> canViewComp uuid comp) $ do
     cn <- view (comp . _1)
-    debug $! "VERIFICATION FAILURE: " <> cn <> " " <> show uuid
+    debug $! "VERIFICATION FAILURE: " <> cn <> " " <> show (unwrap uuid)
 
 verifyAndReturn :: UUID -> Generator' UUID
 verifyAndReturn entityUUID = do

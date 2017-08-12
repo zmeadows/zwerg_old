@@ -17,22 +17,22 @@ import qualified Data.Map as M (empty, insert, delete, lookup, elems)
 import qualified Data.List as L (nub)
 
 data ArmorSlot = Gloves | Head | Chest | Legs | Boots | Shoulders | Belt
-  deriving (Show, Eq, Ord, Enum, Generic)
+    deriving (Eq, Ord, Generic)
 instance Binary ArmorSlot
 
 data HandSlot = LeftHand | RightHand
-  deriving (Show, Eq, Ord, Enum, Generic)
+    deriving (Eq, Ord, Generic)
 instance Binary HandSlot
 
 data EquipmentSlot = Body ArmorSlot | SingleHand HandSlot | BothHands
-  deriving (Show, Eq, Ord, Generic)
+    deriving (Eq, Ord, Generic)
 instance Binary EquipmentSlot
 
 instance ZDefault EquipmentSlot where
     zDefault = SingleHand RightHand
 
 newtype Equipment = MkEquipment (Map EquipmentSlot UUID)
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 instance Binary Equipment
 
 instance ZDefault Equipment where

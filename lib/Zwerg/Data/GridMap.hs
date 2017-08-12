@@ -13,11 +13,10 @@ import qualified Data.IntMap.Lazy as M
   , empty
   , union
   , elems
-  , map
   )
 
 newtype GridMap a = MkGridMap (IntMap a)
-    deriving (Eq, Show, Generic)
+    deriving (Functor, Generic)
 instance Binary a => Binary (GridMap a)
 
 instance ZDefault (GridMap a) where
@@ -36,9 +35,6 @@ instance ZCompleteMapContainer GridMap Position where
 instance ZTraversable2 GridMap Position where
     zTraverseWithKey (MkGridMap gm) f =
         MkGridMap <$> M.traverseWithKey (f . fromJust . from1DIndex) gm
-
-instance ZFoldable GridMap where
-    zMap f (MkGridMap m) = MkGridMap $ M.map f m
 
 -- TODO: use list update function instead of union from IntMap
 mergeUpdates :: GridMap a -> [(Position, a)] -> GridMap a

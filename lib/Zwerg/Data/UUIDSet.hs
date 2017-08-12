@@ -6,7 +6,7 @@ import qualified Control.Monad as CM (filterM)
 import qualified Data.List as L (delete, nub)
 
 newtype UUIDSet = MkUUIDSet [UUID]
-  deriving (Eq, Ord, Show, Monoid, Semigroup, Generic)
+  deriving (Generic)
 
 instance Binary UUIDSet
 

@@ -13,7 +13,7 @@ import qualified Data.IntMap.Lazy as IM
 import Data.Maybe (fromJust)
 
 newtype UUIDMap a = MkUUIDMap (IntMap a)
-    deriving (Show, Eq, Functor, Generic)
+    deriving (Functor, Generic)
 
 instance Binary a => Binary (UUIDMap a)
 
