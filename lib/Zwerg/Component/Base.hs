@@ -51,11 +51,10 @@ type Component a = forall s. HasComponents s => Lens' s (Text, UUIDMap a)
 
 -- TODO: turn these into classes
 -- purely for convenience, type synonyms for commonly various monad contexts
-type MonadCompState a =
-    forall s m. ( HasComponents s
-                , MonadState s m
-                , HasCallStack
-                ) => m a
+type MonadCompState a = forall s m. ( HasComponents s
+                                    , MonadState s m
+                                    , HasCallStack
+                                    ) => m a
 
 type MonadCompStateRand a = forall s m. ( HasCallStack
                                         , HasComponents s
@@ -76,9 +75,7 @@ type MonadCompReadRand a = forall s m. ( HasCallStack
 
 -- For running a MonadCompRead function inside the MonadCompState context
 readC :: MonadCompRead a -> MonadCompState a
-readC x = do
-  cs <- use components
-  return $ runReader x cs
+readC x = (runReader x) <$> use components
 
 emptyComponents :: Components
 emptyComponents =

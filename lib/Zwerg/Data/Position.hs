@@ -4,6 +4,7 @@ module Zwerg.Data.Position
   , Metric(..)
   , to1DIndex
   , from1DIndex
+  , unsafeFrom1DIndex
   , distance
   , modPos
   , movePosDir
@@ -14,6 +15,7 @@ module Zwerg.Data.Position
   ) where
 
 import Zwerg.Prelude
+import Data.List (sort)
 
 newtype ZLevel = MkZLevel Int
   deriving (Eq, Generic)
@@ -24,6 +26,7 @@ newtype Position = MkPosition (Int, Int)
 
 instance ZDefault Position where
     zDefault = MkPosition (0,0)
+
 
 --NOTE: this Ord instance is important, as it keeps the
 --GlyphMap position ordering automatic so we don't have to
@@ -56,6 +59,9 @@ to1DIndex pos =
 
 from1DIndex :: Int -> Maybe Position
 from1DIndex i = validatePosition $ (mod i mapWidthINT, div i mapWidthINT)
+
+unsafeFrom1DIndex :: Int -> Position
+unsafeFrom1DIndex i = MkPosition (mod i mapWidthINT, div i mapWidthINT)
 
 distance :: Metric -> Position -> Position -> Double
 distance metric (MkPosition (x1, y1)) (MkPosition (x2, y2)) =
@@ -95,7 +101,7 @@ allPositions :: [Position]
 allPositions =
   let xs = [0 .. mapWidthINT - 1]
       ys = [0 .. mapHeightINT - 1]
-  in map MkPosition [ (x,y) | x <- xs, y <- ys ]
+  in sort $ map MkPosition [ (x,y) | x <- xs, y <- ys ]
 
 isNeighborPos :: Position -> Position -> Bool
 isNeighborPos (MkPosition (x1,y1)) (MkPosition (x2,y2)) =

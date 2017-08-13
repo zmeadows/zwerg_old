@@ -12,7 +12,7 @@ import Zwerg.Log
 import Zwerg.Random
 import Zwerg.UI.Port
 
-import Data.ByteString.Lazy (ByteString)
+import Data.ByteString (ByteString)
 
 -- TODO: actually use 'quitting' variable
 -- probably needs to be moved to GameState

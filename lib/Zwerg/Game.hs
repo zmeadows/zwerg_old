@@ -4,7 +4,6 @@ module Zwerg.Game where
 import Zwerg.Component
 import Zwerg.Data.Position
 import Zwerg.Data.UUIDMap
--- import Zwerg.Debug
 import Zwerg.Entity
 import Zwerg.Entity.AI
 import Zwerg.Entity.Compare
@@ -17,8 +16,6 @@ import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
 import Zwerg.UI.Port
-
-import qualified Data.Text as T (concat)
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
 
@@ -185,8 +182,8 @@ processEvent :: ZwergEvent -> Game ()
 processEvent (MoveEntityDirectionEvent ed) = do
   oldPosition <- position <@> (ed ^. moverUUID)
   case movePosDir (ed ^. direction) oldPosition of
-    -- TODO: check if non player entity and give error
     Nothing -> do
+        -- TODO: check if non player entity and give error
       pushLogMsgM "You cannot move into the void."
       playerGoofed .= True
     Just newPos -> $(newEvent "MoveEntity") (ed ^. moverUUID) newPos
@@ -244,15 +241,14 @@ processEvent (IncomingDamageEvent ed) = do
     $(newEvent "OutgoingDamage") (ed ^. attackerUUID) (ed ^. defenderUUID) damageDone
 
 processEvent (OutgoingDamageEvent ed) = do
-  stillAlive <- hasComp (ed ^. defenderUUID) hp
-  when stillAlive $ do
+  whenM (hasComp (ed ^. defenderUUID) hp) $ do
     modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
     newHP <- hp <@> (ed ^. defenderUUID)
 
     when (ed ^. attackerUUID == playerUUID || ed ^. defenderUUID == playerUUID) $ do
       attName <- name <@> (ed ^. attackerUUID)
       defName <- name <@> (ed ^. defenderUUID)
-      pushLogMsgM $ T.concat [attName, " hit ", defName, " for ", show $ ed ^. damageAmount, " damage."]
+      pushLogMsgM $ attName <> " hit " <> defName <> " for " <> (show $ ed ^. damageAmount) <> " damage."
 
     when (fst (unwrap newHP) == 0) $
       if (ed ^. defenderUUID) == playerUUID

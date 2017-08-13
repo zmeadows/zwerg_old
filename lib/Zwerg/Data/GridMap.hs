@@ -3,41 +3,33 @@ module Zwerg.Data.GridMap (GridMap, mergeUpdates) where
 import Zwerg.Prelude
 import Zwerg.Data.Position
 
-import Data.Maybe (fromJust)
-import Data.IntMap.Lazy (IntMap)
-import qualified Data.IntMap.Lazy as M
-  ( traverseWithKey
-  , lookup
-  , fromList
-  , adjust
-  , empty
-  , union
-  , elems
-  )
+import Data.Vector (Vector, (//))
+import qualified Data.Vector as V
+import qualified Data.Vector.Mutable as VM
+import Data.Vector.Binary()
 
-newtype GridMap a = MkGridMap (IntMap a)
+newtype GridMap a = MkGridMap (Vector a)
     deriving (Functor, Generic)
 instance Binary a => Binary (GridMap a)
 
-instance ZDefault (GridMap a) where
-    zDefault = MkGridMap M.empty
+instance ZDefault a => ZDefault (GridMap a) where
+    zDefault = MkGridMap $ V.replicate (length allPositions) zDefault
 
 instance ZMapContainer GridMap Position where
-    zModifyAt f k (MkGridMap m) = MkGridMap $ M.adjust f (to1DIndex k) m
-    zElems (MkGridMap m) = M.elems m
+    zModifyAt f k (MkGridMap m) = MkGridMap $ V.modify (\mv -> VM.modify mv f (to1DIndex k)) m
+    zElems (MkGridMap m) = V.toList m
 
 instance ZCompleteMapContainer GridMap Position where
-    zAt (MkGridMap m) pos = fromJust $ M.lookup (to1DIndex pos) m
+    zAt (MkGridMap m) pos = m V.! (to1DIndex pos)
     zIndices = allPositions
-    zBuild f = MkGridMap $ M.fromList $ map (\p -> (to1DIndex p,) $ f p) allPositions
-    zBuildM f = MkGridMap . M.fromList <$> mapM (\p -> (to1DIndex p,) <$> f p) allPositions
+    zBuild f = MkGridMap $ V.fromList $ map f allPositions
+    zBuildM f = MkGridMap . V.fromList <$> mapM f allPositions
 
 instance ZTraversable2 GridMap Position where
     zTraverseWithKey (MkGridMap gm) f =
-        MkGridMap <$> M.traverseWithKey (f . fromJust . from1DIndex) gm
+        MkGridMap <$> V.imapM (\p x -> f (unsafeFrom1DIndex p) x) gm
 
--- TODO: use list update function instead of union from IntMap
 mergeUpdates :: GridMap a -> [(Position, a)] -> GridMap a
-mergeUpdates (MkGridMap m) ps = MkGridMap $ M.union (M.fromList $ map convert ps) m
+mergeUpdates (MkGridMap m) ps = MkGridMap $ m // (map convert ps)
     where convert (p,x) = (to1DIndex p,x)
 
