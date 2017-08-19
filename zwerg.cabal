@@ -127,6 +127,7 @@ library
                       TupleSections,
                       TypeFamilies,
                       TypeOperators,
+                      Strict,
                       InstanceSigs
 
 executable zwerg

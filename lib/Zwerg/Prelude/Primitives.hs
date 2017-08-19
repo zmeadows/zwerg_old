@@ -25,8 +25,8 @@ import Zwerg.Prelude.Class
 
 import Data.Binary as EXPORTED (Binary)
 import GHC.Generics (Generic)
-import Data.Map.Lazy (Map)
-import qualified Data.Map.Lazy as M
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 
 data Direction
   = North

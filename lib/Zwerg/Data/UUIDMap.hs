@@ -8,8 +8,8 @@ import Zwerg.Prelude
 
 import Zwerg.Data.UUIDSet (UUIDSet)
 
-import Data.IntMap.Lazy (IntMap)
-import qualified Data.IntMap.Lazy as IM
+import Data.IntMap.Strict (IntMap)
+import qualified Data.IntMap.Strict as IM
 import Data.Maybe (fromJust)
 
 newtype UUIDMap a = MkUUIDMap (IntMap a)

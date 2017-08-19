@@ -18,6 +18,7 @@ import qualified Brick.Main as BM
 import qualified Brick.Types as BT
 import qualified Graphics.Vty as VTY
 import Data.Monoid ((<>))
+import System.Mem (performGC)
 
 import System.IO (hFlush, stderr)
 
@@ -27,6 +28,7 @@ handleEventZwerg :: HasCallStack
                  -> BT.EventM () (BT.Next ZwergState)
 handleEventZwerg zs (BT.VtyEvent ev) = do
   liftIO $ hFlush stderr
+  liftIO $ performGC
   let eventVTYtoZwergInput :: VTY.Event -> Maybe KeyCode
       eventVTYtoZwergInput (VTY.EvKey VTY.KEsc []) = Just Escape
       eventVTYtoZwergInput (VTY.EvKey (VTY.KChar ch) []) = Just $ KeyChar ch

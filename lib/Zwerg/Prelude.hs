@@ -13,7 +13,7 @@ import Zwerg.Prelude.Primitives as EXPORTED
 
 import Control.Monad.Random.Class as EXPORTED hiding (fromList)
 import Control.Monad.Reader as EXPORTED
-import Control.Monad.State.Lazy as EXPORTED
+import Control.Monad.State.Strict as EXPORTED
 
 import Data.Binary as EXPORTED (Binary)
 import Data.List.NonEmpty as EXPORTED (NonEmpty(..))
