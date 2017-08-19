@@ -12,7 +12,7 @@ sword = do
 
     name        <@- "Iron Short Sword"
     description <@- "A simple sword with short iron blade"
-    glyph       <@- (Glyph '/' $ CellColor antiquewhite Nothing)
+    glyph       <@- (Glyph '†' $ CellColor antiquewhite Nothing)
     itemType    <@- Weapon
     damageChain <@- [ DamageData SingleTarget Slash $ Uniform 1 2 , DamageData SingleTarget Pierce $ Uniform 1 2 ]
     slot        <@- SingleHand RightHand

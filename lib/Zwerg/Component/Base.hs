@@ -41,7 +41,6 @@ data Components = Components
   , _viewRange     :: (Text, UUIDMap Int)
   , _slot          :: (Text, UUIDMap EquipmentSlot)
   , _itemType      :: (Text, UUIDMap ItemType)
-  , _needsRedraw   :: (Text, UUIDMap Bool)
   , _zLevel        :: (Text, UUIDMap ZLevel)
   , _nextUUID      :: UUID
   } deriving (Generic)
@@ -109,7 +108,6 @@ emptyComponents =
         , _viewRange     = ("viewRange"     , zDefault)
         , _slot          = ("slot"          , zDefault)
         , _itemType      = ("itemType"      , zDefault)
-        , _needsRedraw   = ("needsRedraw"   , zDefault)
         , _zLevel        = ("zLevel"        , zDefault)
         , _nextUUID      = incUUID playerUUID
         }

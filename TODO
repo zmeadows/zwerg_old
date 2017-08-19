@@ -2,13 +2,6 @@
 HIGH PRIORITY
 -------------
 
-* Make map bigger and find performance bottleneck(s)
-  - Hopefully it won't be Brick itself
-
-* Fix color setup to use triples of Word8's
-
-* Clean up glyph fog vs. visible data structures and GlyphMap
-
 * Add pickupItem and pickAllItemsOnGround function
 
 * Add ConfirmDropSelectedItems port
@@ -22,7 +15,10 @@ Mostly we will have Distribution Int, but some Doubles may be required
 LOW PRIORITY
 ------------
 
-* Use Data.Coerce to speed up newtype wrapping/unwrapping in some cases?
+* Make map bigger and find performance bottleneck(s)
+  - Hopefully it won't be Brick itself (looks like it is)
+
+* Use Data.Coerce to speed up newtype wrapping/unwrapping of lists in some cases?
 need to better understand if this is necessary
 
 * remove Log newtype (not needed, sequence of messages just fine)
@@ -97,3 +93,9 @@ and call this in the relevant UIBuiler
 
 * modify glyphMap to VTY conversion so that individual char Images are only created when
   the color changes.
+
+* Fix color setup to use triples of Word8's
+
+* Clean up glyph fog vs. visible data structures and GlyphMap
+
+* Add PickupItem and DropItem events

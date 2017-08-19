@@ -18,7 +18,7 @@ goblin = do
     hp            <@- newGoblinHP
     description   <@- "It is foul-smelling and wrinkly."
     species       <@- "Goblin"
-    glyph         <@- (Glyph 'g' $ CellColor green Nothing)
+    glyph         <@- (Glyph 'g' $ CellColor lime Nothing)
     ticks         <@- 100
     aiType        <@- SimpleMeleeCreature
     blocksPassage <@- True

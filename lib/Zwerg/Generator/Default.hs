@@ -45,7 +45,6 @@ generateSkeleton' tileUUID Tile = do
   addComp tileUUID tileType Void
   addComp tileUUID occupants zDefault
   addComp tileUUID blocksPassage True
-  addComp tileUUID needsRedraw True
 
 generateSkeleton' itemUUID Item = do
   addComp itemUUID blocksPassage False

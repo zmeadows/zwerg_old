@@ -22,7 +22,7 @@ getCellColors (GlyphMapCell isVis vg _ fogFG fogBG) =
        then case vg ^. (cellColor . bgColor) of
               Just visBG -> (vg ^. (cellColor . fgColor), visBG)
               Nothing -> (vg ^. (cellColor . fgColor), fogBG)
-       else (darken 0.5 fogFG, darken 0.5 fogBG)
+       else (darken 0.8 fogFG, darken 0.8 fogBG)
 
 getGlyphChar :: GlyphMapCell -> Char
 getGlyphChar (GlyphMapCell isVis vg fogCH _ _) =

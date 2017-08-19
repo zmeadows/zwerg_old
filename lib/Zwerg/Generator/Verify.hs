@@ -20,7 +20,6 @@ verifyAndReturn' :: UUID -> EntityType -> MonadCompRead ()
 verifyAndReturn' uuid Enemy = do
     verifyComponent name uuid
     verifyComponent occupants uuid
-    verifyComponent needsRedraw uuid
     verifyComponent itemType uuid
   -- $(hasAll "uuid"
   --  [ "name" , "description" , "species"

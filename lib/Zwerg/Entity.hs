@@ -129,7 +129,6 @@ transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
             modComp newContainerUUID occupants $ zAdd transfereeUUID
             position <@> newContainerUUID >>= setComp transfereeUUID position
             when (occupiedType == Tile) $ do
-               setComp newContainerUUID needsRedraw True
                setComp transfereeUUID tileOn newContainerUUID
       removeOccupant oldContainerUUID' = do
         occupiedType <- entityType <@> oldContainerUUID'
@@ -137,7 +136,6 @@ transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
           then debug "Attempted to remove an occupant from an entity that doesn't support it"
           else do
             modComp oldContainerUUID' occupants $ zDelete transfereeUUID
-            when (occupiedType == Tile) $ setComp oldContainerUUID' needsRedraw True
   in whenJust oldContainerUUID removeOccupant >> addOccupant
 
 -- | TODO: this is not at all complete
@@ -146,7 +144,6 @@ eraseEntity uuid = do
   -- TODO: not all entities are on a tile?
   entityTileUUID <- tileOn <@> uuid
   modComp entityTileUUID occupants (zDelete uuid)
-  setComp entityTileUUID needsRedraw True
 
   deleteComp uuid name
   deleteComp uuid glyph
@@ -171,7 +168,6 @@ eraseEntity uuid = do
   deleteComp uuid viewRange
   deleteComp uuid slot
   deleteComp uuid itemType
-  deleteComp uuid needsRedraw
   deleteComp uuid zLevel
 
 --TODO: placeholder. Need to look at creatures DEX, etc

@@ -84,6 +84,20 @@ data EntityReachedTileEventData = EntityReachedTileEventData
 makeFields ''EntityReachedTileEventData
 instance Binary EntityReachedTileEventData
 
+data EntityDroppedItemEventData = EntityDroppedItemEventData
+  { _entityDroppedItemEventDataDropperUUID :: UUID
+  , _entityDroppedItemEventDataDroppedUUID :: UUID
+  } deriving (Generic)
+makeFields ''EntityDroppedItemEventData
+instance Binary EntityDroppedItemEventData
+
+data EntityPickedUpItemEventData = EntityPickedUpItemEventData
+  { _entityPickedUpItemEventDataPickerUUID :: UUID
+  , _entityPickedUpItemEventDataPickedUUID :: UUID
+  } deriving (Generic)
+makeFields ''EntityPickedUpItemEventData
+instance Binary EntityPickedUpItemEventData
+
 data TickEventData = TickEventData Int
   deriving (Generic)
 instance Binary TickEventData
@@ -101,6 +115,8 @@ data ZwergEvent
   | TickEvent TickEventData
   | EntityLeftTileEvent EntityLeftTileEventData
   | EntityReachedTileEvent EntityReachedTileEventData
+  | EntityDroppedItemEvent EntityDroppedItemEventData
+  | EntityPickedUpItemEvent EntityPickedUpItemEventData
   deriving (Generic)
 instance Binary ZwergEvent
 
@@ -115,4 +131,6 @@ newEvent "MoveEntity"          = runQ [| \a b -> pushEventM $ MoveEntityEvent $ 
 newEvent "MoveEntityDirection" = runQ [| \a b -> pushEventM $ MoveEntityDirectionEvent $ MoveEntityDirectionEventData a b|]
 newEvent "EntityLeftTile"      = runQ [| \a b -> pushEventM $ EntityLeftTileEvent $ EntityLeftTileEventData a b|]
 newEvent "EntityReachedTile"   = runQ [| \a b -> pushEventM $ EntityReachedTileEvent $ EntityReachedTileEventData a b|]
+newEvent "EntityDroppedItem"   = runQ [| \a b -> pushEventM $ EntityDroppedItemEvent $ EntityDroppedItemEventData a b|]
+newEvent "EntityPickedUpItem"   = runQ [| \a b -> pushEventM $ EntityPickedUpItemEvent $ EntityPickedUpItemEventData a b|]
 newEvent _                     = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION 'newEvent'"|]

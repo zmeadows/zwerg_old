@@ -47,8 +47,7 @@ emptyGameState = GameState
   , _playerGoofed = False
   }
 
--- Highest level purely-functional context which encapsulates
--- all game logic/state/error handling
+-- Highest level purely-functional context which encapsulates all game logic/state
 newtype Game' a = Game (RandT RanGen (State GameState) a)
   deriving ( Functor
            , Applicative
@@ -127,6 +126,11 @@ processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
 
 processUserInput' (ViewInventory inv : ps) (KeyChar 'd') =
   portal .= (ViewInventory $ toggleFocus inv) : ps
+
+processUserInput' (ViewInventory inv : ps) (KeyChar 'D') = do
+    forM_ (getAllSelected inv) $ \droppedItemUUID ->
+        $(newEvent "EntityDroppedItem") playerUUID droppedItemUUID
+    portal .= ps
 
 processUserInput' (ViewInventory _ : ps) (KeyChar 'i') = portal .= ps
 
@@ -255,6 +259,11 @@ processEvent (OutgoingDamageEvent ed) = do
       if (ed ^. defenderUUID) == playerUUID
          then portal %= (DeathScreen "You died." :)
          else eraseEntity $ ed ^. defenderUUID
+
+processEvent (EntityDroppedItemEvent ed) = do
+    tileUUID <- tileOn <@> (ed ^. dropperUUID)
+    modComp (ed ^. dropperUUID) inventory $ zDelete (ed ^. droppedUUID)
+    modComp tileUUID occupants $ zAdd (ed ^. droppedUUID)
 
 processEvent _ = return ()
 

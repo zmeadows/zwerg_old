@@ -1,4 +1,4 @@
-module Zwerg.Geometry.FOV (getFOV, pureGetFOVRays) where
+module Zwerg.Geometry.FOV (getFOV, getFOVLazy, pureGetFOVRays) where
 
 import Zwerg.Prelude
 import Zwerg.Data.GridMap
@@ -28,7 +28,7 @@ getFOVLazy pos fov _ = [ unsafeWrap (x,y) | x <- [minX..maxX], y <- [minY..maxY]
 
 pureGetFOVRays :: Position -> Int -> BlockedMap -> [Position]
 pureGetFOVRays pos fov blockedMap = visiblePos
-    where fovEdges = circle (unwrap pos) (2 * fov)
+    where fovEdges = circle (unwrap pos) (fov) ++ circle (unwrap pos) (fov+1)
           linesToFovEdges = map (tail . line (unwrap pos)) fovEdges
           notBlocked is = case (wrap is) of
                             Just p -> (not $ zAt blockedMap p) && (round (distance Euclidean pos p) < fov)
