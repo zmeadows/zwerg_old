@@ -15,7 +15,9 @@ import Zwerg.Component      as EXPORTED
 import Zwerg.Data.Damage    as EXPORTED
 import Zwerg.Data.Equipment as EXPORTED
 import Zwerg.Data.GridMap   as EXPORTED
+import Zwerg.Data.Glyph     as EXPORTED
 import Zwerg.Data.HP        as EXPORTED
+import Zwerg.Data.ZColor    as EXPORTED
 import Zwerg.Data.Position  as EXPORTED
 import Zwerg.Data.UUIDSet   as EXPORTED
 import Zwerg.Debug          as EXPORTED

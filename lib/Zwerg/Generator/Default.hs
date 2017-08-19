@@ -12,7 +12,7 @@ generatePlayerSkeleton = do
   addComp playerUUID equipment zDefault
   addComp playerUUID inventory zDefault
   addComp playerUUID stats zDefault
-  addComp playerUUID glyph $ Glyph '@' (CellColor Red0 Red0) Nothing
+  addComp playerUUID glyph $ Glyph '@' (CellColor yellow Nothing)
   addComp playerUUID blocksPassage True
   addComp playerUUID blocksVision False
 

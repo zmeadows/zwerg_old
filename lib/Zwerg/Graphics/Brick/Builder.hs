@@ -15,7 +15,6 @@ import Zwerg.Util
 
 import Data.Foldable (foldl1)
 import Data.Monoid ((<>))
-import Data.Text (append)
 import Data.Text.Markup ((@@))
 
 --TODO: add import lists to these
@@ -105,9 +104,7 @@ buildPortUI (MainScreen gm) = do
   mylog <- view (gameState . userLog)
   let mapWidget :: BT.Widget ()
       mapWidget =
-        let rows = glyphMapToRows gm :: [[CellData]]
-            mkImageRow :: [CellData] -> VTY.Image
-            mkImageRow row = foldl1 (VTY.<|>) $ map glyphToVtyImage row
+        let rows = glyphMapToRows gm :: [[GlyphMapCell]]
          in raw $ foldl1 (VTY.<->) $ map mkImageRow rows
 
       logWidget = vBox $ (str . unpack) <$> concat (splitLog 50 15 mylog) :: BT.Widget ()
@@ -148,36 +145,25 @@ zwergLogo = vBox $ map (withAttr "logo")
                  ]
 
 
-zwergColorToVtyColor :: Color -> VTY.Color
-zwergColorToVtyColor zc =
-  let mkVTYcolor :: (Int, Int, Int) -> VTY.Color
-      mkVTYcolor (r, g, b) = VTY.rgbColor r g b
-  in case zc of
-       Green0 -> mkVTYcolor (159, 255, 128)
-       Green1 -> mkVTYcolor (121, 255, 77)
-       Green2 -> mkVTYcolor (83, 255, 26)
-       Green3 -> mkVTYcolor (38, 153, 0)
-       Blue0 -> mkVTYcolor (153, 153, 255)
-       Blue1 -> mkVTYcolor (102, 102, 255)
-       Blue2 -> mkVTYcolor (51, 51, 255)
-       Blue3 -> mkVTYcolor (0, 0, 204)
-       Red0 -> mkVTYcolor (255, 102, 102)
-       Red1 -> mkVTYcolor (255, 51, 51)
-       Red2 -> mkVTYcolor (230, 0, 0)
-       Red3 -> mkVTYcolor (153, 0, 0)
-       White0 -> VTY.Color240 227
-       White1 -> VTY.Color240 230
-       White2 -> VTY.Color240 233
-       White3 -> VTY.Color240 236
-       Black0 -> VTY.Color240 0
-       Black1 -> VTY.Color240 217
-       Black2 -> VTY.Color240 220
-       Black3 -> VTY.Color240 223
+zwergColorToVtyColor :: ZColor -> VTY.Color
+zwergColorToVtyColor (ZColor r g b) = VTY.rgbColor r g b
 
-glyphToVtyImage :: CellData -> VTY.Image
-glyphToVtyImage (CellData isVis fogGlyph visGlyph) =
-  if isVis
-     then VTY.char (zwergColorToVtyColor fgvC `on` VTY.Color240 220) vC
-     else VTY.char (zwergColorToVtyColor fgfC  `on` VTY.Color240 0) fC
- where (Glyph fC (CellColor fgfC _) _) = fogGlyph
-       (Glyph vC (CellColor fgvC _) _) = visGlyph
+mkImageRow :: [GlyphMapCell] -> VTY.Image
+mkImageRow [] = VTY.emptyImage
+mkImageRow (cd:cds) = mkImageRow' cds (getCellColors cd) (singleton $ getGlyphChar cd) []
+
+mkImageRow' :: [GlyphMapCell] -> (ZColor, ZColor) -> Text -> [VTY.Image] -> VTY.Image
+mkImageRow' [] curCellColor chars imgs =
+    foldl1 (VTY.<|>)
+    $ reverse
+    $ (cellsToImage chars curCellColor) : imgs
+
+mkImageRow' (r:rs) curCellColor chars imgs =
+    if nextCellColor == curCellColor
+       then mkImageRow' rs curCellColor (chars <> nextChar) imgs
+       else mkImageRow' rs nextCellColor nextChar $ (cellsToImage chars curCellColor) : imgs
+  where nextCellColor = getCellColors r
+        nextChar = singleton $ getGlyphChar r
+
+cellsToImage :: Text -> (ZColor,ZColor) -> VTY.Image
+cellsToImage t (fgC, bgC) = VTY.text' (zwergColorToVtyColor fgC `on` zwergColorToVtyColor bgC) t

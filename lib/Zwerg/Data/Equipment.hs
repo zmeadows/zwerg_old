@@ -52,6 +52,9 @@ unequip slot eq                   = unequipSlots [slot] eq
 unequipSlots :: [EquipmentSlot] -> Equipment -> ([UUID], Equipment)
 unequipSlots slots eq = unequipSlots' slots eq []
 
+--FIXME: make sure this is really looping through and unequipping everything in the list
+--FIXME: make sure this is really looping through and unequipping everything in the list
+--FIXME: make sure this is really looping through and unequipping everything in the list
 unequipSlots' :: [EquipmentSlot] -> Equipment -> [UUID] -> ([UUID], Equipment)
 unequipSlots' [] eq uis = (uis, eq)
 unequipSlots' (s:ss) (MkEquipment eq) uis =

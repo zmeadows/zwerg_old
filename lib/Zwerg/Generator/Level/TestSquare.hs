@@ -11,8 +11,8 @@ testSquareGenerator = do
     testSquareLevelUUID <- generateSkeleton Level
     testSquareTiles <- tileMap <@> testSquareLevelUUID
 
-    let wallGlyph = Glyph 'X' (CellColor White2 White0) $ Just (CellColor Black1 Black0)
-        floorGlyph = Glyph '·' (CellColor White2 White0) $ Just (CellColor Black2 Black0)
+    let wallGlyph = Glyph 'X' $ CellColor white $ Just black
+        floorGlyph = Glyph '·' $ CellColor white $ Just black
 
     zTraverseWithKey_ testSquareTiles $ \pos tileUUID -> do
         let (x, y) = unwrap pos

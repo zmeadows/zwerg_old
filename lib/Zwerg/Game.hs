@@ -257,16 +257,24 @@ processEvent (OutgoingDamageEvent ed) = do
 
 processEvent _ = return ()
 
--- FIXME: need to make distinction between visible/needsRedraw tiles...
--- FIXME: this should be MonadCompReader?
-getGlyphMapUpdates :: MonadCompRead [(Position,CellData)]
+getGlyphMapUpdates :: MonadCompRead [(Position,GlyphMapCell)]
 getGlyphMapUpdates = do
   visibleTiles <- getVisibleTiles playerUUID
   forM visibleTiles $ \tileUUID -> do
     pos <- position <~> tileUUID
-    glyph1 <- getPrimaryOccupant tileUUID >>= (<~>) glyph
-    glyph2 <- getPrimaryNonEnemyOccupant tileUUID >>= (<~>) glyph
-    return (pos, CellData True glyph2 glyph1)
+    vg <- getPrimaryOccupant tileUUID >>= (<~>) glyph
+    stationaryUUID <- getPrimaryStationaryOccupant tileUUID
+    Glyph fogChar (CellColor fogFG fogBG) <- glyph <~> stationaryUUID
+
+    case fogBG of
+      Just fogBG' -> return (pos, GlyphMapCell True vg fogChar fogFG fogBG')
+      Nothing -> if (stationaryUUID /= tileUUID)
+                    then do
+                      Glyph tileChar (CellColor tileFG tileBG) <- glyph <~> tileUUID
+                      case tileBG of
+                        Just tileBG' -> return (pos, GlyphMapCell True vg tileChar tileFG tileBG')
+                        Nothing -> return (pos, GlyphMapCell True vg tileChar tileFG red)
+                    else return (pos, GlyphMapCell True vg fogChar fogFG red)
 
 processPlayerDirectionInput :: Direction -> Game ()
 processPlayerDirectionInput dir = getPlayerAdjacentEnemy >>= \case

@@ -7,6 +7,7 @@ import Prelude as EXPORTED hiding (show, Monoid(..))
 import qualified Prelude as P (show)
 
 import Zwerg.Data.UUID as EXPORTED
+import Zwerg.Data.ZColor as EXPORTED
 import Zwerg.Prelude.Class as EXPORTED
 import Zwerg.Prelude.Primitives as EXPORTED
 
@@ -19,7 +20,7 @@ import Data.List.NonEmpty as EXPORTED (NonEmpty(..))
 import Data.Maybe as EXPORTED (catMaybes)
 import Data.Semigroup as EXPORTED
 import Data.String.Conv (StringConv, toS)
-import Data.Text as EXPORTED (Text, pack, unpack)
+import Data.Text as EXPORTED (Text, pack, unpack, singleton, append)
 import Data.Traversable as EXPORTED (forM)
 
 import GHC.Exts as EXPORTED (IsList(..))

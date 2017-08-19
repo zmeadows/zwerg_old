@@ -1,4 +1,4 @@
-module Zwerg.Geometry.FOV (getFOV) where
+module Zwerg.Geometry.FOV (getFOV, pureGetFOVRays) where
 
 import Zwerg.Prelude
 import Zwerg.Data.GridMap
@@ -15,16 +15,16 @@ type BlockedMap = GridMap Bool
 -- type RelativePosition = (Int,Int)
 
 getFOV :: Position -> Int -> BlockedMap -> [Position]
-getFOV = pureGetFOVRays
+getFOV = getFOVLazy
 
--- getFOVLazy :: Position -> Int -> BlockedMap -> [Position]
--- getFOVLazy pos fov _ = [ unsafeWrap (x,y) | x <- [minX..maxX], y <- [minY..maxY], inPlayerSightRange (x,y) ]
---     where inPlayerSightRange (a,b) = (round $ distance Euclidean pos (unsafeWrap (a,b))) < fov
---           (posX,posY) = unwrap pos
---           minX = max 0 (posX - fov)
---           minY = max 0 (posY - fov)
---           maxX = min (mapWidthINT-1) (posX + fov)
---           maxY = min (mapHeightINT-1) (posY + fov)
+getFOVLazy :: Position -> Int -> BlockedMap -> [Position]
+getFOVLazy pos fov _ = [ unsafeWrap (x,y) | x <- [minX..maxX], y <- [minY..maxY], inPlayerSightRange (x,y) ]
+    where inPlayerSightRange (a,b) = (round $ distance Euclidean pos (unsafeWrap (a,b))) < fov
+          (posX,posY) = unwrap pos
+          minX = max 0 (posX - fov)
+          minY = max 0 (posY - fov)
+          maxX = min (mapWidthINT-1) (posX + fov)
+          maxY = min (mapHeightINT-1) (posY + fov)
 
 pureGetFOVRays :: Position -> Int -> BlockedMap -> [Position]
 pureGetFOVRays pos fov blockedMap = visiblePos

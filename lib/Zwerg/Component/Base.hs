@@ -5,6 +5,7 @@ import Zwerg.Prelude
 import Zwerg.Data.Damage
 import Zwerg.Data.Equipment
 import Zwerg.Data.GridMap
+import Zwerg.Data.Glyph
 import Zwerg.Data.HP
 import Zwerg.Data.Position
 import Zwerg.Data.UUIDMap

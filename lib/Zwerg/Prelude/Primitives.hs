@@ -4,10 +4,8 @@ module Zwerg.Prelude.Primitives
   , diagonalDirections
   , allDirections
   , TargetType(..)
-  , Color(..)
-  , CellColor(..)
-  , Glyph(..)
   , EntityType(..)
+  , isTypicallyStationary
   , TileType(..)
   , Stat(..)
   , Stats(..)
@@ -58,35 +56,6 @@ data TargetType
   deriving (Generic)
 instance Binary TargetType
 
---TODO: map this onto 256 color?
-  --TODO: fallback 8 bit color?
-data Color
-  = Green0 | Green1 | Green2 | Green3
-  | Blue0  | Blue1  | Blue2  | Blue3
-  | Red0   | Red1   | Red2   | Red3
-  | Black0 | Black1 | Black2 | Black3
-  | White0 | White1 | White2 | White3
-  deriving (Generic)
-instance Binary Color
-
--- type ColoredText = [(Color, Text)]
-
-data CellColor = CellColor
-  { _cellColorForeground :: Color
-  , _cellColorBackground :: Color
-  } deriving (Generic)
-instance Binary CellColor
-
-data Glyph = Glyph
-  { _glyphChar    :: Char
-  , _glyphVisible :: CellColor
-  , _glyphFogged  :: Maybe CellColor
-  } deriving (Generic)
-instance Binary Glyph
-
-instance ZDefault Glyph where
-    zDefault = Glyph 'X' (CellColor Red0 White0) Nothing
-
 data EntityType
   = Player
   | Enemy
@@ -96,6 +65,11 @@ data EntityType
   | Level
   deriving (Eq, Ord, Show, Generic)
 instance Binary EntityType
+
+isTypicallyStationary :: EntityType -> Bool
+isTypicallyStationary Player = False
+isTypicallyStationary Enemy = False
+isTypicallyStationary _ = True
 
 instance ZDefault EntityType where
     zDefault = Enemy
@@ -142,10 +116,10 @@ instance ZDefault AIType where
 -- CONSTS --
 ------------
 mapWidthDOUBLE :: Double
-mapWidthDOUBLE = 100
+mapWidthDOUBLE = 125
 
 mapHeightDOUBLE :: Double
-mapHeightDOUBLE = 25
+mapHeightDOUBLE = 35
 
 mapWidthINT :: Int
 mapWidthINT = round mapWidthDOUBLE

@@ -1,40 +1,52 @@
-#######################
-#### HIGH PRIORITY ####
-#######################
+-------------
+HIGH PRIORITY
+-------------
 
-:: Add pickupItem and pickAllItemsOnGround function
+* Make map bigger and find performance bottleneck(s)
+  - Hopefully it won't be Brick itself
 
-:: Add ConfirmDropSelectedItems port
+* Fix color setup to use triples of Word8's
+
+* Clean up glyph fog vs. visible data structures and GlyphMap
+
+* Add pickupItem and pickAllItemsOnGround function
+
+* Add ConfirmDropSelectedItems port
 Simple yes/no display, with a list of to-be-dropped items underneath.
 
-:: make Distribution a * -> * kind and make Damage use a Distribution Int
+* make Distribution a * -> * kind and make Damage use a Distribution Int
 make sample return m a instead of m Double
 Mostly we will have Distribution Int, but some Doubles may be required
 
-######################
-#### LOW PRIORITY ####
-######################
+------------
+LOW PRIORITY
+------------
 
-:: remove Log newtype (not needed, sequence of messages just fine)
+* Use Data.Coerce to speed up newtype wrapping/unwrapping in some cases?
+need to better understand if this is necessary
 
-:: comment unused Z* class instances
+* remove Log newtype (not needed, sequence of messages just fine)
 
-:: Make function to select Menu focus by matching 'shortcut'
+* comment unused Z* class instances
 
-:: make a printEntity function for debugging
+* Make function to select Menu focus by matching 'shortcut'
 
-:: add HasCallStack to more contexts
+* make a printEntity function for debugging
 
+* add HasCallStack to more contexts
 
-:: Add system to auto-explore by pressing the 'Tab' key
+* Add system to auto-explore by pressing the 'Tab' key
 This will be difficult.
+  - Add A* path-finding algorithm
+  - Add function to choose next tile to explore towards
 
-:: Add 'entitiesInVisionOf' function
-will be useful in many future contexts
+* Add system to auto-attack to reduce early game monotony
 
-##################
-#### FINISHED ####
-##################
+* Add 'entitiesInVisionOf' function will be useful in many future contexts
+
+--------
+FINISHED
+--------
 
 :: Default Components
 Make a function that takes EntityType as argument, and adds *only* the
@@ -82,3 +94,6 @@ instead of a GridMap,
 and computed in the handleEventZwerg function (which is MonadIO context)
 Make a function to return the full Glyph for a player-visible tile,
 and call this in the relevant UIBuiler
+
+* modify glyphMap to VTY conversion so that individual char Images are only created when
+  the color changes.
