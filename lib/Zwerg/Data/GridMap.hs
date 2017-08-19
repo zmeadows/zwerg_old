@@ -12,8 +12,13 @@ newtype GridMap a = MkGridMap (Vector a)
     deriving (Functor, Generic)
 instance Binary a => Binary (GridMap a)
 
+
 instance ZDefault a => ZDefault (GridMap a) where
-    zDefault = MkGridMap $ V.replicate (length allPositions) zDefault
+    zDefault = MkGridMap $ V.replicate (mapWidthINT * mapHeightINT) zDefault
+
+instance ZDefault a => ZWrapped (GridMap a) (Vector a) where
+    unwrap (MkGridMap v) = v
+    wrap _ = Just (zDefault :: GridMap a)
 
 instance ZMapContainer GridMap Position where
     zModifyAt f k (MkGridMap m) = MkGridMap $ V.modify (\mv -> VM.modify mv f (to1DIndex k)) m

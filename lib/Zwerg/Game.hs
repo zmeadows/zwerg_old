@@ -9,7 +9,8 @@ import Zwerg.Entity.AI
 import Zwerg.Entity.Compare
 import Zwerg.Event.Queue
 import Zwerg.Generator
-import Zwerg.Generator.Level.TestSquare
+-- import Zwerg.Generator.Level.TestSquare
+import Zwerg.Generator.Level.Cave
 import Zwerg.Generator.Player.TestPlayer
 import Zwerg.Log
 import Zwerg.UI.GlyphMap
@@ -63,7 +64,7 @@ runGame (Game a) gen st = execState (runRandT a gen) st
 
 -- TODO: factor out into Generator.World module
 generateGame :: Game ()
-generateGame = testSquareGenerator >>= testPlayerGenerator
+generateGame = caveGenerator >>= testPlayerGenerator
 
 -- after we process a player tick, go through all other entities
 -- and process their ticks, until the player is ready to tick again

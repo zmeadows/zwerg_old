@@ -37,4 +37,5 @@ testSquareGenerator = do
 
     replicateM_ 5 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
     replicateM_ 4 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
+
     verifyAndReturn testSquareLevelUUID
