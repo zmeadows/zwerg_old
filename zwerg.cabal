@@ -84,14 +84,11 @@ library
                        brick,
                        bytestring,
                        containers,
-                       filepath,
                        fingertree,
                        mersenne-random-pure64,
-                       microlens,
                        microlens-platform,
                        monad-loops,
                        mtl,
-                       non-negative,
                        semigroups,
                        string-conv,
                        template-haskell,
@@ -101,9 +98,6 @@ library
                        unordered-containers,
                        vector,
                        vector-binary-instances,
-                       vty,
-                       xml,
-                       zlib,
                        primitive,
                        MonadRandom,
                        StateVar
@@ -142,6 +136,34 @@ executable zwerg
   main-is:             Main.hs
 
   default-language:    Haskell2010
+
+  default-extensions: BangPatterns,
+                      CPP,
+                      DeriveFoldable,
+                      DeriveGeneric,
+                      DeriveTraversable,
+                      DeriveAnyClass,
+                      DerivingStrategies,
+                      FlexibleContexts,
+                      FlexibleInstances,
+                      FunctionalDependencies,
+                      GeneralizedNewtypeDeriving,
+                      LambdaCase,
+                      MultiParamTypeClasses,
+                      MultiWayIf,
+                      NoImplicitPrelude,
+                      OverloadedStrings,
+                      RankNTypes,
+                      ScopedTypeVariables,
+                      StandaloneDeriving,
+                      TemplateHaskell,
+                      PatternSynonyms,
+                      TupleSections,
+                      TypeFamilies,
+                      TypeOperators,
+                      Strict,
+                      RecordWildCards,
+                      InstanceSigs
 
   ghc-options:         -Wall
                        -Werror
