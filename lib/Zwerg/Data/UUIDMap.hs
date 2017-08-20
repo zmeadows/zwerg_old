@@ -13,9 +13,8 @@ import qualified Data.IntMap.Strict as IM
 import Data.Maybe (fromJust)
 
 newtype UUIDMap a = MkUUIDMap (IntMap a)
-    deriving (Functor, Generic)
-
-instance Binary a => Binary (UUIDMap a)
+    deriving stock (Functor, Generic)
+    deriving anyclass Binary
 
 instance ZDefault (UUIDMap a) where
   zDefault = MkUUIDMap IM.empty

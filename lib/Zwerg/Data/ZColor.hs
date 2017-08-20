@@ -6,8 +6,8 @@ import Data.Binary as EXPORTED (Binary)
 import Data.Word (Word8)
 
 data ZColor = ZColor Word8 Word8 Word8
-    deriving (Eq, Generic)
-instance Binary ZColor
+    deriving stock (Eq, Generic)
+    deriving anyclass Binary
 
 darken :: Double -> ZColor -> ZColor
 darken scale (ZColor r g b) =

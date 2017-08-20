@@ -9,9 +9,8 @@ import qualified Data.Vector.Mutable as VM
 import Data.Vector.Binary()
 
 newtype GridMap a = MkGridMap (Vector a)
-    deriving (Functor, Generic)
-instance Binary a => Binary (GridMap a)
-
+    deriving stock (Functor, Generic)
+    deriving anyclass Binary
 
 instance ZDefault a => ZDefault (GridMap a) where
     zDefault = MkGridMap $ V.replicate (mapWidthINT * mapHeightINT) zDefault

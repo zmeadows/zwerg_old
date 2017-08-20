@@ -8,11 +8,10 @@ import Zwerg.Prelude
 import qualified Control.Monad.Random as CMR (MonadRandom)
 
 data Distribution
-  = Uniform Double Double
-  | Normal Double Double
-  deriving (Generic)
-
-instance Binary Distribution
+    = Uniform Double Double
+    | Normal Double Double
+  deriving stock Generic
+  deriving anyclass Binary
 
 --TODO: add more distributions and complete this function
 sample :: forall m. (CMR.MonadRandom m) => Distribution -> m Double

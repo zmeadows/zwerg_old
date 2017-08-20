@@ -18,15 +18,15 @@ import Zwerg.Prelude
 import Data.List (sort)
 
 newtype ZLevel = MkZLevel Int
-  deriving (Eq, Generic)
-instance Binary ZLevel
+    deriving stock (Eq, Generic)
+    deriving anyclass Binary
 
 newtype Position = MkPosition (Int, Int)
-    deriving (Eq, Generic)
+    deriving stock (Eq, Generic)
+    deriving anyclass Binary
 
 instance ZDefault Position where
     zDefault = MkPosition (0,0)
-
 
 --NOTE: this Ord instance is important, as it keeps the
 --GlyphMap position ordering automatic so we don't have to
@@ -36,8 +36,6 @@ instance Ord Position where
     if (y1 /= y2)
        then compare y1 y2
        else compare x1 x2
-
-instance Binary Position
 
 instance ZWrapped Position (Int, Int) where
   unwrap (MkPosition p) = p
