@@ -14,15 +14,14 @@ import Control.Monad.Loops (minimumByM)
 import Control.Monad.Random (RandT, evalRandT)
 import Data.Maybe (fromJust, catMaybes)
 
-newtype AI a =
-  AI (RandT RanGen (StateT ZwergEventQueue (Reader Components)) a)
-  deriving ( Functor
-           , Applicative
-           , Monad
-           , MonadReader Components
-           , MonadState ZwergEventQueue
-           , MonadRandom
-           )
+newtype AI a = AI (RandT RanGen (StateT ZwergEventQueue (Reader Components)) a)
+  deriving newtype ( Functor
+                   , Applicative
+                   , Monad
+                   , MonadReader Components
+                   , MonadState ZwergEventQueue
+                   , MonadRandom
+                   )
 
 runAI :: ( HasCallStack
          , HasComponents s

@@ -41,6 +41,8 @@ instance ZDefault Text where
   zDefault = "DEFAULT"
 instance ZDefault Int where
   zDefault = 1
+instance ZDefault Char where
+  zDefault = '⸮'
 instance ZDefault Bool where
   zDefault = False
 instance ZDefault [a] where

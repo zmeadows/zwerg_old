@@ -4,6 +4,7 @@ import Zwerg.Prelude hiding ((<>))
 
 import Zwerg
 import Zwerg.Component
+import Zwerg.Data.Glyph
 import Zwerg.Entity
 import Zwerg.Entity.Compare
 import Zwerg.Game
@@ -41,7 +42,7 @@ menuToBrickList m =
   in BL.listMoveTo (getMenuFocusIndex m) $ BL.list () (V.fromList allLabels) 1
 
 newtype UIBuilder' a = UIBuilder (Reader GameState a)
-  deriving (Functor, Applicative, Monad, MonadReader GameState)
+    deriving newtype (Functor, Applicative, Monad, MonadReader GameState)
 
 type UIBuilder a = HasCallStack => UIBuilder' a
 
@@ -150,20 +151,17 @@ zwergColorToVtyColor (ZColor r g b) = VTY.rgbColor r g b
 
 mkImageRow :: [GlyphMapCell] -> VTY.Image
 mkImageRow [] = VTY.emptyImage
-mkImageRow (cd:cds) = mkImageRow' cds (getCellColors cd) (singleton $ getGlyphChar cd) []
+mkImageRow (cd:cds) = mkImageRow' cds (initFG, initBG) (singleton initChar) []
+    where (initChar, initFG, initBG) = unpackGlyphMapCell cd
 
 mkImageRow' :: [GlyphMapCell] -> (ZColor, ZColor) -> Text -> [VTY.Image] -> VTY.Image
-mkImageRow' [] curCellColor chars imgs =
-    foldl1 (VTY.<|>)
-    $ reverse
-    $ (cellsToImage chars curCellColor) : imgs
+mkImageRow' [] curCellColor chars imgs = foldl1 (VTY.<|>) $ reverse $ (cellsToImage chars curCellColor) : imgs
 
-mkImageRow' (r:rs) curCellColor chars imgs =
-    if nextCellColor == curCellColor
-       then mkImageRow' rs curCellColor (chars <> nextChar) imgs
-       else mkImageRow' rs nextCellColor nextChar $ (cellsToImage chars curCellColor) : imgs
-  where nextCellColor = getCellColors r
-        nextChar = singleton $ getGlyphChar r
+mkImageRow' (r:rs) (curFG, curBG) chars imgs =
+    if (nextFG, nextBG) == (curFG, curBG)
+       then mkImageRow' rs (curFG, curBG) (chars <> singleton nextChar) imgs
+       else mkImageRow' rs (nextFG, nextBG) (singleton nextChar) $ (cellsToImage chars (curFG,curBG)) : imgs
+  where (nextChar, nextFG, nextBG) = unpackGlyphMapCell r
 
 cellsToImage :: Text -> (ZColor,ZColor) -> VTY.Image
 cellsToImage t (fgC, bgC) = VTY.text' (zwergColorToVtyColor fgC `on` zwergColorToVtyColor bgC) t

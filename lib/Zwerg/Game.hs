@@ -49,12 +49,12 @@ emptyGameState = GameState
 
 -- Highest level purely-functional context which encapsulates all game logic/state
 newtype Game' a = Game (RandT RanGen (State GameState) a)
-  deriving ( Functor
-           , Applicative
-           , Monad
-           , MonadState GameState
-           , MonadRandom
-           )
+    deriving newtype ( Functor
+                     , Applicative
+                     , Monad
+                     , MonadState GameState
+                     , MonadRandom
+                     )
 
 type Game a = HasCallStack => Game' a
 
@@ -173,7 +173,7 @@ updateGlyphMap =
   use portal >>= \case
     MainScreen gm : ps -> do
         updatedGlyphs <- readC getGlyphMapUpdates
-        portal .= (MainScreen $ mergeUpdates (fmap (set isVisible False) gm) updatedGlyphs) : ps
+        portal .= (MainScreen $ mergeUpdates (fmap (markVisibility False) gm) updatedGlyphs) : ps
     _ -> return ()
 
 processEvents :: Game ()
@@ -272,19 +272,17 @@ getGlyphMapUpdates = do
   visibleTiles <- getVisibleTiles playerUUID
   forM visibleTiles $ \tileUUID -> do
     pos <- position <~> tileUUID
-    vg <- getPrimaryOccupant tileUUID >>= (<~>) glyph
-    stationaryUUID <- getPrimaryStationaryOccupant tileUUID
-    Glyph fogChar (CellColor fogFG fogBG) <- glyph <~> stationaryUUID
+    primaryGlyph <- getPrimaryOccupant tileUUID >>= (<~>) glyph
 
-    case fogBG of
-      Just fogBG' -> return (pos, GlyphMapCell True vg fogChar fogFG fogBG')
-      Nothing -> if (stationaryUUID /= tileUUID)
-                    then do
-                      Glyph tileChar (CellColor tileFG tileBG) <- glyph <~> tileUUID
-                      case tileBG of
-                        Just tileBG' -> return (pos, GlyphMapCell True vg tileChar tileFG tileBG')
-                        Nothing -> return (pos, GlyphMapCell True vg tileChar tileFG red)
-                    else return (pos, GlyphMapCell True vg fogChar fogFG red)
+    let go bgGlyph = return (pos, GlyphMapCell True primaryGlyph bgGlyph)
+
+    getPrimaryOccupant tileUUID >>= (<~>) glyph >>= \case
+      PartialGlyph stationaryChar stationaryFG -> do
+        glyph <~> tileUUID >>= \case
+          FullGlyph _ _ tileBG -> go $ FullGlyph stationaryChar stationaryFG tileBG
+          _ -> go zDefault
+      stationaryGlyph@(FullGlyph _ _ _) -> go stationaryGlyph
+      _ -> go zDefault
 
 processPlayerDirectionInput :: Direction -> Game ()
 processPlayerDirectionInput dir = getPlayerAdjacentEnemy >>= \case

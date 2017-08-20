@@ -6,7 +6,7 @@ module Zwerg.Data.UUID
   , Parent(..)
   ) where
 
-import Prelude
+import Prelude (Int, Eq, (>=), Maybe(..), ($), (+))
 
 import Zwerg.Prelude.Class
 
@@ -14,7 +14,8 @@ import Data.Binary (Binary)
 import GHC.Generics (Generic)
 
 newtype UUID = MkUUID Int
-  deriving (Eq, Generic, Binary)
+    deriving stock (Eq, Generic)
+    deriving anyclass Binary
 
 instance ZDefault UUID where
     zDefault = MkUUID (-1)
@@ -31,5 +32,5 @@ incUUID :: UUID -> UUID
 incUUID (MkUUID uuid) = MkUUID $ uuid + 1
 
 data Parent = Alive UUID | Dead | NoParent
-  deriving (Eq, Generic)
-instance Binary Parent
+    deriving stock (Eq, Generic)
+    deriving anyclass Binary

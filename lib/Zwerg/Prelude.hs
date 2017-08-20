@@ -16,6 +16,7 @@ import Control.Monad.Reader as EXPORTED
 import Control.Monad.State.Strict as EXPORTED
 
 import Data.Binary as EXPORTED (Binary)
+import Data.Bifunctor as EXPORTED
 import Data.List.NonEmpty as EXPORTED (NonEmpty(..))
 import Data.Maybe as EXPORTED (catMaybes)
 import Data.Semigroup as EXPORTED

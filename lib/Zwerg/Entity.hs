@@ -92,7 +92,6 @@ isItemType itypetest uuid = entityType <~> uuid >>= \case
     Item -> (== itypetest) <$> itemType <~> uuid
     _ -> debug "attempted to compare ItemType for non-Item entity." *> return False
 
-
 tileBlocksPassage :: UUID -> MonadCompRead Bool
 tileBlocksPassage tileUUID = do
   -- The tile might itself block passage
