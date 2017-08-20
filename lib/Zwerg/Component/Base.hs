@@ -1,4 +1,31 @@
-module Zwerg.Component.Base where
+module Zwerg.Component.Base
+    ( Components
+    , Component
+    , HasComponents(..)
+    , MonadCompRead
+    , MonadCompReadRand
+    , MonadCompState
+    , MonadCompStateRand
+    , addComp
+    , canViewComp
+    , deleteComp
+    , demandComp
+    , demandViewComp
+    , filterComp
+    , getComp
+    , getCompName
+    , getCompUUIDMap
+    , getComponents
+    , hasComp
+    , modComp
+    , popUUID
+    , readC
+    , setComp
+    , viewComp
+    , viewCompName
+    , viewCompUUIDMap
+    , viewComponents
+    ) where
 
 import Zwerg.Prelude
 
