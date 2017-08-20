@@ -9,25 +9,22 @@ import Zwerg.UI.Menu
 import qualified Data.List.NonEmpty as NE (repeat, zip)
 
 data Port
-  = MainScreen GlyphMap
-  | MainMenu (Menu ())
-  | ChooseTarget
-  | LoadingScreen
-  | ViewEquipment
-  | ViewInventory (MenuGroupSelect UUID)
-  | ExamineTiles Position
-  | DeathScreen Text
-  | ExitScreen
-  deriving (Generic)
-instance Binary Port
+    = MainScreen GlyphMap
+    | MainMenu (Menu ())
+    | ChooseTarget
+    | LoadingScreen
+    | ViewEquipment
+    | ViewInventory (MenuGroupSelect UUID)
+    | ExamineTiles Position
+    | DeathScreen Text
+    | ExitScreen
+  deriving stock Generic
+  deriving anyclass Binary
 
 instance ZDefault Port where
     zDefault = initMainMenu
 
 type Portal = [Port]
-
-class HasPortal s where
-  portal :: Lens' s Portal
 
 initMainMenu :: Port
 initMainMenu =

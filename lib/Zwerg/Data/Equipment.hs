@@ -17,23 +17,23 @@ import qualified Data.Map as M (empty, insert, delete, lookup, elems)
 import qualified Data.List as L (nub)
 
 data ArmorSlot = Gloves | Head | Chest | Legs | Boots | Shoulders | Belt
-    deriving (Eq, Ord, Generic)
-instance Binary ArmorSlot
+    deriving stock (Eq, Ord, Generic)
+    deriving anyclass Binary
 
 data HandSlot = LeftHand | RightHand
-    deriving (Eq, Ord, Generic)
-instance Binary HandSlot
+    deriving stock (Eq, Ord, Generic)
+    deriving anyclass Binary
 
 data EquipmentSlot = Body ArmorSlot | SingleHand HandSlot | BothHands
-    deriving (Eq, Ord, Generic)
-instance Binary EquipmentSlot
+    deriving stock (Eq, Ord, Generic)
+    deriving anyclass Binary
 
 instance ZDefault EquipmentSlot where
     zDefault = SingleHand RightHand
 
 newtype Equipment = MkEquipment (Map EquipmentSlot UUID)
-  deriving (Generic)
-instance Binary Equipment
+    deriving stock Generic
+    deriving anyclass Binary
 
 instance ZDefault Equipment where
     zDefault = MkEquipment M.empty
@@ -52,16 +52,13 @@ unequip slot eq                   = unequipSlots [slot] eq
 unequipSlots :: [EquipmentSlot] -> Equipment -> ([UUID], Equipment)
 unequipSlots slots eq = unequipSlots' slots eq []
 
---FIXME: make sure this is really looping through and unequipping everything in the list
---FIXME: make sure this is really looping through and unequipping everything in the list
---FIXME: make sure this is really looping through and unequipping everything in the list
 unequipSlots' :: [EquipmentSlot] -> Equipment -> [UUID] -> ([UUID], Equipment)
 unequipSlots' [] eq uis = (uis, eq)
 unequipSlots' (s:ss) (MkEquipment eq) uis =
-  let eq' = MkEquipment $ M.delete s eq
-  in case M.lookup s eq of
-       Just uuid -> unequipSlots' ss eq' (uuid:uis)
-       Nothing -> ([], eq')
+    case M.lookup s eq of
+        Just uuid -> unequipSlots' ss eq' (uuid:uis)
+        Nothing -> unequipSlots' ss (MkEquipment eq) uis
+  where eq' = MkEquipment $ M.delete s eq
 
 getEquippedInSlot :: EquipmentSlot -> Equipment -> [UUID]
 

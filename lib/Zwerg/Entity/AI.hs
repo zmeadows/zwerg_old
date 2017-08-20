@@ -3,7 +3,6 @@ module Zwerg.Entity.AI
   ) where
 
 import Zwerg.Component
--- import Zwerg.Debug
 import Zwerg.Data.Position
 import Zwerg.Entity
 import Zwerg.Event.Queue
@@ -30,7 +29,7 @@ runAI :: ( HasCallStack
          , MonadRandom m
          ) => UUID -> m ()
 runAI uuid = do
-  cmps <- use components
+  cmps <- getComponents
   ait <- aiType <@> uuid
   ranWord <- getRandom
   let (AI a)   = enact uuid ait

@@ -29,16 +29,16 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 
 data Direction
-  = North
-  | South
-  | East
-  | West
-  | NorthWest
-  | NorthEast
-  | SouthWest
-  | SouthEast
-  deriving (Generic)
-instance Binary Direction
+    = North
+    | South
+    | East
+    | West
+    | NorthWest
+    | NorthEast
+    | SouthWest
+    | SouthEast
+  deriving stock Generic
+  deriving anyclass Binary
 
 cardinalDirections :: [Direction]
 cardinalDirections = [North,South,East,West]
@@ -50,21 +50,21 @@ allDirections :: [Direction]
 allDirections = cardinalDirections ++ diagonalDirections
 
 data TargetType
-  = SingleTarget
-  | AOE Double
-  | Line Direction Int
-  deriving (Generic)
-instance Binary TargetType
+    = SingleTarget
+    | AOE Double
+    | Line Direction Int
+  deriving stock Generic
+  deriving anyclass Binary
 
 data EntityType
-  = Player
-  | Enemy
-  | Item
-  | Container
-  | Tile
-  | Level
-  deriving (Eq, Ord, Show, Generic)
-instance Binary EntityType
+    = Player
+    | Enemy
+    | Item
+    | Container
+    | Tile
+    | Level
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass Binary
 
 isTypicallyStationary :: EntityType -> Bool
 isTypicallyStationary Player = False
@@ -75,16 +75,16 @@ instance ZDefault EntityType where
     zDefault = Enemy
 
 data TileType = Floor | Wall | Door | Void
-  deriving (Generic)
-instance Binary TileType
+    deriving stock Generic
+    deriving anyclass Binary
 
 data Stat = STR | DEX | INT | CHA | CON | WIS
-    deriving (Show, Eq, Ord, Enum, Generic)
-instance Binary Stat
+    deriving stock (Show, Eq, Ord, Enum, Generic)
+    deriving anyclass Binary
 
 newtype Stats = MkStats (Map Stat Int)
-  deriving (Generic)
-instance Binary Stats
+    deriving stock Generic
+    deriving anyclass Binary
 
 instance ZDefault Stats where
     zDefault = MkStats $ M.fromList $ fmap (, 0) $ enumFrom $ toEnum 0
@@ -99,22 +99,19 @@ replaceStat s v (MkStats m) = MkStats $ M.insert s v m
 -- TODO: maximum stat == 100?
 
 data ItemType = Weapon | Armor | Potion | Scroll | Gold
-  deriving (Eq, Ord, Generic)
-instance Binary ItemType
+    deriving stock (Eq, Ord, Generic)
+    deriving anyclass Binary
 
 instance ZDefault ItemType where
     zDefault = Weapon
 
 data AIType = SimpleMeleeCreature | SimpleRangedCreature
-  deriving (Generic)
-instance Binary AIType
+    deriving stock Generic
+    deriving anyclass Binary
 
 instance ZDefault AIType where
     zDefault = SimpleMeleeCreature
 
-------------
--- CONSTS --
-------------
 mapWidthDOUBLE :: Double
 mapWidthDOUBLE = 125
 

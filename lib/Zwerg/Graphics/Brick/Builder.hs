@@ -31,6 +31,8 @@ import qualified Brick.Widgets.ProgressBar as BP
 import qualified Data.Vector as V
 import qualified Graphics.Vty as VTY
 
+import Lens.Micro.Platform (view)
+
 listDrawElement :: Bool -> Text -> BT.Widget ()
 listDrawElement sel a =
   let selStr s = if sel then withAttr "logo" (str s) else str s
@@ -67,7 +69,7 @@ buildPortUI (ViewInventory m) = do
     menuWidget <- buildMenuWidget
     return $ [BC.vCenterLayer $ BC.hCenterLayer $ hLimit 40 $ BB.border $ menuWidget]
 
-  where focusedUUID = view (item . _1) $ focus m :: UUID
+  where focusedUUID = fst $ item $ focus m :: UUID
 
         makeItemWidget :: (UUID, Bool) -> UIBuilder (BT.Widget ())
         makeItemWidget (itemUUID, markedForDrop) = do

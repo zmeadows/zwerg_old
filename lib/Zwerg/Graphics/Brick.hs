@@ -6,7 +6,6 @@ import Zwerg
 import Zwerg.Event.Queue
 import Zwerg.Game
 import Zwerg.Graphics.Brick.Builder
-import Zwerg.Log
 import Zwerg.Random
 import Zwerg.UI.Input
 
@@ -19,6 +18,8 @@ import qualified Brick.Types as BT
 import qualified Graphics.Vty as VTY
 import Data.Monoid ((<>))
 import System.Mem (performGC)
+
+import Lens.Micro.Platform (view, set)
 
 import System.IO (hFlush, stderr)
 

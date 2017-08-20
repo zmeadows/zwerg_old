@@ -8,11 +8,11 @@ import Zwerg.Prelude hiding ((<>))
 
 import Zwerg.Component
 import Zwerg.Game
-import Zwerg.Log
 import Zwerg.Random
-import Zwerg.UI.Port
 
 import Data.ByteString (ByteString)
+
+import Lens.Micro.Platform (makeClassy)
 
 -- TODO: actually use 'quitting' variable
 -- probably needs to be moved to GameState
@@ -28,10 +28,6 @@ instance HasGameState ZwergState where
   gameState = zsGameState
 instance HasComponents ZwergState where
   components = gameState . components
-instance HasLog ZwergState where
-  userLog = gameState . userLog
-instance HasPortal ZwergState where
-  portal = gameState . portal
 
 initZwergState :: ZwergState
 initZwergState = ZwergState

@@ -1,9 +1,6 @@
 module Zwerg.Data.Damage
   ( DamageAttribute(..)
   , DamageData(..)
-  , HasTargetType(..)
-  , HasAttribute(..)
-  , HasDistribution(..)
   , DamageChain
   , Resistance(..)
   , Resistances
@@ -31,22 +28,20 @@ instance ZDefault DamageAttribute where
     zDefault = Slash
 
 data DamageData = DamageData
-    { _damageDataTargetType   :: TargetType
-    , _damageDataAttribute    :: DamageAttribute
-    , _damageDataDistribution :: Distribution }
+    { ddTargetType   :: TargetType
+    , ddAttribute    :: DamageAttribute
+    , ddDistribution :: Distribution }
   deriving stock Generic
   deriving anyclass Binary
-makeFields ''DamageData
 
 instance ZDefault DamageData where
     zDefault = DamageData SingleTarget zDefault $ Uniform 0 0
 
 type DamageChain = [DamageData]
 
---TODO: make newtype of Int
 newtype Resistance = MkResistance Int
-  deriving (Generic)
-instance Binary Resistance
+    deriving stock Generic
+    deriving anyclass Binary
 
 -- increaseResistance :: Resistance -> Int -> Resistance
 -- increaseResistance (MkResistance r) i = MkResistance $ min 10 $ r + i
@@ -55,7 +50,6 @@ instance Binary Resistance
 -- decreaseResistance (MkResistance r) i = MkResistance $ max (-10) $ r - i
 
 newtype Resistances = MkResistances (Map DamageAttribute Resistance)
-  deriving (Generic)
-instance Binary Resistances
-
+    deriving stock Generic
+    deriving anyclass Binary
 

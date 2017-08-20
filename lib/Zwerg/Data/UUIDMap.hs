@@ -40,33 +40,7 @@ instance ZFilterable (UUIDMap a) (UUID, a) where
     zFilterM f (MkUUIDMap m) = (MkUUIDMap . IM.fromAscList)
                                <$> (filterM (\(x,a) -> f (unsafeWrap x, a)) $ IM.toAscList m)
 
-type instance IxValue (UUIDMap a) = a
-
--- TODO: just reference IntMap implementation?
--- TODO: try to derive?
--- FIXME: This could be causing slowdown?!?
-instance Ixed (UUIDMap a) where
-  ix k f m =
-    case zLookup k m of
-      Just v -> f v <&> \v' -> zInsert k v' m
-      Nothing -> pure m
-
-type instance Index (UUIDMap a) = UUID
-
--- TODO: just reference IntMap implementation?
--- TODO: try to derive?
--- FIXME: This could be causing slowdown?!?
-instance At (UUIDMap a) where
-  at k f m =
-    f mv <&> \r ->
-      case r of
-        Nothing -> maybe m (const (zRemoveAt k m)) mv
-        Just v' -> zInsert k v' m
-    where
-      mv = zLookup k m
-
-getMinimumUUIDs :: (Ord a, Bounded a)
-                => UUIDMap a -> (a, [UUID])
+getMinimumUUIDs :: (Ord a, Bounded a) => UUIDMap a -> (a, [UUID])
 getMinimumUUIDs (MkUUIDMap um) =
   let (amin, ids) = IM.foldrWithKey f (minBound, []) um
   in (amin, ) $ map unsafeWrap ids

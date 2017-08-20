@@ -28,11 +28,6 @@ import GHC.Exts as EXPORTED (IsList(..))
 import GHC.Generics as EXPORTED (Generic)
 import GHC.Stack as EXPORTED (HasCallStack, CallStack, callStack, prettyCallStack)
 
-import Lens.Micro.Internal as EXPORTED (At(..), Ixed(..), Index, IxValue)
-import Lens.Micro.Platform as EXPORTED
-       (makeClassy, makeLenses, makeFields, (%=), (^.), (.=), over, use,
-        view, to, set, Lens, Lens', (<&>), _1, _2)
-
 {-# SPECIALIZE show :: Show a => a -> Text  #-}
 {-# SPECIALIZE show :: Show a => a -> String  #-}
 show :: (Show a, StringConv String b) => a -> b

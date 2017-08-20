@@ -20,29 +20,32 @@ import Zwerg.UI.Port
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
 
+import Lens.Micro.Platform (makeClassy, (%=), use, _2, (.=))
+
 data GameState = GameState
-  { _gsComponents :: Components
-  , _gsLog        :: Log
-  , _gsPortal     :: Portal
-  , _gsEventQueue :: ZwergEventQueue
-  , _playerGoofed :: Bool
-  }
+    { _gsComponents :: Components
+    , _userLog      :: Log
+    , _portal       :: Portal
+    , _gsEventQueue :: ZwergEventQueue
+    , _playerGoofed :: Bool
+    }
+  deriving stock Generic
+  deriving anyclass Binary
 makeClassy ''GameState
 
 instance HasComponents GameState where
   components = gsComponents
-instance HasLog GameState where
-  userLog = gsLog
-instance HasPortal GameState where
-  portal = gsPortal
 instance HasZwergEventQueue GameState where
   eventQueue = gsEventQueue
+
+pushLogMsgM :: Text -> Game ()
+pushLogMsgM message = userLog %= pushLogMsg message
 
 emptyGameState :: GameState
 emptyGameState = GameState
   { _gsComponents = zDefault
-  , _gsLog        = zDefault
-  , _gsPortal     = [zDefault]
+  , _userLog      = zDefault
+  , _portal       = [zDefault]
   , _gsEventQueue = zDefault
   , _playerGoofed = False
   }
@@ -71,12 +74,12 @@ processNonPlayerEvents :: Game ()
 processNonPlayerEvents = do
   use portal >>= \case
     MainScreen _ : _ -> do
-      (minTick, uuids) <- getMinimumUUIDs <$> use (ticks . _2)
-      (ticks . _2) %= fmap (\x -> max (x - minTick) 0)
-      if | notElem playerUUID uuids ->
-             forM_ uuids $ \i -> do runAI i >> processEvents >> setComp i ticks 100
-         | otherwise -> return ()
-      updateGlyphMap
+        (minTick, uuids) <- getMinimumUUIDs <$> getCompUUIDMap ticks
+        (ticks . _2) %= fmap (\x -> max (x - minTick) 0)
+        if | notElem playerUUID uuids ->
+               forM_ uuids $ \i -> do runAI i >> processEvents >> setComp i ticks 100
+           | otherwise -> return ()
+        updateGlyphMap
     _ -> return ()
 
 processUserInput :: KeyCode -> Game ()
@@ -97,13 +100,13 @@ processUserInput' (MainMenu m : ps) (KeyChar 'j') = portal .= (MainMenu $ next m
 processUserInput' (MainMenu m : ps) (KeyChar 'k') = portal .= (MainMenu $ prev m) : ps
 
 processUserInput' (MainMenu m:_) Return =
-  case focus m ^. label of
-    "new game" -> do
-      generateGame
-      portal .= [MainScreen blankGlyphMap]
-      updateGlyphMap
-    "exit" -> portal .= [ExitScreen]
-    _ -> return ()
+    case label (focus m) of
+        "new game" -> do
+            generateGame
+            portal .= [MainScreen blankGlyphMap]
+            updateGlyphMap
+        "exit" -> portal .= [ExitScreen]
+        _ -> return ()
 
 processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput West
 processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput South
@@ -184,86 +187,88 @@ processEvents =
 
 processEvent :: ZwergEvent -> Game ()
 
-processEvent (MoveEntityDirectionEvent ed) = do
-  oldPosition <- position <@> (ed ^. moverUUID)
-  case movePosDir (ed ^. direction) oldPosition of
+processEvent (MoveEntityDirectionEvent MoveEntityDirectionEventData{..}) = do
+  oldPosition <- position <@> moveEntityDirMoverUUID
+  case movePosDir moveEntityDirDirection oldPosition of
     Nothing -> do
         -- TODO: check if non player entity and give error
       pushLogMsgM "You cannot move into the void."
       playerGoofed .= True
-    Just newPos -> $(newEvent "MoveEntity") (ed ^. moverUUID) newPos
+    Just newPos -> $(newEvent "MoveEntity") moveEntityDirMoverUUID newPos
 
-processEvent (MoveEntityEvent ed) = do
-  oldTileUUID <- tileOn <@> (ed ^. moverUUID)
-  levelTiles <- level <@> (ed ^. moverUUID) >>= (<@>) tileMap
-  let newTileUUID = zAt levelTiles (ed ^. newPosition)
+processEvent (MoveEntityEvent MoveEntityEventData{..}) = do
+  oldTileUUID <- tileOn <@> moveEntityMoverUUID
+  levelTiles <- level <@> moveEntityMoverUUID >>= (<@>) tileMap
+  let newTileUUID = zAt levelTiles moveEntityNewPosition
   newTileBlocked <- readC $ tileBlocksPassage newTileUUID
 
   if newTileBlocked
-     then if (ed ^. moverUUID) /= playerUUID
+     then if moveEntityMoverUUID /= playerUUID
              then debug "NPC Entity attempted to move to blocked tile"
              else do
                pushLogMsgM "You cannot move into a blocked tile."
                playerGoofed .= True
      else do
-       --TODO: granular add/remove component from tiles in processing these left/reached
-       -- tile events? Or stick with transferOccupant here?
-       transferOccupant (ed ^. moverUUID) (Just oldTileUUID) newTileUUID
-       $(newEvent "EntityLeftTile") (ed ^. moverUUID) oldTileUUID
-       $(newEvent "EntityReachedTile") (ed ^. moverUUID) newTileUUID
+       transferOccupant moveEntityMoverUUID (Just oldTileUUID) newTileUUID
+       $(newEvent "EntityLeftTile") moveEntityMoverUUID oldTileUUID
+       $(newEvent "EntityReachedTile") moveEntityMoverUUID newTileUUID
 
 processEvent (EntityLeftTileEvent _) = return ()
 
 processEvent (EntityReachedTileEvent _) = return ()
 
-processEvent (WeaponAttackAttemptEvent ed) = do
-  attDEX <- readC $ getStat DEX $ ed ^. attackerUUID
-  defDEX <- readC $ getStat DEX $ ed ^. defenderUUID
+processEvent (WeaponAttackAttemptEvent WeaponAttackAttemptEventData{..}) = do
+  attDEX <- readC $ getStat DEX $ weapAtkAttempAttackerUUID
+  defDEX <- readC $ getStat DEX $ weapAtkAttempDefenderUUID
   let prob = if attDEX > defDEX then 0.75 else 0.5 :: Double
   r <- getRandomR (0.0, 1.0)
   if (r < prob)
-     then $(newEvent "WeaponAttackHit") (ed ^. attackerUUID) (ed ^. defenderUUID)
-     else $(newEvent "WeaponAttackMiss") (ed ^. attackerUUID) (ed ^. defenderUUID)
+     then $(newEvent "WeaponAttackHit") weapAtkAttempAttackerUUID weapAtkAttempDefenderUUID
+     else $(newEvent "WeaponAttackMiss") weapAtkAttempAttackerUUID weapAtkAttempDefenderUUID
 
-processEvent (WeaponAttackHitEvent ed) = do
-  readC (getEquippedWeapon $ ed ^. attackerUUID) >>= \case
+processEvent (WeaponAttackHitEvent WeaponAttackHitEventData{..}) = do
+  readC (getEquippedWeapon weapAtkHitAttackerUUID) >>= \case
     --TODO: decide how to handle unarmed attacks
     Nothing -> return ()
     Just weaponUUID -> do
       chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do
-        targetedUUIDs <- readC $ getTargetedUUIDs (damageData ^. targetType) (ed ^. defenderUUID)
-        forM_ targetedUUIDs $ \targetUUID ->
-          $(newEvent "IncomingDamage") (ed ^. attackerUUID) targetUUID (damageData ^. attribute) (damageData ^. distribution)
+          targetedUUIDs <- readC $ getTargetedUUIDs (ddTargetType damageData) weapAtkHitDefenderUUID
+          forM_ targetedUUIDs $ \targetUUID ->
+              $(newEvent "IncomingDamage")
+                  weapAtkHitAttackerUUID
+                  targetUUID
+                  (ddAttribute damageData)
+                  (ddDistribution damageData)
 
 processEvent (WeaponAttackMissEvent _) = return ()
 
-processEvent (DeathEvent ed) = eraseEntity $ ed ^. dyingUUID
+processEvent (DeathEvent DeathEventData{..}) = eraseEntity dyingUUID
 
-processEvent (IncomingDamageEvent ed) = do
+processEvent (IncomingDamageEvent IncomingDamageEventData{..}) = do
   --TODO: account for weaknesses in creatures and armor
-    damageDone <- round <$> sample (ed ^. damageDistribution)
-    $(newEvent "OutgoingDamage") (ed ^. attackerUUID) (ed ^. defenderUUID) damageDone
+    damageDone <- round <$> sample incDamDistribution
+    $(newEvent "OutgoingDamage") incDamAttackerUUID incDamDefenderUUID damageDone
 
-processEvent (OutgoingDamageEvent ed) = do
-  whenM (hasComp (ed ^. defenderUUID) hp) $ do
-    modComp (ed ^. defenderUUID) hp (adjustHP $ subtract $ ed ^. damageAmount)
-    newHP <- hp <@> (ed ^. defenderUUID)
+processEvent (OutgoingDamageEvent OutgoingDamageEventData{..}) = do
+    whenM (hasComp outDamDefenderUUID hp) $ do
+        modComp outDamDefenderUUID hp (adjustHP $ subtract $ outDamDamageAmount)
+        newHP <- hp <@> outDamDefenderUUID
 
-    when (ed ^. attackerUUID == playerUUID || ed ^. defenderUUID == playerUUID) $ do
-      attName <- name <@> (ed ^. attackerUUID)
-      defName <- name <@> (ed ^. defenderUUID)
-      pushLogMsgM $ attName <> " hit " <> defName <> " for " <> (show $ ed ^. damageAmount) <> " damage."
+        when (outDamAttackerUUID == playerUUID || outDamDefenderUUID == playerUUID) $ do
+            (attName, defName) <- name <@@!> (outDamAttackerUUID, outDamDefenderUUID)
+            pushLogMsgM $ attName <> " hit " <> defName <> " for " <> (show $ outDamDamageAmount) <> " damage."
 
-    when (fst (unwrap newHP) == 0) $
-      if (ed ^. defenderUUID) == playerUUID
-         then portal %= (DeathScreen "You died." :)
-         else eraseEntity $ ed ^. defenderUUID
+        when (fst (unwrap newHP) == 0) $
+          if outDamDefenderUUID == playerUUID
+             then portal %= (DeathScreen "You died." :)
+             else eraseEntity outDamDefenderUUID
 
-processEvent (EntityDroppedItemEvent ed) = do
-    tileUUID <- tileOn <@> (ed ^. dropperUUID)
-    modComp (ed ^. dropperUUID) inventory $ zDelete (ed ^. droppedUUID)
-    modComp tileUUID occupants $ zAdd (ed ^. droppedUUID)
+processEvent (EntityDroppedItemEvent EntityDroppedItemEventData{..}) = do
+    tileUUID <- tileOn <@> entityDroppedItemDropperUUID
+    modComp entityDroppedItemDropperUUID inventory
+      $ zDelete entityDroppedItemDroppedUUID
+    modComp tileUUID occupants $ zAdd entityDroppedItemDroppedUUID
 
 processEvent _ = return ()
 

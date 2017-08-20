@@ -42,7 +42,7 @@ instance ZDefault Text where
 instance ZDefault Int where
   zDefault = 1
 instance ZDefault Char where
-  zDefault = '⸮'
+  zDefault = '?'
 instance ZDefault Bool where
   zDefault = False
 instance ZDefault [a] where

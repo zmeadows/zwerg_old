@@ -12,6 +12,8 @@ import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Debug
 
+import Lens.Micro.Platform (makeClassy, Lens', (%=), use, view, _2, _1)
+
 data Components = Components
     { _name          :: (Text, UUIDMap Text)
     , _description   :: (Text, UUIDMap Text)
@@ -49,8 +51,6 @@ makeClassy ''Components
 
 type Component a = forall s. HasComponents s => Lens' s (Text, UUIDMap a)
 
--- TODO: turn these into classes
--- purely for convenience, type synonyms for commonly various monad contexts
 type MonadCompState a = forall s m. ( HasComponents s
                                     , MonadState s m
                                     , HasCallStack
@@ -78,39 +78,38 @@ readC :: MonadCompRead a -> MonadCompState a
 readC x = (runReader x) <$> use components
 
 emptyComponents :: Components
-emptyComponents =
-    Components
-        { _name          = ("name"          , zDefault)
-        , _description   = ("description"   , zDefault)
-        , _species       = ("species"       , zDefault)
-        , _glyph         = ("glyph"         , zDefault)
-        , _hp            = ("hp"            , zDefault)
-        , _entityType    = ("entityType"    , zDefault)
-        , _position      = ("position"      , zDefault)
-        , _cooldown      = ("cooldown"      , zDefault)
-        , _equipment     = ("equipment"     , zDefault)
-        , _level         = ("level"         , zDefault)
-        , _resistances   = ("resistances"   , zDefault)
-        , _tiles         = ("tiles"         , zDefault)
-        , _tileOn        = ("tileOn"        , zDefault)
-        , _ticks         = ("ticks"         , zDefault)
-        , _tileType      = ("tileType"      , zDefault)
-        , _tileMap       = ("tileMap"       , zDefault)
-        , _occupants     = ("occupants"     , zDefault)
-        , _parent        = ("parent"        , zDefault)
-        , _children      = ("children"      , zDefault)
-        , _inventory     = ("inventory"     , zDefault)
-        , _stats         = ("stats"         , zDefault)
-        , _blocksPassage = ("blocksPassage" , zDefault)
-        , _blocksVision  = ("blocksVision"  , zDefault)
-        , _aiType        = ("aiType"        , zDefault)
-        , _damageChain   = ("damageChain"   , zDefault)
-        , _viewRange     = ("viewRange"     , zDefault)
-        , _slot          = ("slot"          , zDefault)
-        , _itemType      = ("itemType"      , zDefault)
-        , _zLevel        = ("zLevel"        , zDefault)
-        , _nextUUID      = incUUID playerUUID
-        }
+emptyComponents = Components
+    { _name          = ("name"          , zDefault)
+    , _description   = ("description"   , zDefault)
+    , _species       = ("species"       , zDefault)
+    , _glyph         = ("glyph"         , zDefault)
+    , _hp            = ("hp"            , zDefault)
+    , _entityType    = ("entityType"    , zDefault)
+    , _position      = ("position"      , zDefault)
+    , _cooldown      = ("cooldown"      , zDefault)
+    , _equipment     = ("equipment"     , zDefault)
+    , _level         = ("level"         , zDefault)
+    , _resistances   = ("resistances"   , zDefault)
+    , _tiles         = ("tiles"         , zDefault)
+    , _tileOn        = ("tileOn"        , zDefault)
+    , _ticks         = ("ticks"         , zDefault)
+    , _tileType      = ("tileType"      , zDefault)
+    , _tileMap       = ("tileMap"       , zDefault)
+    , _occupants     = ("occupants"     , zDefault)
+    , _parent        = ("parent"        , zDefault)
+    , _children      = ("children"      , zDefault)
+    , _inventory     = ("inventory"     , zDefault)
+    , _stats         = ("stats"         , zDefault)
+    , _blocksPassage = ("blocksPassage" , zDefault)
+    , _blocksVision  = ("blocksVision"  , zDefault)
+    , _aiType        = ("aiType"        , zDefault)
+    , _damageChain   = ("damageChain"   , zDefault)
+    , _viewRange     = ("viewRange"     , zDefault)
+    , _slot          = ("slot"          , zDefault)
+    , _itemType      = ("itemType"      , zDefault)
+    , _zLevel        = ("zLevel"        , zDefault)
+    , _nextUUID      = incUUID playerUUID
+    }
 
 instance ZDefault Components where
     zDefault = emptyComponents
@@ -122,13 +121,16 @@ popUUID = do
     return newUUID
 
 getComp :: UUID -> Component a -> MonadCompState (Maybe a)
-getComp uuid comp = use $ comp . _2 . at uuid
+getComp uuid comp = zLookup uuid . snd <$> use comp
+
+viewComp :: UUID -> Component a -> MonadCompRead (Maybe a)
+viewComp uuid comp = zLookup uuid . snd <$> view comp
 
 hasComp :: UUID -> Component a -> MonadCompState Bool
-hasComp uuid comp = use $ comp . _2 . to (zContains uuid)
+hasComp uuid comp = zContains uuid . snd <$> use comp
 
 canViewComp :: UUID -> Component a -> MonadCompRead Bool
-canViewComp uuid comp = view $ comp . _2 . to (zContains uuid)
+canViewComp uuid comp = zContains uuid . snd <$> view comp
 
 addComp :: (HasComponents s, MonadState s m)
         => UUID -> Component a -> a -> m ()
@@ -159,9 +161,6 @@ demandComp comp uuid =
       debug $ "Missing Component: " <> cn
       return zDefault
 
-viewComp :: UUID -> Component a -> MonadCompRead (Maybe a)
-viewComp uuid comp = view (comp . _2 . at uuid)
-
 demandViewComp :: ZDefault a => Component a -> UUID -> MonadCompRead a
 demandViewComp comp uuid =
   viewComp uuid comp >>= \case
@@ -171,14 +170,20 @@ demandViewComp comp uuid =
       debug $ "Missing Component: " <> cn
       return zDefault
 
-(<@>) :: ZDefault a => Component a -> UUID -> MonadCompState a
-(<@>) = demandComp
+getCompName :: (HasComponents s, MonadState s m) => Component a -> m Text
+getCompName comp = fst <$> use comp
 
-(<@?>) :: UUID -> Component a -> MonadCompState (Maybe a)
-(<@?>) = getComp
+viewCompName :: (HasComponents s, MonadReader s m) => Component a -> m Text
+viewCompName comp = fst <$> view comp
 
-(<~>) :: ZDefault a => Component a -> UUID -> MonadCompRead a
-(<~>) = demandViewComp
+getCompUUIDMap :: (HasComponents s, MonadState s m) => Component a -> m (UUIDMap a)
+getCompUUIDMap comp = snd <$> use comp
 
-(<~?>) :: UUID -> Component a -> MonadCompRead (Maybe a)
-(<~?>) = viewComp
+viewCompUUIDMap :: (HasComponents s, MonadReader s m) => Component a -> m (UUIDMap a)
+viewCompUUIDMap comp = snd <$> view comp
+
+getComponents :: (HasComponents s, MonadState s m) => m Components
+getComponents = use components
+
+viewComponents :: (HasComponents s, MonadReader s m) => m Components
+viewComponents = view components

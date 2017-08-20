@@ -7,12 +7,11 @@ module Zwerg.Data.HP
 import Zwerg.Prelude
 
 newtype HP = MkHP (Int, Int)
-  deriving (Generic)
+    deriving stock Generic
+    deriving anyclass Binary
 
 validHP :: (Int,Int) -> Bool
 validHP (curHP, maxHP) = curHP >= 0 && curHP <= maxHP && maxHP > 0
-
-instance Binary HP
 
 instance ZWrapped HP (Int, Int) where
   unwrap (MkHP hp) = hp

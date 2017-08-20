@@ -8,9 +8,6 @@ import Zwerg.Util
 
 type GlyphMap = GridMap GlyphMapCell
 
-class HasGlyphMap s where
-  glyphMap :: Lens' s GlyphMap
-
 blankGlyphMap :: GlyphMap
 blankGlyphMap = zBuild (const emptyCellData)
     where emptyGlyph = Glyph ' ' (CellColor black $ Just black)

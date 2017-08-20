@@ -1,24 +1,14 @@
-module Zwerg.Log
-  ( Log
-  , HasLog(..)
-  , pushLogMsg
-  , pushLogMsgM
-  , splitLog
-  ) where
+module Zwerg.Log (Log, pushLogMsg, splitLog) where
 
 import Zwerg.Prelude
 
 import Data.Sequence (Seq)
-import qualified Data.Sequence as S
+import qualified Data.Sequence as S (empty, (|>))
 import qualified Data.Text as T (splitAt, empty)
 
 newtype Log = MkLog (Seq Text)
-  deriving (Generic)
-
-instance Binary Log
-
-class HasLog s where
-  userLog :: Lens' s Log
+    deriving stock Generic
+    deriving anyclass Binary
 
 instance ZWrapped Log (Seq Text) where
   unwrap (MkLog l) = l
@@ -27,9 +17,6 @@ instance ZWrapped Log (Seq Text) where
 instance ZDefault Log where
     zDefault = MkLog S.empty
 
-pushLogMsgM :: (HasLog s, MonadState s m)
-            => Text -> m ()
-pushLogMsgM message = userLog %= pushLogMsg message
 
 pushLogMsg :: Text -> Log -> Log
 pushLogMsg message (MkLog l) = MkLog $ l S.|> message

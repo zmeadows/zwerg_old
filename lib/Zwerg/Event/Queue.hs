@@ -11,12 +11,13 @@ import Zwerg.Prelude
 
 import Zwerg.Event as EXPORTED
 
+import Lens.Micro.Platform (Lens', use, (.=), (%=))
 import Data.Sequence (Seq, (|>), ViewL(..), (><))
 import qualified Data.Sequence as S (viewl, empty, length, null)
 
 newtype ZwergEventQueue = MkZwergEventQueue (Seq ZwergEvent)
-    deriving (Generic)
-instance Binary ZwergEventQueue
+    deriving stock Generic
+    deriving anyclass Binary
 
 class HasZwergEventQueue s where
     eventQueue :: Lens' s ZwergEventQueue

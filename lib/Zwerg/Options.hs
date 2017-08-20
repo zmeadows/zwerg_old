@@ -3,11 +3,12 @@ module Zwerg.Options where
 import Zwerg.Prelude
 
 data Options = Options
-  { _effectsLevel :: Int
-  , _backgroundLevel :: Int
+  { effectsLevel :: Int
+  , backgroundLevel :: Int
   }
 
-makeClassy ''Options
-
 defaultOptions :: Options
-defaultOptions = Options {_effectsLevel = 5, _backgroundLevel = 5}
+defaultOptions = Options
+    { effectsLevel = 5
+    , backgroundLevel = 5
+    }

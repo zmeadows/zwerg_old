@@ -4,6 +4,18 @@ module Zwerg.Component.Sketchy where
 import Zwerg.Prelude
 import Zwerg.Component.Base
 
+(<@>) :: ZDefault a => Component a -> UUID -> MonadCompState a
+(<@>) = demandComp
+
+(<@?>) :: UUID -> Component a -> MonadCompState (Maybe a)
+(<@?>) = getComp
+
+(<~>) :: ZDefault a => Component a -> UUID -> MonadCompRead a
+(<~>) = demandViewComp
+
+(<~?>) :: UUID -> Component a -> MonadCompRead (Maybe a)
+(<~?>) = viewComp
+
 (<@!!>) :: (ZDefault a, ZDefault b)
         => (Component a, Component b) -> UUID -> MonadCompState (a,b)
 (<@!!>) (compA, compB) uuid = do
