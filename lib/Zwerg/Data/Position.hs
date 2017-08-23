@@ -77,14 +77,14 @@ modPos (f, g) (MkPosition (x, y)) = validatePosition (f x, g y)
 movePosDir :: Direction -> Position -> Maybe Position
 movePosDir dir (MkPosition (x, y)) = validatePosition $
     case dir of
-        West      -> (x - 1, y)
-        East      -> (x + 1, y)
-        North     -> (x, y - 1)
-        South     -> (x, y + 1)
-        NorthWest -> (x - 1, y + 1)
-        NorthEast -> (x + 1, y + 1)
-        SouthWest -> (x - 1, y - 1)
-        SouthEast -> (x + 1, y - 1)
+      Cardinal West      -> (x - 1, y)
+      Cardinal East      -> (x + 1, y)
+      Cardinal North     -> (x, y - 1)
+      Cardinal South     -> (x, y + 1)
+      Diagonal NorthWest -> (x - 1, y + 1)
+      Diagonal NorthEast -> (x + 1, y + 1)
+      Diagonal SouthWest -> (x - 1, y - 1)
+      Diagonal SouthEast -> (x + 1, y - 1)
 
 isValidPosition :: (Int, Int) -> Bool
 isValidPosition (x, y) = x >= 0 && y >= 0 && x < mapWidthINT && y < mapHeightINT

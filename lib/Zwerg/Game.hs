@@ -108,14 +108,14 @@ processUserInput' (MainMenu m:_) Return =
         "exit" -> portal .= [ExitScreen]
         _ -> return ()
 
-processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput West
-processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput South
-processUserInput' (MainScreen _:_) (KeyChar 'k') = processPlayerDirectionInput North
-processUserInput' (MainScreen _:_) (KeyChar 'l') = processPlayerDirectionInput East
-processUserInput' (MainScreen _:_) (LeftArrow)   = processPlayerDirectionInput West
-processUserInput' (MainScreen _:_) (UpArrow)     = processPlayerDirectionInput South
-processUserInput' (MainScreen _:_) (DownArrow)   = processPlayerDirectionInput North
-processUserInput' (MainScreen _:_) (RightArrow)  = processPlayerDirectionInput East
+processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput $ Cardinal West
+processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput $ Cardinal South
+processUserInput' (MainScreen _:_) (KeyChar 'k') = processPlayerDirectionInput $ Cardinal North
+processUserInput' (MainScreen _:_) (KeyChar 'l') = processPlayerDirectionInput $ Cardinal East
+processUserInput' (MainScreen _:_) (LeftArrow)   = processPlayerDirectionInput $ Cardinal West
+processUserInput' (MainScreen _:_) (UpArrow)     = processPlayerDirectionInput $ Cardinal South
+processUserInput' (MainScreen _:_) (DownArrow)   = processPlayerDirectionInput $ Cardinal North
+processUserInput' (MainScreen _:_) (RightArrow)  = processPlayerDirectionInput $ Cardinal East
 
 processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
   uuids <- unwrap <$> inventory <@> playerUUID
@@ -150,22 +150,22 @@ processUserInput' p@(MainScreen _ : _) (KeyChar 'x') = do
 processUserInput' (ExamineTiles _ : ps) (KeyChar 'x') = portal .= ps
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'h') =
-  case movePosDir West pos of
+  case movePosDir (Cardinal West) pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'j') =
-  case movePosDir South pos of
+  case movePosDir (Cardinal South) pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'k') =
-  case movePosDir North pos of
+  case movePosDir (Cardinal North) pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
 
 processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') =
-  case movePosDir East pos of
+  case movePosDir (Cardinal East) pos of
     Just newPos -> portal .= ExamineTiles newPos : ps
     Nothing -> return ()
 

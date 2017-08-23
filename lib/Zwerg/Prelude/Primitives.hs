@@ -1,5 +1,7 @@
 module Zwerg.Prelude.Primitives
   ( Direction(..)
+  , CardinalDirection(..)
+  , DiagonalDirection(..)
   , cardinalDirections
   , diagonalDirections
   , allDirections
@@ -28,23 +30,23 @@ import GHC.Generics (Generic)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 
-data Direction
-    = North
-    | South
-    | East
-    | West
-    | NorthWest
-    | NorthEast
-    | SouthWest
-    | SouthEast
+data CardinalDirection = North | South | East | West
+  deriving stock Generic
+  deriving anyclass Binary
+
+data DiagonalDirection = NorthWest | NorthEast | SouthWest | SouthEast
+  deriving stock Generic
+  deriving anyclass Binary
+
+data Direction = Cardinal CardinalDirection | Diagonal DiagonalDirection
   deriving stock Generic
   deriving anyclass Binary
 
 cardinalDirections :: [Direction]
-cardinalDirections = [North,South,East,West]
+cardinalDirections = map Cardinal [North,South,East,West]
 
 diagonalDirections :: [Direction]
-diagonalDirections = [NorthWest,SouthWest,NorthEast,SouthEast]
+diagonalDirections = map Diagonal [NorthWest,SouthWest,NorthEast,SouthEast]
 
 allDirections :: [Direction]
 allDirections = cardinalDirections ++ diagonalDirections
@@ -68,8 +70,8 @@ data EntityType
 
 isTypicallyStationary :: EntityType -> Bool
 isTypicallyStationary Player = False
-isTypicallyStationary Enemy = False
-isTypicallyStationary _ = True
+isTypicallyStationary Enemy  = False
+isTypicallyStationary _      = True
 
 instance ZDefault EntityType where
     zDefault = Enemy

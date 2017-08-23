@@ -4,9 +4,6 @@ HIGH PRIORITY
 
 * Add pickupItem and pickAllItemsOnGround function
 
-* Add ConfirmDropSelectedItems port
-Simple yes/no display, with a list of to-be-dropped items underneath.
-
 * make Distribution a * -> * kind and make Damage use a Distribution Int
 make sample return m a instead of m Double
 Mostly we will have Distribution Int, but some Doubles may be required
@@ -14,6 +11,9 @@ Mostly we will have Distribution Int, but some Doubles may be required
 ------------
 LOW PRIORITY
 ------------
+
+* Add ConfirmDropSelectedItems port
+Simple yes/no display, with a list of to-be-dropped items underneath.
 
 * Make map bigger and find performance bottleneck(s)
   - Hopefully it won't be Brick itself (looks like it is)

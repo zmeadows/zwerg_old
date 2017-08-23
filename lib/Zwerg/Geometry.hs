@@ -1,6 +1,7 @@
 module Zwerg.Geometry
   ( line
   , circle
+  , squareSpiral
   ) where
 
 import Zwerg.Prelude
@@ -47,3 +48,17 @@ balancedWord :: Int -> Int -> Int -> [Int]
 balancedWord p q eps
   | eps + p < q = 0 : balancedWord p q (eps + p)
   | otherwise = 1 : balancedWord p q (eps + p - q)
+
+squareSpiral :: Int -> [(Int,Int)]
+squareSpiral radius = go 1 radius [(radius,0)]
+    where go :: Int -> Int -> [(Int,Int)] -> [(Int,Int)]
+          go 2 1 sps@((1,1):_) = sps
+          go 1 r sps@((x,1):_) = go 1 (r-1) ((x-1,0):sps)
+          go 0 r sps@((x,y):_) = if (y == r) then go 2 r ((x+1,y):sps) else go 0 r ((x,y+1):sps)
+          go 1 r sps@((x,y):_) = if (y == -r) then go 3 r ((x-1,y):sps) else go 1 r ((x,y-1):sps)
+          go 2 r sps@((x,y):_) = if (x == r) then go 1 r ((x,y+1):sps) else go 2 r ((x+1,y):sps)
+          go 3 r sps@((x,y):_) = if (x == -r) then go 0 r ((x,y-1):sps) else go 3 r ((x-1,y):sps)
+          go _ _ _ = error "apparently impossible case encountered while building square spiral"
+
+-- diamondSpiral :: Int -> [(Int,Int)]
+-- diamondSpiral _ = []
