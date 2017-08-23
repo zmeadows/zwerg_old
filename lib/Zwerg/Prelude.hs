@@ -18,7 +18,7 @@ import Control.Monad.State.Strict as EXPORTED
 import Data.Binary as EXPORTED (Binary)
 import Data.Bifunctor as EXPORTED
 import Data.List.NonEmpty as EXPORTED (NonEmpty(..))
-import Data.Maybe as EXPORTED (catMaybes)
+import Data.Maybe as EXPORTED (catMaybes, mapMaybe)
 import Data.Semigroup as EXPORTED
 import Data.String.Conv (StringConv, toS)
 import Data.Text as EXPORTED (Text, pack, unpack, singleton, append)

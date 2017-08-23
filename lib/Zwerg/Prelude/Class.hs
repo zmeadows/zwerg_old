@@ -47,6 +47,8 @@ instance ZDefault Bool where
   zDefault = False
 instance ZDefault [a] where
   zDefault = []
+instance ZDefault (Maybe a) where
+  zDefault = Nothing
 
 class ZEmptiable a where
   zIsNull :: a -> Bool
