@@ -281,7 +281,7 @@ getGlyphMapUpdates = do
 
     let go bgGlyph = return (pos, GlyphMapCell True primaryGlyph bgGlyph)
 
-    getPrimaryOccupant tileUUID >>= (<~>) glyph >>= \case
+    getPrimaryStationaryOccupant tileUUID >>= (<~>) glyph >>= \case
       PartialGlyph stationaryChar stationaryFG -> do
         glyph <~> tileUUID >>= \case
           FullGlyph _ _ tileBG -> go $ FullGlyph stationaryChar stationaryFG tileBG
