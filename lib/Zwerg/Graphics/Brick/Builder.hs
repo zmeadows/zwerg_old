@@ -100,10 +100,12 @@ buildPortUI (ExamineTiles pos) = do
       blankLog  = translateBy (BT.Location (0,mapHeightINT+1)) (padBottom BT.Max $ padRight BT.Max $ fill ' ')
   return $ [tileMaker, sometext, blankLog]
 
-buildPortUI (MainScreen gm) = do
+buildPortUI MainScreen = do
   _name  <- name <~> playerUUID
   _stats <- stats <~> playerUUID
   _hp    <- hp <~> playerUUID
+  levelUUID <- level <~> playerUUID
+  gm <- glyphMap <~> levelUUID
   mylog <- view (gameState . userLog)
   let mapWidget :: BT.Widget ()
       mapWidget =

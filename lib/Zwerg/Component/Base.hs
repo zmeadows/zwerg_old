@@ -37,6 +37,7 @@ import Zwerg.Data.HP
 import Zwerg.Data.Position
 import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet
+import Zwerg.UI.GlyphMap
 import Zwerg.Debug
 
 import Lens.Micro.Platform (makeClassy, Lens', (%=), use, view, _2, _1)
@@ -56,8 +57,10 @@ data Components = Components
     , _tiles         :: (Text, UUIDMap UUIDSet       )
     , _ticks         :: (Text, UUIDMap Int           )
     , _tileOn        :: (Text, UUIDMap UUID          )
+    , _connectedTo   :: (Text, UUIDMap UUID          )
     , _tileType      :: (Text, UUIDMap TileType      )
     , _tileMap       :: (Text, UUIDMap (GridMap UUID))
+    , _glyphMap      :: (Text, UUIDMap GlyphMap      )
     , _occupants     :: (Text, UUIDMap UUIDSet       )
     , _parent        :: (Text, UUIDMap Parent        )
     , _children      :: (Text, UUIDMap UUIDSet       )
@@ -119,9 +122,11 @@ emptyComponents = Components
     , _resistances   = ("resistances"   , zDefault)
     , _tiles         = ("tiles"         , zDefault)
     , _tileOn        = ("tileOn"        , zDefault)
+    , _connectedTo   = ("connectedTo"   , zDefault)
     , _ticks         = ("ticks"         , zDefault)
     , _tileType      = ("tileType"      , zDefault)
     , _tileMap       = ("tileMap"       , zDefault)
+    , _glyphMap      = ("glyphMap"      , zDefault)
     , _occupants     = ("occupants"     , zDefault)
     , _parent        = ("parent"        , zDefault)
     , _children      = ("children"      , zDefault)
@@ -159,24 +164,19 @@ hasComp uuid comp = zContains uuid . snd <$> use comp
 canViewComp :: UUID -> Component a -> MonadCompRead Bool
 canViewComp uuid comp = zContains uuid . snd <$> view comp
 
-addComp :: (HasComponents s, MonadState s m)
-        => UUID -> Component a -> a -> m ()
+addComp :: (HasComponents s, MonadState s m) => UUID -> Component a -> a -> m ()
 addComp uuid comp dat = (comp . _2) %= zInsert uuid dat
 
-setComp :: (HasComponents s, MonadState s m)
-        => UUID -> Component a -> a -> m ()
+setComp :: (HasComponents s, MonadState s m) => UUID -> Component a -> a -> m ()
 setComp = addComp
 
-modComp :: (HasComponents s, MonadState s m)
-        => UUID -> Component a -> (a -> a) -> m ()
+modComp :: (HasComponents s, MonadState s m) => UUID -> Component a -> (a -> a) -> m ()
 modComp uuid comp f = (comp . _2) %= zModifyAt f uuid
 
-deleteComp :: (HasComponents s, MonadState s m)
-           => UUID -> Component a -> m ()
+deleteComp :: (HasComponents s, MonadState s m) => UUID -> Component a -> m ()
 deleteComp uuid comp = (comp . _2) %= zRemoveAt uuid
 
-filterComp :: (HasComponents s, MonadState s m)
-           => Component a -> (a -> Bool) -> m ()
+filterComp :: (HasComponents s, MonadState s m) => Component a -> (a -> Bool) -> m ()
 filterComp comp f = (comp . _2) %= zFilter (\(_, x) -> f x)
 
 demandComp :: ZDefault a => Component a -> UUID -> MonadCompState a

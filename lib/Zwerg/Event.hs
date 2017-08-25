@@ -82,6 +82,16 @@ data EntityPickedUpItemEventData = EntityPickedUpItemEventData
   deriving stock Generic
   deriving anyclass Binary
 
+data EntityUpStairsEventData = EntityUpStairsEventData
+    { entityUpStairsUUID :: UUID }
+  deriving stock Generic
+  deriving anyclass Binary
+
+data EntityDownStairsEventData = EntityDownStairsEventData
+    { entityDownStairsUUID :: UUID }
+  deriving stock Generic
+  deriving anyclass Binary
+
 data ZwergEvent
     = IncomingDamageEvent IncomingDamageEventData
     | OutgoingDamageEvent OutgoingDamageEventData
@@ -95,6 +105,8 @@ data ZwergEvent
     | EntityReachedTileEvent EntityReachedTileEventData
     | EntityDroppedItemEvent EntityDroppedItemEventData
     | EntityPickedUpItemEvent EntityPickedUpItemEventData
+    | EntityUpStairsEvent EntityUpStairsEventData
+    | EntityDownStairsEvent EntityDownStairsEventData
   deriving stock Generic
   deriving anyclass Binary
 
@@ -110,4 +122,6 @@ newEvent "EntityLeftTile"      = runQ [| \a b -> pushEventM $ EntityLeftTileEven
 newEvent "EntityReachedTile"   = runQ [| \a b -> pushEventM $ EntityReachedTileEvent $ EntityReachedTileEventData a b|]
 newEvent "EntityDroppedItem"   = runQ [| \a b -> pushEventM $ EntityDroppedItemEvent $ EntityDroppedItemEventData a b|]
 newEvent "EntityPickedUpItem"  = runQ [| \a b -> pushEventM $ EntityPickedUpItemEvent $ EntityPickedUpItemEventData a b|]
+newEvent "EntityUpStairs"      = runQ [| \a -> pushEventM $ EntityUpStairsEvent $ EntityUpStairsEventData a|]
+newEvent "EntityDownStairs"    = runQ [| \a -> pushEventM $ EntityDownStairsEvent $ EntityDownStairsEventData a|]
 newEvent _                     = runQ [|"INVALID EVENT TYPE PASSED TO TEMPLATE HASKELL FUNCTION 'newEvent'"|]

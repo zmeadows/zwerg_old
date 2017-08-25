@@ -6,6 +6,8 @@ module Zwerg.Generator.Default
 
 import Zwerg.Generator as EXPORTED
 
+import Zwerg.UI.GlyphMap
+
 generatePlayerSkeleton :: Generator' ()
 generatePlayerSkeleton = do
   --TODO: check if player already exists and throw error if it does
@@ -32,6 +34,7 @@ generateSkeleton' enemyUUID Enemy = do
 
 generateSkeleton' levelUUID Level = do
   setComp levelUUID tiles zDefault
+  setComp levelUUID glyphMap blankGlyphMap
   emptyTileMap <- zBuildM $ \pos -> do
       tileUUID <- generateSkeleton Tile
       addComp tileUUID position pos

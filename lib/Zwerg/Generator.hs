@@ -41,6 +41,7 @@ getRandomEmptyTile :: UUID -> Generator' (Maybe UUID)
 getRandomEmptyTile levelUUID = do
   levelTiles <- tiles <@> levelUUID
   -- TODO: make sure new tile isn't fully enclosed by walls
+  -- FIXME: make sure not a special tile, such as ladder/door, maybe just require Floor TileType?
   unoccupiedTiles <- zFilterM (fmap not . (<@>) blocksPassage) levelTiles
   tryPickRandom unoccupiedTiles
 

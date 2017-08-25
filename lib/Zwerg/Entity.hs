@@ -77,6 +77,7 @@ equipItem itemUUID entityUUID = do
   (_, newEquipment) <- equip islot itemUUID <$> equipment <@> entityUUID
   setComp entityUUID equipment newEquipment
 
+
 getEquippedWeapon :: UUID -> MonadCompRead (Maybe UUID)
 getEquippedWeapon entityUUID = do
   uuids <- getEquippedInSlot (SingleHand RightHand) <$> equipment <~> entityUUID
@@ -124,11 +125,10 @@ transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
         if occupiedType `notElem` [Tile, Container]
           then debug "Attempted to add an occupant to an entity that doesn't support it"
           else do
-            --TODO: change z-level hasn't changed?
             modComp newContainerUUID occupants $ zAdd transfereeUUID
             position <@> newContainerUUID >>= setComp transfereeUUID position
-            when (occupiedType == Tile) $ do
-               setComp transfereeUUID tileOn newContainerUUID
+            level <@> newContainerUUID >>= setComp transfereeUUID level
+            when (occupiedType == Tile) $ setComp transfereeUUID tileOn newContainerUUID
       removeOccupant oldContainerUUID' = do
         occupiedType <- entityType <@> oldContainerUUID'
         if occupiedType `notElem` [Tile, Container]

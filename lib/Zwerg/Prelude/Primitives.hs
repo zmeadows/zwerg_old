@@ -76,9 +76,12 @@ isTypicallyStationary _      = True
 instance ZDefault EntityType where
     zDefault = Enemy
 
-data TileType = Floor | Wall | Door | Void
-    deriving stock Generic
+data TileType = Floor | Wall | Door | Stairs | Void
+    deriving stock (Eq, Generic)
     deriving anyclass Binary
+
+instance ZDefault TileType where
+    zDefault = Void
 
 data Stat = STR | DEX | INT | CHA | CON | WIS
     deriving stock (Show, Eq, Ord, Enum, Generic)

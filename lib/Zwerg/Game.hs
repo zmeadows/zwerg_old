@@ -9,11 +9,11 @@ import Zwerg.Entity.AI
 import Zwerg.Entity.Compare
 import Zwerg.Event.Queue
 import Zwerg.Generator
--- import Zwerg.Generator.Level.TestSquare
+import Zwerg.Generator.Level.TestSquare
+import Zwerg.Generator.Stairs
 import Zwerg.Generator.Level.Cave
 import Zwerg.Generator.Player.TestPlayer
 import Zwerg.Log
-import Zwerg.UI.GlyphMap
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
 import Zwerg.UI.Port
@@ -66,14 +66,21 @@ runGame (Game a) gen st = execState (runRandT a gen) st
 
 -- TODO: factor out into Generator.World module
 generateGame :: Game ()
-generateGame = caveGenerator >>= testPlayerGenerator
+generateGame = do
+    caveUUID <- caveGenerator
+    testUUID <- testSquareGenerator
+    buildRandomStairs testUUID caveUUID
+    buildRandomStairs testUUID caveUUID
+    buildRandomStairs testUUID caveUUID
+    buildRandomStairs testUUID caveUUID
+    testPlayerGenerator caveUUID
 
 -- after we process a player tick, go through all other entities
 -- and process their ticks, until the player is ready to tick again
 processNonPlayerEvents :: Game ()
 processNonPlayerEvents = do
   use portal >>= \case
-    MainScreen _ : _ -> do
+    (MainScreen:_) -> do
         (minTick, uuids) <- getMinimumUUIDs <$> getCompUUIDMap ticks
         (ticks . _2) %= fmap (\x -> max (x - minTick) 0)
         if | notElem playerUUID uuids ->
@@ -103,21 +110,24 @@ processUserInput' (MainMenu m:_) Return =
     case label (focus m) of
         "new game" -> do
             generateGame
-            portal .= [MainScreen blankGlyphMap]
+            portal .= [MainScreen]
             updateGlyphMap
         "exit" -> portal .= [ExitScreen]
         _ -> return ()
 
-processUserInput' (MainScreen _:_) (KeyChar 'h') = processPlayerDirectionInput $ Cardinal West
-processUserInput' (MainScreen _:_) (KeyChar 'j') = processPlayerDirectionInput $ Cardinal South
-processUserInput' (MainScreen _:_) (KeyChar 'k') = processPlayerDirectionInput $ Cardinal North
-processUserInput' (MainScreen _:_) (KeyChar 'l') = processPlayerDirectionInput $ Cardinal East
-processUserInput' (MainScreen _:_) (LeftArrow)   = processPlayerDirectionInput $ Cardinal West
-processUserInput' (MainScreen _:_) (UpArrow)     = processPlayerDirectionInput $ Cardinal South
-processUserInput' (MainScreen _:_) (DownArrow)   = processPlayerDirectionInput $ Cardinal North
-processUserInput' (MainScreen _:_) (RightArrow)  = processPlayerDirectionInput $ Cardinal East
+processUserInput' (MainScreen:_) (KeyChar 'h') = processPlayerDirectionInput $ Cardinal West
+processUserInput' (MainScreen:_) (KeyChar 'j') = processPlayerDirectionInput $ Cardinal South
+processUserInput' (MainScreen:_) (KeyChar 'k') = processPlayerDirectionInput $ Cardinal North
+processUserInput' (MainScreen:_) (KeyChar 'l') = processPlayerDirectionInput $ Cardinal East
+processUserInput' (MainScreen:_) (LeftArrow)   = processPlayerDirectionInput $ Cardinal West
+processUserInput' (MainScreen:_) (UpArrow)     = processPlayerDirectionInput $ Cardinal South
+processUserInput' (MainScreen:_) (DownArrow)   = processPlayerDirectionInput $ Cardinal North
+processUserInput' (MainScreen:_) (RightArrow)  = processPlayerDirectionInput $ Cardinal East
 
-processUserInput' p@(MainScreen _:_) (KeyChar 'i') = do
+processUserInput' (MainScreen:_) (KeyChar '>') = $(newEvent "EntityDownStairs") playerUUID
+processUserInput' (MainScreen:_) (KeyChar '<') = $(newEvent "EntityUpStairs") playerUUID
+
+processUserInput' p@(MainScreen:_) (KeyChar 'i') = do
   uuids <- unwrap <$> inventory <@> playerUUID
   names <- mapM (name <@>) uuids
   case zip names uuids of
@@ -143,7 +153,7 @@ processUserInput' (ViewInventory inv : ps) (KeyChar 'j') =
 processUserInput' (ViewInventory inv : ps) (KeyChar 'k') =
   portal .= (ViewInventory $ prev inv) : ps
 
-processUserInput' p@(MainScreen _ : _) (KeyChar 'x') = do
+processUserInput' p@(MainScreen:_) (KeyChar 'x') = do
   playerPos <- position <@> playerUUID
   portal .= ExamineTiles playerPos : p
 
@@ -171,12 +181,15 @@ processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') =
 
 processUserInput' _ _ = return ()
 
+--TODO: pull GlyphMap from level.
 updateGlyphMap :: Game ()
 updateGlyphMap =
   use portal >>= \case
-    MainScreen gm : ps -> do
+    MainScreen : _ -> do
+        levelUUID <- level <@> playerUUID
+        gm <- glyphMap <@> levelUUID
         updatedGlyphs <- readC getGlyphMapUpdates
-        portal .= (MainScreen $ mergeUpdates (fmap (markVisibility False) gm) updatedGlyphs) : ps
+        setComp levelUUID glyphMap $ mergeUpdates (fmap (markVisibility False) gm) updatedGlyphs
     _ -> return ()
 
 processEvents :: Game ()
@@ -240,6 +253,26 @@ processEvent (WeaponAttackHitEvent WeaponAttackHitEventData{..}) = do
                   targetUUID
                   (ddAttribute damageData)
                   (ddDistribution damageData)
+
+processEvent (EntityDownStairsEvent EntityDownStairsEventData{..}) = do
+  tileUUID <- tileOn <@> entityDownStairsUUID
+  onStairTile <- (== Stairs) <$> tileType <@> tileUUID
+  if onStairTile
+     then do
+         newTileUUID <- connectedTo <@> tileUUID
+         newTileBlocked <- readC $ tileBlocksPassage newTileUUID
+         if newTileBlocked
+            then if entityDownStairsUUID /= playerUUID
+                    then debug "NPC Entity attempted to move down stairs to blocked tile."
+                    else do
+                      -- TODO: check if player is strong enough to push blocker out of the way.
+                      pushLogMsgM "There's something down there blocking your way."
+                      playerGoofed .= True
+            else do
+                transferOccupant entityDownStairsUUID (Just tileUUID) newTileUUID
+                $(newEvent "EntityLeftTile") entityDownStairsUUID tileUUID
+                $(newEvent "EntityReachedTile") entityDownStairsUUID newTileUUID
+     else debug "Entity attempted to use stairs while not on staircase."
 
 processEvent (WeaponAttackMissEvent _) = return ()
 

@@ -59,6 +59,7 @@ library
                        Zwerg.Generator.Level.TestSquare
                        Zwerg.Generator.Level.Cave
                        Zwerg.Generator.Player.TestPlayer
+                       Zwerg.Generator.Stairs
                        Zwerg.Generator.Verify
                        Zwerg.Geometry
                        Zwerg.Geometry.FOV
@@ -101,6 +102,7 @@ library
                        vector,
                        vector-binary-instances,
                        primitive,
+                       tuple,
                        MonadRandom,
                        StateVar
 

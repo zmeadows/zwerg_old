@@ -18,6 +18,9 @@ whenJustM mg f = maybe (return ()) f =<< mg
 whenM :: Monad m => m Bool -> m () -> m ()
 whenM mg f = mg >>= (flip when) f
 
+inM2 :: Monad m => (a -> m b) -> (a,a) -> m (b,b)
+inM2 f t = sequenceT $ join (***) f t
+
 chunksOf :: Int -> [e] -> [[e]]
 chunksOf i ls = map (take i) (build (splitter ls))
   where

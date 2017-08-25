@@ -3,13 +3,12 @@ module Zwerg.UI.Port where
 import Zwerg.Prelude
 
 import Zwerg.Data.Position
-import Zwerg.UI.GlyphMap
 import Zwerg.UI.Menu
 
 import qualified Data.List.NonEmpty as NE (repeat, zip)
 
 data Port
-    = MainScreen GlyphMap
+    = MainScreen
     | MainMenu (Menu ())
     | ChooseTarget
     | LoadingScreen

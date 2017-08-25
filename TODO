@@ -2,6 +2,8 @@
 HIGH PRIORITY
 -------------
 
+* Switch Portal to non-empty list
+
 * Add pickupItem and pickAllItemsOnGround function
 
 * make Distribution a * -> * kind and make Damage use a Distribution Int
@@ -33,8 +35,21 @@ need to better understand if this is necessary
 
 * Add system to auto-explore by pressing the 'Tab' key
 This will be difficult.
-  - Add A* path-finding algorithm
+  - Add A* path-finding algorithm (DONE)
   - Add function to choose next tile to explore towards
+    - How to choose that tile?
+        - Recursively sub-divide level into blocks until one block has X% more
+          unexplored (void) tiles than the rest.
+        - Then pick N random visible open tiles in that area
+        - Compute A* path/distance to these N open tiles and pick smallest
+          distance
+        - Save this path as a player component and begin following it
+        - Stop following when:
+          - Encountered Enemy, Door, Shop, etc.
+          - Saw item that isn't AlwaysPickup type
+          - Level is fully explored (might be unreachable areas)
+        - Check situation after other entity events are processed
+          and clear auto-explore path if any of the above conditions met
 
 * Add system to auto-attack to reduce early game monotony
 

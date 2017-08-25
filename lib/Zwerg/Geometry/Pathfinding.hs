@@ -6,6 +6,7 @@ import Zwerg.Data.Position
 
 import Data.Sequence (Seq, (|>), ViewR(..))
 import qualified Data.Sequence as S (empty, viewr, null)
+import Lens.Micro.Platform (makeLenses, (%=), (.=), use, view)
 
 -------------------------------------------------------------------------------
 
@@ -17,97 +18,82 @@ emptyPath = MkPath S.empty
 isEmptyPath :: Path -> Bool
 isEmptyPath (MkPath s) = S.null s
 
+pushPath :: Direction -> Path -> Path
+pushPath dir (MkPath p) = MkPath $ p |> dir
+
+popPath :: Path -> Path
+popPath (MkPath p) =
+    case (S.viewr p) of
+      EmptyR -> emptyPath
+      (oldpath :> _) -> MkPath oldpath
+
 -------------------------------------------------------------------------------
 
-type PathFinder a = ReaderT PathFinderConfig (State PathFinderContext) a
-
 data PathFinderConfig = PathFinderConfig
-    { goal    :: Position
-    , blocked :: Position -> Bool
+    { _goal    :: Position
+    , _blocked :: Position -> Bool
     }
+makeLenses ''PathFinderConfig
 
 data PathFinderContext = PathFinderContext
-    { currentPosition :: Position
-    , currentDistance :: Int
-    , currentPath     :: Path
-    , bestPath        :: Path
-    , bestDistance    :: Int
+    { _currentPosition :: Position
+    , _currentDistance :: Int
+    , _currentPath     :: Path
+    , _bestPath        :: Path
+    , _bestDistance    :: Int
     }
+makeLenses ''PathFinderContext
+
+type PathFinder a = ReaderT PathFinderConfig (State PathFinderContext) a
 
 -------------------------------------------------------------------------------
 
 findPath :: GridMap Bool -> Position -> Position -> Maybe Path
-findPath blocked startPos goalPos = evalState (runReaderT (buildPath >> extractPath) initConfig) initContext
-    where initConfig = PathFinderConfig goalPos (zAt blocked)
-          initContext = PathFinderContext startPos 0 emptyPath emptyPath maxBound
+findPath bm startPos goalPos =
+    evalState (runReaderT (buildPath >> extractPath) initConfig) initContext
+  where initConfig = PathFinderConfig goalPos (zAt bm)
+        initContext = PathFinderContext startPos 0 emptyPath emptyPath maxBound
 
-modCurrentDistance :: (Int -> Int) -> PathFinder ()
-modCurrentDistance f = do
-    cd <- gets currentDistance
-    get >>= \s -> put $ s { currentDistance = f cd }
-
-setBestDistance :: Int -> PathFinder ()
-setBestDistance i = get >>= \s -> put $ s { bestDistance = i }
-
-setBestPath :: Path -> PathFinder ()
-setBestPath p = get >>= \s -> put $ s { bestPath = p }
-
-setCurrentPosition :: Position -> PathFinder ()
-setCurrentPosition p = get >>= \s -> put $ s { currentPosition = p }
-
-pushPath :: Direction -> PathFinder ()
-pushPath dir = do
-    (MkPath cp) <- gets currentPath
-    get >>= \s -> put $ s { currentPath = MkPath $ cp |> dir }
-
-popPath :: PathFinder ()
-popPath = do
-    (MkPath cp) <- gets currentPath
-    case (S.viewr cp) of
-      EmptyR -> return ()
-      (oldpath :> _) -> get >>= \s -> put $ s { currentPath = MkPath $ oldpath }
-
-getValidMoves :: PathFinder [(Position,Direction)]
-getValidMoves = do
-    blockFunc <- asks blocked
+getValidMoveDirPairs :: PathFinder [(Position,Direction)]
+getValidMoveDirPairs = do
+    blockFunc <- view blocked
     let isGoodPos (p,d) =
             case (movePosDir d p) of
               Just p' -> if (not $ blockFunc p')
                             then Just (p',d)
                             else Nothing
               Nothing -> Nothing
-
-    cp <- gets currentPosition
-    return $ mapMaybe isGoodPos $ zip (repeat cp) allDirections
+    cp <- use currentPosition
+    return $ mapMaybe isGoodPos $ zip (repeat cp) cardinalDirections
 
 buildPath :: PathFinder ()
 buildPath = do
-    cd <- gets currentDistance
-    md <- gets bestDistance
-    cp <- gets currentPosition
-    atGoal <- (cp ==) <$> asks goal
+    cd <- use currentDistance
+    md <- use bestDistance
+    cp <- use currentPosition
+    atGoal <- (cp ==) <$> view goal
 
     when (atGoal && cd < md) $ do
-        setBestDistance cd
-        gets currentPath >>= setBestPath
+        bestDistance .= cd
+        use currentPath >>= (.=) bestPath
 
     when (not atGoal && cd < md) $ do
-        nextPositions <- getValidMoves
+        nextPositions <- getValidMoveDirPairs
         forM_ nextPositions $ \(pos,dir) -> do
-            pushPath dir
+            currentPath %= pushPath dir
             --FIXME: account for extra diagonal distance
-            modCurrentDistance succ
-            setCurrentPosition pos
+            currentDistance %= succ
+            currentPosition .= pos
 
             buildPath
 
-            popPath
-            modCurrentDistance pred
-        setCurrentPosition cp
+            currentPath %= popPath
+            currentDistance %= pred
+        currentPosition .= cp
 
 extractPath :: PathFinder (Maybe Path)
 extractPath = do
-    bp <- gets bestPath
+    bp <- use bestPath
     if (not $ isEmptyPath bp)
        then return $ Just bp
        else return Nothing
