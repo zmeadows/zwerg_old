@@ -2,6 +2,9 @@
 HIGH PRIORITY
 -------------
 
+* remove as many Z* classes as possible and just use
+  Foldable/Traversable/Monoid/Etc.
+
 * Switch Portal to non-empty list
 
 * Add pickupItem and pickAllItemsOnGround function

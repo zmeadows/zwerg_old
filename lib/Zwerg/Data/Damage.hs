@@ -43,12 +43,6 @@ newtype Resistance = MkResistance Int
     deriving stock Generic
     deriving anyclass Binary
 
--- increaseResistance :: Resistance -> Int -> Resistance
--- increaseResistance (MkResistance r) i = MkResistance $ min 10 $ r + i
-
--- decreaseResistance :: Resistance -> Int -> Resistance
--- decreaseResistance (MkResistance r) i = MkResistance $ max (-10) $ r - i
-
 newtype Resistances = MkResistances (Map DamageAttribute Resistance)
     deriving stock Generic
     deriving anyclass Binary

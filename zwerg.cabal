@@ -87,6 +87,7 @@ library
                        vty,
                        bytestring,
                        containers,
+                       fclabels,
                        fingertree,
                        mersenne-random-pure64,
                        microlens-platform,

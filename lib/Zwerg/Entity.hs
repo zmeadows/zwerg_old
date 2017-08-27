@@ -120,22 +120,22 @@ getOccupantsOfType containerUUID eType = occupants <~> containerUUID >>= zFilter
 
 transferOccupant :: UUID -> Maybe UUID -> UUID -> MonadCompState ()
 transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
-  let addOccupant = do
-        occupiedType <- entityType <@> newContainerUUID
-        if occupiedType `notElem` [Tile, Container]
-          then debug "Attempted to add an occupant to an entity that doesn't support it"
-          else do
-            modComp newContainerUUID occupants $ zAdd transfereeUUID
-            position <@> newContainerUUID >>= setComp transfereeUUID position
-            level <@> newContainerUUID >>= setComp transfereeUUID level
-            when (occupiedType == Tile) $ setComp transfereeUUID tileOn newContainerUUID
-      removeOccupant oldContainerUUID' = do
-        occupiedType <- entityType <@> oldContainerUUID'
-        if occupiedType `notElem` [Tile, Container]
-          then debug "Attempted to remove an occupant from an entity that doesn't support it"
-          else do
-            modComp oldContainerUUID' occupants $ zDelete transfereeUUID
-  in whenJust oldContainerUUID removeOccupant >> addOccupant
+    whenJust oldContainerUUID removeOccupant >> addOccupant
+  where addOccupant = do
+          occupiedType <- entityType <@> newContainerUUID
+          if occupiedType `notElem` [Tile, Container]
+            then debug "Attempted to add an occupant to an entity that doesn't support it"
+            else do
+              modComp newContainerUUID occupants $ zAdd transfereeUUID
+              position <@> newContainerUUID >>= setComp transfereeUUID position
+              level <@> newContainerUUID >>= setComp transfereeUUID level
+              when (occupiedType == Tile) $ setComp transfereeUUID tileOn newContainerUUID
+        removeOccupant oldContainerUUID' = do
+          occupiedType <- entityType <@> oldContainerUUID'
+          if occupiedType `notElem` [Tile, Container]
+            then debug "Attempted to remove an occupant from an entity that doesn't support it"
+            else do
+              modComp oldContainerUUID' occupants $ zDelete transfereeUUID
 
 -- | TODO: this is not at all complete
 eraseEntity :: UUID -> MonadCompState ()

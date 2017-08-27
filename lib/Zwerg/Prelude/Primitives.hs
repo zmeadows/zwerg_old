@@ -8,6 +8,7 @@ module Zwerg.Prelude.Primitives
   , TargetType(..)
   , EntityType(..)
   , isTypicallyStationary
+  , UpOrDown(..)
   , TileType(..)
   , Stat(..)
   , Stats(..)
@@ -76,7 +77,11 @@ isTypicallyStationary _      = True
 instance ZDefault EntityType where
     zDefault = Enemy
 
-data TileType = Floor | Wall | Door | Stairs | Void
+data UpOrDown = Up | Down
+    deriving stock (Eq, Generic)
+    deriving anyclass Binary
+
+data TileType = Floor | Wall | Door | Stairs UpOrDown | Void
     deriving stock (Eq, Generic)
     deriving anyclass Binary
 

@@ -9,6 +9,7 @@ import Zwerg.Entity.AI
 import Zwerg.Entity.Compare
 import Zwerg.Event.Queue
 import Zwerg.Generator
+import Zwerg.Generator.Level
 import Zwerg.Generator.Level.TestSquare
 import Zwerg.Generator.Stairs
 import Zwerg.Generator.Level.Cave
@@ -69,6 +70,8 @@ generateGame :: Game ()
 generateGame = do
     caveUUID <- caveGenerator
     testUUID <- testSquareGenerator
+    setZLevel caveUUID (unsafeWrap 0)
+    setZLevel testUUID (unsafeWrap 1)
     buildRandomStairs testUUID caveUUID
     buildRandomStairs testUUID caveUUID
     buildRandomStairs testUUID caveUUID
@@ -124,8 +127,8 @@ processUserInput' (MainScreen:_) (UpArrow)     = processPlayerDirectionInput $ C
 processUserInput' (MainScreen:_) (DownArrow)   = processPlayerDirectionInput $ Cardinal North
 processUserInput' (MainScreen:_) (RightArrow)  = processPlayerDirectionInput $ Cardinal East
 
-processUserInput' (MainScreen:_) (KeyChar '>') = $(newEvent "EntityDownStairs") playerUUID
-processUserInput' (MainScreen:_) (KeyChar '<') = $(newEvent "EntityUpStairs") playerUUID
+processUserInput' (MainScreen:_) (KeyChar '>') = $(newEvent "EntityUseStairs") playerUUID Down
+processUserInput' (MainScreen:_) (KeyChar '<') = $(newEvent "EntityUseStairs") playerUUID Up
 
 processUserInput' p@(MainScreen:_) (KeyChar 'i') = do
   uuids <- unwrap <$> inventory <@> playerUUID
@@ -254,25 +257,30 @@ processEvent (WeaponAttackHitEvent WeaponAttackHitEventData{..}) = do
                   (ddAttribute damageData)
                   (ddDistribution damageData)
 
-processEvent (EntityDownStairsEvent EntityDownStairsEventData{..}) = do
-  tileUUID <- tileOn <@> entityDownStairsUUID
-  onStairTile <- (== Stairs) <$> tileType <@> tileUUID
-  if onStairTile
-     then do
+--FIXME: switch to single stairs event with UpOrDown member
+processEvent (EntityUseStairsEvent EntityUseStairsEventData{..}) = do
+  tileUUID <- tileOn <@> entityUseStairsUUID
+  tileType <@> tileUUID >>= \case
+    Stairs dir -> do
          newTileUUID <- connectedTo <@> tileUUID
          newTileBlocked <- readC $ tileBlocksPassage newTileUUID
-         if newTileBlocked
-            then if entityDownStairsUUID /= playerUUID
-                    then debug "NPC Entity attempted to move down stairs to blocked tile."
-                    else do
-                      -- TODO: check if player is strong enough to push blocker out of the way.
-                      pushLogMsgM "There's something down there blocking your way."
-                      playerGoofed .= True
-            else do
-                transferOccupant entityDownStairsUUID (Just tileUUID) newTileUUID
-                $(newEvent "EntityLeftTile") entityDownStairsUUID tileUUID
-                $(newEvent "EntityReachedTile") entityDownStairsUUID newTileUUID
-     else debug "Entity attempted to use stairs while not on staircase."
+         let stairsGoExpectedDirection = dir == entityUseStairsUpOrDown
+             isPlayer = entityUseStairsUUID == playerUUID
+         if | newTileBlocked && not isPlayer ->
+                  debug "NPC Entity attempted to move down stairs to blocked tile."
+            | newTileBlocked && isPlayer -> do
+                  pushLogMsgM "There's something down there blocking your way."
+                  playerGoofed .= True
+            | not stairsGoExpectedDirection && not isPlayer ->
+                  debug "NPC Entity attempted to move down up-going stairs!"
+            | not stairsGoExpectedDirection && isPlayer -> do
+                  pushLogMsgM "You can't go down the up stairs."
+                  playerGoofed .= True
+            | otherwise -> do
+                transferOccupant entityUseStairsUUID (Just tileUUID) newTileUUID
+                $(newEvent "EntityLeftTile") entityUseStairsUUID tileUUID
+                $(newEvent "EntityReachedTile") entityUseStairsUUID newTileUUID
+    _ -> debug "Entity attempted to use stairs while not on staircase."
 
 processEvent (WeaponAttackMissEvent _) = return ()
 

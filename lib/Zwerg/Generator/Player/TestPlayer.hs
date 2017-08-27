@@ -18,6 +18,9 @@ testPlayerGenerator startLevelUUID = do
     ticks       <@- 50
     hp          <@- unsafeWrap (100,100)
 
+    levelZLevel <- zLevel <@> startLevelUUID
+    zLevel <@- levelZLevel
+
     assignUniformRandomStat playerUUID STR (1, 100)
     assignUniformRandomStat playerUUID DEX (1, 100)
     assignUniformRandomStat playerUUID INT (1, 100)

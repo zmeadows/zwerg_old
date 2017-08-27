@@ -5,6 +5,10 @@ import Zwerg.Prelude
 import Data.Text (Text)
 import qualified Data.Text as T (replicate, append, length)
 
+condM :: Monad m => [(m Bool, m ())] -> m ()
+condM [] = return ()
+condM ((f1,f2):rest) = f1 >>= \b -> if b then f2  else condM rest
+
 takeUntil :: (a -> Bool) -> [a] -> [a]
 takeUntil _ [] = []
 takeUntil p (x:xs) = x : if p x then takeUntil p xs else []

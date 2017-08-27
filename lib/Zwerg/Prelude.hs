@@ -3,7 +3,7 @@ module Zwerg.Prelude
   , module EXPORTED
   ) where
 
-import Prelude as EXPORTED hiding (show, Monoid(..))
+import Prelude as EXPORTED hiding (id, (.), show, Monoid(..))
 import qualified Prelude as P (show)
 
 import Zwerg.Data.UUID as EXPORTED
@@ -11,13 +11,14 @@ import Zwerg.Data.ZColor as EXPORTED
 import Zwerg.Prelude.Class as EXPORTED
 import Zwerg.Prelude.Primitives as EXPORTED
 
+import Control.Arrow as EXPORTED hiding ((<+>))
+import Control.Category as EXPORTED
 import Control.Monad.Random.Class as EXPORTED hiding (fromList)
 import Control.Monad.Reader as EXPORTED
 import Control.Monad.State.Strict as EXPORTED
-import Control.Arrow as EXPORTED hiding ((<+>))
 
-import Data.Binary as EXPORTED (Binary)
 import Data.Bifunctor as EXPORTED (bimap)
+import Data.Binary as EXPORTED (Binary)
 import Data.List.NonEmpty as EXPORTED (NonEmpty(..))
 import Data.Maybe as EXPORTED (catMaybes, mapMaybe)
 import Data.Semigroup as EXPORTED

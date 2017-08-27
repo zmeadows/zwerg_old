@@ -21,6 +21,13 @@ newtype ZLevel = MkZLevel Int
     deriving stock (Eq, Generic)
     deriving anyclass Binary
 
+instance ZWrapped ZLevel Int where
+    unwrap (MkZLevel x) = x
+    wrap x = if x >= 0 then (Just $ MkZLevel x) else Nothing
+
+instance ZDefault ZLevel where
+    zDefault = MkZLevel 0
+
 newtype Position = MkPosition (Int, Int)
     deriving stock (Eq, Generic)
     deriving anyclass Binary

@@ -11,12 +11,12 @@ buildRandomStairs lowerLevelUUID upperLevelUUID = do
            addComp lowerStairsUUID name        "Stone staircase"
            addComp lowerStairsUUID description "A carved stone staircase."
            addComp lowerStairsUUID glyph       (Glyph '<' zDefault)
-           addComp lowerStairsUUID tileType    Stairs
+           addComp lowerStairsUUID tileType    (Stairs Up)
 
            addComp upperStairsUUID name        "Stone staircase"
            addComp upperStairsUUID description "A carved stone staircase."
            addComp upperStairsUUID glyph       (Glyph '>' zDefault)
-           addComp upperStairsUUID tileType    Stairs
+           addComp upperStairsUUID tileType    (Stairs Down)
 
            addComp lowerStairsUUID connectedTo upperStairsUUID
            addComp upperStairsUUID connectedTo lowerStairsUUID
