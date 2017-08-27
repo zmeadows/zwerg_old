@@ -257,7 +257,6 @@ processEvent (WeaponAttackHitEvent WeaponAttackHitEventData{..}) = do
                   (ddAttribute damageData)
                   (ddDistribution damageData)
 
---FIXME: switch to single stairs event with UpOrDown member
 processEvent (EntityUseStairsEvent EntityUseStairsEventData{..}) = do
   tileUUID <- tileOn <@> entityUseStairsUUID
   tileType <@> tileUUID >>= \case
