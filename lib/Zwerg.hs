@@ -4,6 +4,8 @@ module Zwerg
   , initZwergState
   ) where
 
+#define DEBUG_CALLSTACK
+
 import Zwerg.Prelude hiding ((<>))
 
 import Zwerg.Component
