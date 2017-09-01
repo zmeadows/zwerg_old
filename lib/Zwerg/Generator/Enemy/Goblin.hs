@@ -3,11 +3,12 @@ module Zwerg.Generator.Enemy.Goblin (goblin) where
 import Zwerg.Generator
 import Zwerg.Generator.Default
 -- import Zwerg.Generator.Verify
--- import Zwerg.Generator.Item.Weapon
+import Zwerg.Generator.Item.Weapon
 
 goblin :: Generator
 goblin = Generator goblinHatch []
-           <+ assignUniformRandomStats (zip (enumFrom STR) (repeat (1,5)))
+           +> assignUniformRandomStats (zip (enumFrom STR) (repeat (1,5)))
+           +> generateAndEquip sword
 
 goblinHatch :: EntityHatcher
 goblinHatch = MkEntityHatcher $ do

@@ -2,12 +2,13 @@ module Zwerg.Generator.Player.TestPlayer where
 
 import Zwerg.Generator
 import Zwerg.Generator.Default
--- import Zwerg.Generator.Item.Weapon
+import Zwerg.Generator.Item.Weapon
 
 testPlayer :: Generator
 testPlayer =
     Generator testPlayerHatcher []
-      <+ assignUniformRandomStats (zip (enumFrom STR) (repeat (1,100)))
+      +> assignUniformRandomStats (zip (enumFrom STR) (repeat (1,100)))
+      +> generateAndEquip sword
 
 testPlayerHatcher :: EntityHatcher
 testPlayerHatcher = MkEntityHatcher $ do

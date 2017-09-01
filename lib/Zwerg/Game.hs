@@ -239,7 +239,7 @@ processEvent (WeaponAttackAttemptEvent WeaponAttackAttemptEventData{..}) = do
 processEvent (WeaponAttackHitEvent WeaponAttackHitEventData{..}) = do
   rc (getEquippedWeapon weapAtkHitAttackerUUID) >>= \case
     --TODO: decide how to handle unarmed attacks
-    Nothing -> return ()
+    Nothing -> debug "no weapon"
     Just weaponUUID -> do
       chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do

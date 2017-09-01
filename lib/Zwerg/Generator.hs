@@ -55,7 +55,6 @@ generate (Generator (MkEntityHatcher hatch) assemblers) = do
     newEntityUUID <- hatch
     forM_ assemblers $ \(MkEntityAssembler f) -> f newEntityUUID
     return newEntityUUID
-    -- verifyAndReturn newEntityUUID
 
 putOnRandomEmptyTile :: UUID -> EntityAssembler
 putOnRandomEmptyTile levelUUID = MkEntityAssembler $ \entityUUID -> do
@@ -76,8 +75,8 @@ assignUniformRandomStats ss = MkEntityAssembler $ \entityUUID ->
         newStat <- getRandomR bounds
         modComp entityUUID stats (replaceStat stat newStat)
 
-generateAndEquip :: Generator -> EntityAssembler
 --TODO: check if slot is already filled and add to inventory if it is
+generateAndEquip :: Generator -> EntityAssembler
 generateAndEquip itemGen = MkEntityAssembler $ \wearerUUID ->
     generate itemGen >>= (flip equipItem) wearerUUID
 
