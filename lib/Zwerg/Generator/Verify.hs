@@ -6,12 +6,12 @@ verifyComponent :: Component a -> UUID -> MonadCompRead ()
 verifyComponent !comp !uuid =
   whenM (not <$> canViewComp uuid comp) $ do
       cn <- viewCompName comp
-      debug $! "VERIFICATION FAILURE: " <> cn <> " " <> show (unwrap uuid)
+      debug $ "VERIFICATION FAILURE: " <> cn <> " " <> show (unwrap uuid)
 
-verifyAndReturn :: UUID -> Generator' UUID
+verifyAndReturn :: UUID -> MonadCompRead UUID
 verifyAndReturn entityUUID = do
-  etype <- entityType <@> entityUUID
-  readC $ verifyAndReturn' entityUUID etype
+  etype <- entityType <~> entityUUID
+  verifyAndReturn' entityUUID etype
   return entityUUID
 
 --TODO: continually expand this as new components are added

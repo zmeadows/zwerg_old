@@ -1,11 +1,16 @@
 module Zwerg.Generator
   ( module EXPORTED
-  , Generator
-  , Generator'
-  , getRandomEmptyTile
-  , assignUniformRandomStat
+  , Generator(..)
+  , generate
+  , EntityAssembler(..)
+  , EntityHatcher(..)
+  , (+>)
+  , (<+)
+  , (++>)
+  , (<++)
   , assignUniformRandomStats
   , putOnRandomEmptyTile
+  , generateOnRandomEmptyTile
   , generateAndEquip
   , generateAndHold
   , generateAndHoldN
@@ -29,54 +34,57 @@ import Zwerg.Util           as EXPORTED
 
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
 
-type Generator' a = forall s m. ( HasCallStack
-                                , HasComponents s
-                                , MonadRandom m
-                                , MonadState s m
-                                ) => m a
+data EntityHatcher = MkEntityHatcher (MonadCompStateRand UUID)
+data EntityAssembler = MkEntityAssembler (UUID -> MonadCompStateRand ())
+data Generator = Generator EntityHatcher [EntityAssembler]
 
-type Generator = Generator' UUID
+(<+) :: Generator -> EntityAssembler -> Generator
+(<+) (Generator hatcher assemblers) a = Generator hatcher (a:assemblers)
 
-getRandomEmptyTile :: UUID -> Generator' (Maybe UUID)
-getRandomEmptyTile levelUUID = do
-  levelTiles <- tiles <@> levelUUID
-  -- TODO: make sure new tile isn't fully enclosed by walls
-  -- FIXME: make sure not a special tile, such as ladder/door, maybe just require Floor TileType?
-  unoccupiedTiles <- zFilterM (fmap not . (<@>) blocksPassage) levelTiles
-  tryPickRandom unoccupiedTiles
+(+>) :: Generator -> EntityAssembler -> Generator
+(+>) (Generator hatcher assemblers) a = Generator hatcher (assemblers ++ [a])
 
-assignUniformRandomStat :: UUID -> Stat -> (Int, Int) -> Generator' ()
-assignUniformRandomStat targetUUID stat bounds = do
-  newStat <- getRandomR bounds
-  modComp targetUUID stats (replaceStat stat newStat)
+(++>) :: Generator -> [EntityAssembler] -> Generator
+(++>) (Generator hatcher assemblers) newAssemblers = Generator hatcher (assemblers ++ newAssemblers)
 
-assignUniformRandomStats :: UUID -> [(Stat,(Int,Int))] -> Generator' ()
-assignUniformRandomStats targetUUID =
-    mapM_ (\(stat, rs) -> assignUniformRandomStat targetUUID stat rs)
+(<++) :: Generator -> [EntityAssembler] -> Generator
+(<++) (Generator hatcher assemblers) newAssemblers = Generator hatcher (newAssemblers ++ assemblers)
 
-putOnRandomEmptyTile :: UUID -> UUID -> Generator' ()
-putOnRandomEmptyTile levelUUID entityUUID = do
-  getRandomEmptyTile levelUUID >>= \case
-      Just tileUUID -> do
-          addComp entityUUID level levelUUID
-          transferOccupant entityUUID Nothing tileUUID
-      Nothing -> debug $ "Couldn't find empty tile to place entity with UUID: "
-                         <> show (unwrap entityUUID)
+generate :: Generator -> MonadCompStateRand UUID
+generate (Generator (MkEntityHatcher hatch) assemblers) = do
+    newEntityUUID <- hatch
+    forM_ assemblers $ \(MkEntityAssembler f) -> f newEntityUUID
+    return newEntityUUID
+    -- verifyAndReturn newEntityUUID
 
--- verify :: String -> String -> Q Exp
--- verify us cs = [| verifyComponent $(dyn cs) $(dyn us) |]
--- 
--- hasAll :: String -> [String] -> Q Exp
--- hasAll us css = DoE <$> (mapM (fmap NoBindS . verify us) css)
+putOnRandomEmptyTile :: UUID -> EntityAssembler
+putOnRandomEmptyTile levelUUID = MkEntityAssembler $ \entityUUID -> do
+    (rcr $ getRandomEmptyTileR levelUUID) >>= \case
+        Just tileUUID -> do
+            addComp entityUUID level levelUUID
+            transferOccupant entityUUID Nothing tileUUID
+        Nothing -> debug $ "Couldn't find empty tile to place entity with UUID: "
+                           <> show (unwrap entityUUID)
 
-generateAndEquip :: Generator -> UUID -> Generator' ()
---TODO: check if slot is already filled (or wait... do this in equipItem?)
-generateAndEquip itemGen wearerUUID = itemGen >>= (flip equipItem) wearerUUID
+generateOnRandomEmptyTile :: Generator -> EntityAssembler
+generateOnRandomEmptyTile gen = MkEntityAssembler $ \levelUUID ->
+    void $ generate $ gen +> putOnRandomEmptyTile levelUUID
 
-generateAndHold :: Generator -> UUID -> Generator' ()
-generateAndHold itemGen wearerUUID = (zAdd <$> itemGen) >>= modComp wearerUUID inventory
+assignUniformRandomStats :: [(Stat, (Int, Int))] -> EntityAssembler
+assignUniformRandomStats ss = MkEntityAssembler $ \entityUUID ->
+    forM_ ss $ \(stat, bounds) -> do
+        newStat <- getRandomR bounds
+        modComp entityUUID stats (replaceStat stat newStat)
 
-generateAndHoldN :: Int -> Generator -> UUID -> Generator' ()
-generateAndHoldN n itemGen wearerUUID = replicateM_ n $ generateAndHold itemGen wearerUUID
+generateAndEquip :: Generator -> EntityAssembler
+--TODO: check if slot is already filled and add to inventory if it is
+generateAndEquip itemGen = MkEntityAssembler $ \wearerUUID ->
+    generate itemGen >>= (flip equipItem) wearerUUID
 
+generateAndHold :: Generator -> EntityAssembler
+generateAndHold itemGen = MkEntityAssembler $ \wearerUUID ->
+    (zAdd <$> generate itemGen) >>= modComp wearerUUID inventory
 
+generateAndHoldN :: Int -> Generator -> EntityAssembler
+generateAndHoldN n itemGen = MkEntityAssembler $ \wearerUUID ->
+    replicateM_ n $ (zAdd <$> generate itemGen) >>= modComp wearerUUID inventory

@@ -9,11 +9,12 @@ import Zwerg.Entity.AI
 import Zwerg.Entity.Compare
 import Zwerg.Event.Queue
 import Zwerg.Generator
-import Zwerg.Generator.Level
-import Zwerg.Generator.Level.TestSquare
-import Zwerg.Generator.Stairs
-import Zwerg.Generator.Level.Cave
-import Zwerg.Generator.Player.TestPlayer
+-- import Zwerg.Generator.Level
+-- import Zwerg.Generator.Level.TestSquare
+-- import Zwerg.Generator.Stairs
+-- import Zwerg.Generator.Level.Cave
+-- import Zwerg.Generator.Player.TestPlayer
+import Zwerg.Generator.World
 import Zwerg.Log
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
@@ -39,6 +40,7 @@ instance HasComponents GameState where
 instance HasZwergEventQueue GameState where
   eventQueue = gsEventQueue
 
+{-# INLINABLE pushLogMsgM #-}
 pushLogMsgM :: Text -> Game ()
 pushLogMsgM message = userLog %= pushLogMsg message
 
@@ -62,21 +64,13 @@ newtype Game' a = Game (RandT RanGen (State GameState) a)
 
 type Game a = HasCallStack => Game' a
 
+{-# INLINABLE runGame #-}
 runGame :: Game () -> RanGen -> GameState -> GameState
 runGame (Game a) gen st = execState (runRandT a gen) st
 
 -- TODO: factor out into Generator.World module
 generateGame :: Game ()
-generateGame = do
-    caveUUID <- caveGenerator
-    testUUID <- testSquareGenerator
-    setZLevel caveUUID (unsafeWrap 0)
-    setZLevel testUUID (unsafeWrap 1)
-    buildRandomStairs testUUID caveUUID
-    buildRandomStairs testUUID caveUUID
-    buildRandomStairs testUUID caveUUID
-    buildRandomStairs testUUID caveUUID
-    testPlayerGenerator caveUUID
+generateGame = void $ generate world
 
 -- after we process a player tick, go through all other entities
 -- and process their ticks, until the player is ready to tick again
@@ -191,7 +185,7 @@ updateGlyphMap =
     MainScreen : _ -> do
         levelUUID <- level <@> playerUUID
         gm <- glyphMap <@> levelUUID
-        updatedGlyphs <- readC getGlyphMapUpdates
+        updatedGlyphs <- rc getGlyphMapUpdates
         setComp levelUUID glyphMap $ mergeUpdates (fmap (markVisibility False) gm) updatedGlyphs
     _ -> return ()
 
@@ -216,7 +210,7 @@ processEvent (MoveEntityEvent MoveEntityEventData{..}) = do
   oldTileUUID <- tileOn <@> moveEntityMoverUUID
   levelTiles <- level <@> moveEntityMoverUUID >>= (<@>) tileMap
   let newTileUUID = zAt levelTiles moveEntityNewPosition
-  newTileBlocked <- readC $ tileBlocksPassage newTileUUID
+  newTileBlocked <- rc $ tileBlocksPassage newTileUUID
 
   if newTileBlocked
      then if moveEntityMoverUUID /= playerUUID
@@ -234,8 +228,8 @@ processEvent (EntityLeftTileEvent _) = return ()
 processEvent (EntityReachedTileEvent _) = return ()
 
 processEvent (WeaponAttackAttemptEvent WeaponAttackAttemptEventData{..}) = do
-  attDEX <- readC $ getStat DEX $ weapAtkAttempAttackerUUID
-  defDEX <- readC $ getStat DEX $ weapAtkAttempDefenderUUID
+  attDEX <- rc $ getStat DEX $ weapAtkAttempAttackerUUID
+  defDEX <- rc $ getStat DEX $ weapAtkAttempDefenderUUID
   let prob = if attDEX > defDEX then 0.75 else 0.5 :: Double
   r <- getRandomR (0.0, 1.0)
   if (r < prob)
@@ -243,13 +237,13 @@ processEvent (WeaponAttackAttemptEvent WeaponAttackAttemptEventData{..}) = do
      else $(newEvent "WeaponAttackMiss") weapAtkAttempAttackerUUID weapAtkAttempDefenderUUID
 
 processEvent (WeaponAttackHitEvent WeaponAttackHitEventData{..}) = do
-  readC (getEquippedWeapon weapAtkHitAttackerUUID) >>= \case
+  rc (getEquippedWeapon weapAtkHitAttackerUUID) >>= \case
     --TODO: decide how to handle unarmed attacks
     Nothing -> return ()
     Just weaponUUID -> do
       chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do
-          targetedUUIDs <- readC $ getTargetedUUIDs (ddTargetType damageData) weapAtkHitDefenderUUID
+          targetedUUIDs <- rc $ getTargetedUUIDs (ddTargetType damageData) weapAtkHitDefenderUUID
           forM_ targetedUUIDs $ \targetUUID ->
               $(newEvent "IncomingDamage")
                   weapAtkHitAttackerUUID
@@ -262,7 +256,7 @@ processEvent (EntityUseStairsEvent EntityUseStairsEventData{..}) = do
   tileType <@> tileUUID >>= \case
     Stairs dir -> do
          newTileUUID <- connectedTo <@> tileUUID
-         newTileBlocked <- readC $ tileBlocksPassage newTileUUID
+         newTileBlocked <- rc $ tileBlocksPassage newTileUUID
          let stairsGoExpectedDirection = dir == entityUseStairsUpOrDown
              isPlayer = entityUseStairsUUID == playerUUID
          if | newTileBlocked && not isPlayer ->
@@ -333,7 +327,7 @@ processPlayerDirectionInput :: Direction -> Game ()
 processPlayerDirectionInput dir = getPlayerAdjacentEnemy >>= \case
       Just attackedUUID -> $(newEvent "WeaponAttackAttempt") playerUUID attackedUUID
       Nothing -> $(newEvent "MoveEntityDirection") playerUUID dir
-  where getPlayerAdjacentEnemy = readC $ do
+  where getPlayerAdjacentEnemy = rc $ do
           attackedTileUUID <- tileOn <~> playerUUID >>= getAdjacentTileUUID dir
           case attackedTileUUID of
             Just attackedTileUUID' -> do

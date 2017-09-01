@@ -91,6 +91,7 @@ buildPath = do
             currentDistance %= pred
         currentPosition .= cp
 
+{-# INLINABLE extractPath #-}
 extractPath :: PathFinder (Maybe Path)
 extractPath = do
     bp <- use bestPath

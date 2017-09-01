@@ -69,6 +69,7 @@ data EntityType
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass Binary
 
+{-# INLINABLE isTypicallyStationary #-}
 isTypicallyStationary :: EntityType -> Bool
 isTypicallyStationary Player = False
 isTypicallyStationary Enemy  = False
@@ -99,9 +100,11 @@ newtype Stats = MkStats (Map Stat Int)
 instance ZDefault Stats where
     zDefault = MkStats $ M.fromList $ fmap (, 0) $ enumFrom $ toEnum 0
 
+{-# INLINABLE lookupStat #-}
 lookupStat :: Stat -> Stats -> Int
 lookupStat s (MkStats m) = m M.! s
 
+{-# INLINABLE replaceStat #-}
 replaceStat :: Stat -> Int -> Stats -> Stats
 replaceStat s v (MkStats m) = MkStats $ M.insert s v m
 

@@ -61,6 +61,7 @@ library
                        Zwerg.Generator.Player.TestPlayer
                        Zwerg.Generator.Stairs
                        Zwerg.Generator.Verify
+                       Zwerg.Generator.World
                        Zwerg.Geometry
                        Zwerg.Geometry.FOV
                        Zwerg.Geometry.Pathfinding
@@ -87,7 +88,6 @@ library
                        vty,
                        bytestring,
                        containers,
-                       fclabels,
                        fingertree,
                        mersenne-random-pure64,
                        microlens-platform,
@@ -104,6 +104,7 @@ library
                        vector-binary-instances,
                        primitive,
                        tuple,
+                       contravariant,
                        MonadRandom,
                        StateVar
 

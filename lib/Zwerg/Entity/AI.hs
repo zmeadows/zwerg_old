@@ -40,7 +40,7 @@ runAI uuid = do
 enact :: UUID -> AIType -> AI ()
 
 enact entityUUID SimpleMeleeCreature = do
-    whenM (uncurry (==) <$> zLevel <~~!> (playerUUID, entityUUID)) $ do
+    whenM (uncurry (==) <$> inM2 getZLevel (playerUUID, entityUUID)) $ do
       tileUUID <- tileOn <~> entityUUID
       entityPos <- position <~> entityUUID
       playerPos <- position <~> playerUUID

@@ -13,6 +13,7 @@ import qualified Data.IntervalMap.FingerTree as IM
 
 type BlockedMap = GridMap Bool
 
+{-# INLINABLE getFOV #-}
 getFOV :: Position -> Int -> BlockedMap -> [Position]
 getFOV = getFOVLazy
 

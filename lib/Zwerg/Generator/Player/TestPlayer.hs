@@ -2,33 +2,27 @@ module Zwerg.Generator.Player.TestPlayer where
 
 import Zwerg.Generator
 import Zwerg.Generator.Default
-import Zwerg.Generator.Item.Weapon
+-- import Zwerg.Generator.Item.Weapon
 
-testPlayerGenerator :: UUID -> Generator' ()
-testPlayerGenerator startLevelUUID = do
+testPlayer :: Generator
+testPlayer =
+    Generator testPlayerHatcher []
+      <+ assignUniformRandomStats (zip (enumFrom STR) (repeat (1,100)))
+
+testPlayerHatcher :: EntityHatcher
+testPlayerHatcher = MkEntityHatcher $ do
     generatePlayerSkeleton
-    let (<@-) :: Component a -> a -> Generator' ()
+    let (<@-) :: Component a -> a -> MonadCompState ()
         (<@-) = addComp playerUUID
 
     name        <@- "Bob"
     description <@- "It's you."
-    level       <@- startLevelUUID
     entityType  <@- Player
     viewRange   <@- 7
     ticks       <@- 50
     hp          <@- unsafeWrap (100,100)
 
-    levelZLevel <- zLevel <@> startLevelUUID
-    zLevel <@- levelZLevel
+    return playerUUID
 
-    assignUniformRandomStat playerUUID STR (1, 100)
-    assignUniformRandomStat playerUUID DEX (1, 100)
-    assignUniformRandomStat playerUUID INT (1, 100)
-    assignUniformRandomStat playerUUID CHA (1, 100)
-    assignUniformRandomStat playerUUID CON (1, 100)
-    assignUniformRandomStat playerUUID WIS (1, 100)
-
-    putOnRandomEmptyTile startLevelUUID playerUUID
-
-    generateAndHoldN 3 sword playerUUID
-
+    -- putOnRandomEmptyTile startLevelUUID playerUUID
+    -- generateAndHoldN 3 sword playerUUID

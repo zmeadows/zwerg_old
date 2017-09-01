@@ -9,6 +9,7 @@ data ZColor = ZColor Word8 Word8 Word8
     deriving stock (Eq, Generic)
     deriving anyclass Binary
 
+{-# INLINABLE darken #-}
 darken :: Double -> ZColor -> ZColor
 darken scale (ZColor r g b) =
     ZColor

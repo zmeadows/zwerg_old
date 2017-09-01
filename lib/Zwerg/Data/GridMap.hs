@@ -33,6 +33,7 @@ instance ZTraversable2 GridMap Position where
     zTraverseWithKey (MkGridMap gm) f =
         MkGridMap <$> V.imapM (\p x -> f (unsafeFrom1DIndex p) x) gm
 
+{-# INLINABLE mergeUpdates #-}
 mergeUpdates :: GridMap a -> [(Position, a)] -> GridMap a
 mergeUpdates (MkGridMap m) ps = MkGridMap $ m // (map convert ps)
     where convert (p,x) = (to1DIndex p,x)

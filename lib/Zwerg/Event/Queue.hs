@@ -41,9 +41,11 @@ popEvent = do
           eventQueue .= MkZwergEventQueue eq'
           return $ Just evt
 
+{-# INLINABLE pushEventM #-}
 pushEventM :: (HasZwergEventQueue s, MonadState s m) => ZwergEvent -> m ()
 pushEventM evt = eventQueue %= \(MkZwergEventQueue q) -> MkZwergEventQueue $ q |> evt
 
+{-# INLINABLE mergeEventsM #-}
 mergeEventsM :: (HasZwergEventQueue s, MonadState s m) => ZwergEventQueue -> m ()
 mergeEventsM (MkZwergEventQueue q') =
     eventQueue %= \(MkZwergEventQueue q) -> MkZwergEventQueue $ q >< q'

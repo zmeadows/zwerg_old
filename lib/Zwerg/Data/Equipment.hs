@@ -38,17 +38,20 @@ newtype Equipment = MkEquipment (Map EquipmentSlot UUID)
 instance ZDefault Equipment where
     zDefault = MkEquipment M.empty
 
+{-# INLINABLE equip #-}
 equip :: EquipmentSlot -> UUID -> Equipment -> ([UUID], Equipment)
 equip slot uuid eq =
     let (ueis, MkEquipment eq') = unequip slot eq
     in (ueis, MkEquipment $ M.insert slot uuid eq')
 
+{-# INLINABLE unequip #-}
 unequip :: EquipmentSlot -> Equipment -> ([UUID], Equipment)
 unequip (SingleHand LeftHand) eq  = unequipSlots [SingleHand LeftHand, BothHands] eq
 unequip (SingleHand RightHand) eq = unequipSlots [SingleHand RightHand, BothHands] eq
 unequip BothHands eq              = unequipSlots [SingleHand LeftHand, SingleHand RightHand, BothHands] eq
 unequip slot eq                   = unequipSlots [slot] eq
 
+{-# INLINABLE unequipSlots #-}
 unequipSlots :: [EquipmentSlot] -> Equipment -> ([UUID], Equipment)
 unequipSlots slots eq = unequipSlots' slots eq []
 
@@ -73,5 +76,6 @@ getEquippedInSlot (BothHands) (MkEquipment eqMap)          =
 
 getEquippedInSlot slot (MkEquipment eqMap) = catMaybes [M.lookup slot eqMap]
 
+{-# INLINABLE getAllEquippedItems #-}
 getAllEquippedItems :: Equipment -> [UUID]
 getAllEquippedItems (MkEquipment eq) = L.nub $ M.elems eq

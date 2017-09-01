@@ -2,12 +2,14 @@ module Zwerg.Generator.Item.Weapon (sword) where
 
 import Zwerg.Generator
 import Zwerg.Generator.Default
-import Zwerg.Generator.Verify
 
 sword :: Generator
-sword = do
+sword = Generator swordHatch []
+
+swordHatch :: EntityHatcher
+swordHatch = MkEntityHatcher $ do
     swordUUID <- generateSkeleton Item
-    let (<@-) :: Component a -> a -> Generator' ()
+    let (<@-) :: Component a -> a -> MonadCompState ()
         (<@-) = addComp swordUUID
 
     name        <@- "Iron Short Sword"
@@ -17,4 +19,4 @@ sword = do
     damageChain <@- [ DamageData SingleTarget Slash $ Uniform 1 2 , DamageData SingleTarget Pierce $ Uniform 1 2 ]
     slot        <@- SingleHand RightHand
 
-    verifyAndReturn swordUUID
+    return swordUUID

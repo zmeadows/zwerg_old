@@ -19,6 +19,7 @@ import Zwerg.Data.Equipment
 import Zwerg.Data.Position
 import Zwerg.Data.UUIDSet (UUIDSet)
 import Zwerg.Geometry.FOV
+import Zwerg.Random.RanGen
 import Zwerg.Prelude
 import Zwerg.Util
 
@@ -35,6 +36,12 @@ addToInventory itemUUID holderUUID = do
   setComp itemUUID parent $ Alive holderUUID
   (tileOn, position, zLevel) <@@===> (holderUUID, itemUUID)
 -}
+
+getZLevel :: UUID -> MonadCompRead ZLevel
+getZLevel entityUUID =
+    entityType <~> entityUUID >>= \case
+      Level -> zLevel <~> entityUUID
+      _ -> level <~> entityUUID >>= (<~>) zLevel
 
 getVisionBlockedTiles :: UUID -> MonadCompRead (GridMap Bool)
 getVisionBlockedTiles levelUUID = do
@@ -59,6 +66,7 @@ getVisibleTiles uuid = do
     levelTileMap <- tileMap <~> levelUUID
     return $ map (zAt levelTileMap) visibleTiles
 
+{-# INLINABLE getItemsOnEntityTile #-}
 getItemsOnEntityTile :: UUID -> MonadCompRead UUIDSet
 getItemsOnEntityTile entityUUID = tileOn <~> entityUUID >>= (`getOccupantsOfType` Item)
 
@@ -88,6 +96,7 @@ getEquippedWeapon entityUUID = do
         debug "Entity has multiple weapons equipped, and dual-wielding is not yet implemented."
         return $ Just $ head xs
 
+{-# INLINABLE isItemType #-}
 isItemType :: ItemType -> UUID -> MonadCompRead Bool
 isItemType itypetest uuid = entityType <~> uuid >>= \case
     Item -> (== itypetest) <$> itemType <~> uuid
@@ -114,6 +123,7 @@ getAdjacentTileUUID dir tileUUID = do
       levelTileMap <- tileMap <~> tileLevelUUID
       return $ Just $ zAt levelTileMap adjPos
 
+{-# INLINABLE getOccupantsOfType #-}
 getOccupantsOfType :: UUID -> EntityType -> MonadCompRead UUIDSet
 getOccupantsOfType containerUUID eType = occupants <~> containerUUID >>= zFilterM isEtype
   where isEtype uuid = (eType ==) <$> entityType <~> uuid
@@ -137,7 +147,7 @@ transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
             else do
               modComp oldContainerUUID' occupants $ zDelete transfereeUUID
 
--- | TODO: this is not at all complete
+--FIXME: this is not at all complete
 eraseEntity :: UUID -> MonadCompState ()
 eraseEntity uuid = do
   -- TODO: not all entities are on a tile?
@@ -186,5 +196,23 @@ getFearLevel :: UUID -> MonadCompRead Text
 getFearLevel _ = return "Terrifying"
 
 --TODO: make Stats instance of ZMapContainer
+{-# INLINABLE getStat #-}
 getStat :: Stat -> UUID -> MonadCompRead Int
 getStat someStat entityUUID = lookupStat someStat <$> stats <~> entityUUID
+
+getRandomEmptyTile :: UUID -> MonadCompStateRand (Maybe UUID)
+getRandomEmptyTile levelUUID = do
+    levelTiles <- tiles <@> levelUUID
+    -- TODO: make sure new tile isn't fully enclosed by walls
+    -- FIXME: make sure not a special tile, such as ladder/door, maybe just require Floor TileType?
+    unoccupiedTiles <- zFilterM (fmap not . (<@>) blocksPassage) levelTiles
+    tryPickRandom unoccupiedTiles
+
+--FIXME: Not a generator!
+getRandomEmptyTileR :: UUID -> MonadCompReadRand (Maybe UUID)
+getRandomEmptyTileR levelUUID = do
+  levelTiles <- tiles <~> levelUUID
+  -- TODO: make sure new tile isn't fully enclosed by walls
+  -- FIXME: make sure not a special tile, such as ladder/door, maybe just require Floor TileType?
+  unoccupiedTiles <- zFilterM (fmap not . (<~>) blocksPassage) levelTiles
+  tryPickRandom unoccupiedTiles

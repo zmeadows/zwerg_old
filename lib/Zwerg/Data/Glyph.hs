@@ -45,18 +45,22 @@ data GlyphMapCell = GlyphMapCell Bool Glyph Glyph
 instance ZDefault GlyphMapCell where
     zDefault = GlyphMapCell True zDefault zDefault
 
+{-# INLINABLE cellColors #-}
 cellColors :: GlyphMapCell -> (ZColor, ZColor)
 cellColors (GlyphMapCell True (FullGlyph _ fg bg) _) = (fg,bg)
 cellColors (GlyphMapCell True (PartialGlyph _ fg) (FullGlyph _ _ bg)) = (fg,bg)
 cellColors (GlyphMapCell False _ (FullGlyph _ fg bg)) = join bimap (darken 0.8) (fg,bg)
 cellColors _ = (darkred, white)
 
+{-# INLINABLE cellChar #-}
 cellChar :: GlyphMapCell -> Char
 cellChar (GlyphMapCell True (Glyph ch _) _) = ch
 cellChar (GlyphMapCell False _ (Glyph ch _)) = ch
 
+{-# INLINABLE unpackGlyphMapCell #-}
 unpackGlyphMapCell :: GlyphMapCell -> (Char, ZColor, ZColor)
 unpackGlyphMapCell gmc = let (fg,bg) = cellColors gmc in (cellChar gmc, fg, bg)
 
+{-# INLINABLE markVisibility #-}
 markVisibility :: Bool -> GlyphMapCell -> GlyphMapCell
 markVisibility isVis (GlyphMapCell _ g1 g2) = GlyphMapCell isVis g1 g2

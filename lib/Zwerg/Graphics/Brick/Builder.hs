@@ -33,11 +33,13 @@ import qualified Graphics.Vty as VTY
 
 import Lens.Micro.Platform (view)
 
+{-# INLINABLE listDrawElement #-}
 listDrawElement :: Bool -> Text -> BT.Widget ()
 listDrawElement sel a =
   let selStr s = if sel then withAttr "logo" (str s) else str s
   in BC.hCenter $ selStr (unpack a)
 
+{-# INLINABLE menuToBrickList #-}
 menuToBrickList :: Menu a -> BL.List () Text
 menuToBrickList m =
   let allLabels = getMenuLabels m
@@ -48,9 +50,11 @@ newtype UIBuilder' a = UIBuilder (Reader GameState a)
 
 type UIBuilder a = HasCallStack => UIBuilder' a
 
+{-# INLINABLE runUIBuilder #-}
 runUIBuilder :: UIBuilder a -> GameState -> a
 runUIBuilder (UIBuilder x) gs = runReader x gs
 
+{-# INLINABLE buildZwergUI #-}
 buildZwergUI :: ZwergState -> [BT.Widget ()]
 buildZwergUI zs = runUIBuilder (concat <$> (mapM buildPortUI (view portal zs))) $ view gameState zs
 
@@ -139,6 +143,7 @@ buildPortUI MainScreen = do
 
 buildPortUI _ = return [emptyWidget]
 
+{-# INLINABLE zwergLogo #-}
 zwergLogo :: BT.Widget ()
 zwergLogo = vBox $ map (withAttr "logo")
                  [ txt " ______      _____ _ __ __ _ "
@@ -150,14 +155,17 @@ zwergLogo = vBox $ map (withAttr "logo")
                  ]
 
 
+{-# INLINABLE zwergColorToVtyColor #-}
 zwergColorToVtyColor :: ZColor -> VTY.Color
 zwergColorToVtyColor (ZColor r g b) = VTY.rgbColor r g b
 
+{-# INLINABLE mkImageRow #-}
 mkImageRow :: [GlyphMapCell] -> VTY.Image
 mkImageRow [] = VTY.emptyImage
 mkImageRow (cd:cds) = mkImageRow' cds (initFG, initBG) (singleton initChar) []
     where (initChar, initFG, initBG) = unpackGlyphMapCell cd
 
+{-# INLINABLE mkImageRow' #-}
 mkImageRow' :: [GlyphMapCell] -> (ZColor, ZColor) -> Text -> [VTY.Image] -> VTY.Image
 mkImageRow' [] curCellColor chars imgs = foldl1 (VTY.<|>) $ reverse $ (cellsToImage chars curCellColor) : imgs
 
@@ -167,5 +175,6 @@ mkImageRow' (r:rs) (curFG, curBG) chars imgs =
        else mkImageRow' rs (nextFG, nextBG) (singleton nextChar) $ (cellsToImage chars (curFG,curBG)) : imgs
   where (nextChar, nextFG, nextBG) = unpackGlyphMapCell r
 
+{-# INLINABLE cellsToImage #-}
 cellsToImage :: Text -> (ZColor,ZColor) -> VTY.Image
 cellsToImage t (fgC, bgC) = VTY.text' (zwergColorToVtyColor fgC `on` zwergColorToVtyColor bgC) t

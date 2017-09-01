@@ -1,10 +1,10 @@
-module Zwerg.Generator.Level.Cave (caveGenerator) where
+module Zwerg.Generator.Level.Cave (cave) where
 
 import Zwerg.Generator
 import Zwerg.Generator.Default
-import Zwerg.Generator.Verify
-import Zwerg.Generator.Enemy.Goblin
-import Zwerg.Generator.Item.Weapon
+-- import Zwerg.Generator.Verify
+-- import Zwerg.Generator.Enemy.Goblin
+-- import Zwerg.Generator.Item.Weapon
 
 import qualified Data.Vector.Primitive as IV
 import qualified Data.Vector.Primitive.Mutable as MV
@@ -12,22 +12,27 @@ import qualified Data.Vector.Primitive.Mutable as MV
 import Control.Monad.ST
 import Control.Monad.Primitive
 
+cave :: Generator
+cave = Generator caveHatch []
+    -- replicateM_ 5 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
+    -- replicateM_ 4 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
+
 type CaveCellType = Int
 
 blocked, open :: CaveCellType
 blocked = 1
 open = 0
 
-buildRandomStartCells :: Generator' (GridMap CaveCellType)
+buildRandomStartCells :: MonadCompReadRand (GridMap CaveCellType)
 buildRandomStartCells = zBuildM $ const $ do
-    r <- getRandomR (0.0, 1.0) :: Generator' Double
+    r <- (getRandomR (0.0, 1.0) :: MonadCompReadRand (Double))
     if r > 0.55
        then return blocked
        else return open
 
-caveGenerator :: Generator
-caveGenerator = do
-    q <- IV.convert <$> unwrap <$> buildRandomStartCells
+caveHatch :: EntityHatcher
+caveHatch = MkEntityHatcher $ do
+    q <- IV.convert <$> unwrap <$> rcr buildRandomStartCells
     let qs = runST $ automate q
 
     testSquareLevelUUID <- generateSkeleton Level
@@ -36,7 +41,7 @@ caveGenerator = do
 
     zTraverseWithKey_ testSquareTiles $ \pos tileUUID -> do
         let isWallTile = (qs IV.! (to1DIndex pos)) == blocked
-            (<.-) :: Component a -> a -> Generator' ()
+            (<.-) :: Component a -> a -> MonadCompState ()
             (<.-) = setComp tileUUID
         if isWallTile
           then do
@@ -54,10 +59,10 @@ caveGenerator = do
             name          <.- "Floor tile in the test level"
             description   <.- "It is a floor."
 
-    replicateM_ 5 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
-    replicateM_ 4 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
+    return testSquareLevelUUID
 
-    verifyAndReturn testSquareLevelUUID
+
+--FIXME: replace weird type signatures with just ST?
 
 automate :: (HasCallStack, PrimMonad m) => IV.Vector CaveCellType -> m (IV.Vector CaveCellType)
 automate v = do

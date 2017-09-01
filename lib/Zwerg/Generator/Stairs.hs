@@ -4,8 +4,8 @@ import Zwerg.Generator
 -- import Zwerg.Generator.Default
 import Zwerg.Generator.Verify
 
-buildRandomStairs :: UUID -> UUID -> Generator' ()
-buildRandomStairs lowerLevelUUID upperLevelUUID = do
+buildRandomStairs :: UUID -> EntityAssembler
+buildRandomStairs upperLevelUUID = MkEntityAssembler $ \lowerLevelUUID ->
    inM2 getRandomEmptyTile (lowerLevelUUID, upperLevelUUID) >>= \case
        (Just lowerStairsUUID, Just upperStairsUUID) -> do
            addComp lowerStairsUUID name        "Stone staircase"
@@ -23,6 +23,6 @@ buildRandomStairs lowerLevelUUID upperLevelUUID = do
 
            setComp lowerStairsUUID blocksVision True
 
-           void $ inM2 verifyAndReturn (lowerStairsUUID, upperStairsUUID)
+           void $ inM2 (\i -> rc $ verifyAndReturn i) (lowerStairsUUID, upperStairsUUID)
        (_,_) -> debug "Could not find two empty tiles to place stairs on."
 

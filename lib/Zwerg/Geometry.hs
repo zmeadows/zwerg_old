@@ -6,6 +6,7 @@ module Zwerg.Geometry
 
 import Zwerg.Prelude
 
+{-# INLINABLE circle #-}
 circle :: (Int, Int) -> Int -> [(Int, Int)]
 circle p0 r = circle' p0 (r, 0) 0 []
 
@@ -27,6 +28,7 @@ circle' (x0, y0) (x, y) err s =
   in if | x >= y -> circle' (x0, y0) (x', y') err' s'
         | otherwise -> s'
 
+{-# INLINABLE line #-}
 line :: (Int, Int) -> (Int, Int) -> [(Int, Int)]
 line p1 p2 = bla p1 p2
 

@@ -8,7 +8,7 @@ import Zwerg.Generator as EXPORTED
 
 import Zwerg.UI.GlyphMap
 
-generatePlayerSkeleton :: Generator' ()
+generatePlayerSkeleton :: MonadCompState ()
 generatePlayerSkeleton = do
   --TODO: check if player already exists and throw error if it does
   addComp playerUUID equipment zDefault
@@ -18,14 +18,14 @@ generatePlayerSkeleton = do
   addComp playerUUID blocksPassage True
   addComp playerUUID blocksVision False
 
-generateSkeleton :: EntityType -> Generator' UUID
+generateSkeleton :: EntityType -> MonadCompState UUID
 generateSkeleton etype = do
   entityUUID <- popUUID
   addComp entityUUID entityType etype
   generateSkeleton' entityUUID etype
   return entityUUID
 
-generateSkeleton' :: UUID -> EntityType -> Generator' ()
+generateSkeleton' :: UUID -> EntityType -> MonadCompState ()
 generateSkeleton' enemyUUID Enemy = do
   addComp enemyUUID equipment zDefault
   addComp enemyUUID stats zDefault

@@ -50,5 +50,6 @@ getMinimumUUIDs (MkUUIDMap um) =
          | x < xmin -> (x, [uuid])
          | otherwise -> (xmin, uuids)
 
+{-# INLINABLE toUUIDSet #-}
 toUUIDSet :: UUIDMap a -> UUIDSet
 toUUIDSet m = unsafeWrap $ zKeys m

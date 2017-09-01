@@ -19,7 +19,8 @@ module Zwerg.Component.Base
     , hasComp
     , modComp
     , popUUID
-    , readC
+    , rc
+    , rcr
     , setComp
     , viewComp
     , viewCompName
@@ -31,15 +32,17 @@ import Zwerg.Prelude
 
 import Zwerg.Data.Damage
 import Zwerg.Data.Equipment
-import Zwerg.Data.GridMap
 import Zwerg.Data.Glyph
+import Zwerg.Data.GridMap
 import Zwerg.Data.HP
 import Zwerg.Data.Position
 import Zwerg.Data.UUIDMap
 import Zwerg.Data.UUIDSet
-import Zwerg.UI.GlyphMap
 import Zwerg.Debug
+import Zwerg.Random.RanGen
+import Zwerg.UI.GlyphMap
 
+import Control.Monad.Random (evalRandT)
 import Lens.Micro.Platform (makeClassy, Lens', (%=), use, view, _2, _1)
 
 data Components = Components
@@ -81,9 +84,9 @@ makeClassy ''Components
 
 type Component a = forall s. HasComponents s => Lens' s (Text, UUIDMap a)
 
-type MonadCompState a = forall s m. ( HasComponents s
+type MonadCompState a = forall s m. ( HasCallStack
+                                    , HasComponents s
                                     , MonadState s m
-                                    , HasCallStack
                                     ) => m a
 
 type MonadCompStateRand a = forall s m. ( HasCallStack
@@ -104,8 +107,16 @@ type MonadCompReadRand a = forall s m. ( HasCallStack
                                        ) => m a
 
 -- For running a MonadCompRead function inside the MonadCompState context
-readC :: MonadCompRead a -> MonadCompState a
-readC x = (runReader x) <$> use components
+{-# INLINABLE rc #-}
+rc :: MonadCompRead a -> MonadCompState a
+rc x = (runReader x) <$> use components
+
+-- For running a MonadCompRead function inside the MonadCompState context
+{-# INLINABLE rcr #-}
+rcr :: MonadCompReadRand a -> MonadCompStateRand a
+rcr x = do
+  ranWord <- getRandom
+  runReader (evalRandT x $ pureRanGen ranWord) <$> use components
 
 emptyComponents :: Components
 emptyComponents = Components
@@ -146,39 +157,50 @@ emptyComponents = Components
 instance ZDefault Components where
     zDefault = emptyComponents
 
+{-# INLINABLE popUUID #-}
 popUUID :: MonadCompState UUID
 popUUID = do
     newUUID <- use nextUUID
     nextUUID %= incUUID
     return newUUID
 
+{-# INLINABLE getComp #-}
 getComp :: UUID -> Component a -> MonadCompState (Maybe a)
 getComp uuid comp = zLookup uuid . snd <$> use comp
 
+{-# INLINABLE viewComp #-}
 viewComp :: UUID -> Component a -> MonadCompRead (Maybe a)
 viewComp uuid comp = zLookup uuid . snd <$> view comp
 
+{-# INLINABLE hasComp #-}
 hasComp :: UUID -> Component a -> MonadCompState Bool
 hasComp uuid comp = zContains uuid . snd <$> use comp
 
+{-# INLINABLE canViewComp #-}
 canViewComp :: UUID -> Component a -> MonadCompRead Bool
 canViewComp uuid comp = zContains uuid . snd <$> view comp
 
+{-# INLINABLE addComp #-}
 addComp :: (HasComponents s, MonadState s m) => UUID -> Component a -> a -> m ()
 addComp uuid comp dat = (comp . _2) %= zInsert uuid dat
 
+{-# INLINABLE setComp #-}
 setComp :: (HasComponents s, MonadState s m) => UUID -> Component a -> a -> m ()
 setComp = addComp
 
+{-# INLINABLE modComp #-}
 modComp :: (HasComponents s, MonadState s m) => UUID -> Component a -> (a -> a) -> m ()
 modComp uuid comp f = (comp . _2) %= zModifyAt f uuid
 
+{-# INLINABLE deleteComp #-}
 deleteComp :: (HasComponents s, MonadState s m) => UUID -> Component a -> m ()
 deleteComp uuid comp = (comp . _2) %= zRemoveAt uuid
 
+{-# INLINABLE filterComp #-}
 filterComp :: (HasComponents s, MonadState s m) => Component a -> (a -> Bool) -> m ()
 filterComp comp f = (comp . _2) %= zFilter (\(_, x) -> f x)
 
+{-# INLINABLE demandComp #-}
 demandComp :: ZDefault a => Component a -> UUID -> MonadCompState a
 demandComp comp uuid =
   getComp uuid comp >>= \case
@@ -188,6 +210,7 @@ demandComp comp uuid =
       debug $ "Missing Component: " <> cn
       return zDefault
 
+{-# INLINABLE demandViewComp #-}
 demandViewComp :: ZDefault a => Component a -> UUID -> MonadCompRead a
 demandViewComp comp uuid =
   viewComp uuid comp >>= \case
@@ -197,20 +220,26 @@ demandViewComp comp uuid =
       debug $ "Missing Component: " <> cn
       return zDefault
 
+{-# INLINABLE getCompName #-}
 getCompName :: (HasComponents s, MonadState s m) => Component a -> m Text
 getCompName comp = fst <$> use comp
 
+{-# INLINABLE viewCompName #-}
 viewCompName :: (HasComponents s, MonadReader s m) => Component a -> m Text
 viewCompName comp = fst <$> view comp
 
+{-# INLINABLE getCompUUIDMap #-}
 getCompUUIDMap :: (HasComponents s, MonadState s m) => Component a -> m (UUIDMap a)
 getCompUUIDMap comp = snd <$> use comp
 
+{-# INLINABLE viewCompUUIDMap #-}
 viewCompUUIDMap :: (HasComponents s, MonadReader s m) => Component a -> m (UUIDMap a)
 viewCompUUIDMap comp = snd <$> view comp
 
+{-# INLINABLE getComponents #-}
 getComponents :: (HasComponents s, MonadState s m) => m Components
 getComponents = use components
 
+{-# INLINABLE viewComponents #-}
 viewComponents :: (HasComponents s, MonadReader s m) => m Components
 viewComponents = view components
