@@ -4,7 +4,7 @@ import Zwerg.Generator
 
 buildRandomStairs :: UUID -> EntityAssembler
 buildRandomStairs upperLevelUUID = MkEntityAssembler $ \lowerLevelUUID ->
-   inM2 getRandomEmptyTile (lowerLevelUUID, upperLevelUUID) >>= \case
+    inM2 (\i -> rcr $ getRandomEmptyTile i) (lowerLevelUUID, upperLevelUUID) >>= \case
        (Just lowerStairsUUID, Just upperStairsUUID) -> do
            addComp lowerStairsUUID name        "Stone staircase"
            addComp lowerStairsUUID description "A carved stone staircase."

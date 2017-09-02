@@ -58,7 +58,7 @@ generate (Generator (MkEntityHatcher hatch) assemblers) = do
 
 putOnRandomEmptyTile :: UUID -> EntityAssembler
 putOnRandomEmptyTile levelUUID = MkEntityAssembler $ \entityUUID ->
-    rcr (getRandomEmptyTileR levelUUID) >>= \case
+    rcr (getRandomEmptyTile levelUUID) >>= \case
         Just tileUUID -> do
             addComp entityUUID level levelUUID
             transferOccupant entityUUID Nothing tileUUID

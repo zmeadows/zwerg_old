@@ -199,19 +199,10 @@ getFearLevel _ = return "Terrifying"
 getStat :: Stat -> UUID -> MonadCompRead Int
 getStat someStat entityUUID = lookupStat someStat <$> stats <~> entityUUID
 
-getRandomEmptyTile :: UUID -> MonadCompStateRand (Maybe UUID)
+getRandomEmptyTile :: UUID -> MonadCompReadRand (Maybe UUID)
 getRandomEmptyTile levelUUID = do
-    levelTiles <- tiles <@> levelUUID
+    levelTiles <- tiles <~> levelUUID
     -- TODO: make sure new tile isn't fully enclosed by walls
     -- FIXME: make sure not a special tile, such as ladder/door, maybe just require Floor TileType?
-    unoccupiedTiles <- zFilterM (fmap not . (<@>) blocksPassage) levelTiles
+    unoccupiedTiles <- zFilterM (fmap not . (<~>) blocksPassage) levelTiles
     tryPickRandom unoccupiedTiles
-
---FIXME: Not a generator!
-getRandomEmptyTileR :: UUID -> MonadCompReadRand (Maybe UUID)
-getRandomEmptyTileR levelUUID = do
-  levelTiles <- tiles <~> levelUUID
-  -- TODO: make sure new tile isn't fully enclosed by walls
-  -- FIXME: make sure not a special tile, such as ladder/door, maybe just require Floor TileType?
-  unoccupiedTiles <- zFilterM (fmap not . (<~>) blocksPassage) levelTiles
-  tryPickRandom unoccupiedTiles
