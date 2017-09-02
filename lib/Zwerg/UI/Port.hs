@@ -23,7 +23,7 @@ data Port
 instance ZDefault Port where
     zDefault = initMainMenu
 
-type Portal = [Port]
+type Portal = NonEmpty Port
 
 initMainMenu :: Port
 initMainMenu =

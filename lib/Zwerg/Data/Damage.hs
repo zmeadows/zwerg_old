@@ -39,7 +39,6 @@ instance ZDefault DamageData where
 
 type DamageChain = [DamageData]
 
-
 newtype Resistance = MkResistance Int
     deriving stock Generic
     deriving anyclass Binary

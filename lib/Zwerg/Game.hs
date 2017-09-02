@@ -9,16 +9,13 @@ import Zwerg.Entity.AI
 import Zwerg.Entity.Compare
 import Zwerg.Event.Queue
 import Zwerg.Generator
--- import Zwerg.Generator.Level
--- import Zwerg.Generator.Level.TestSquare
--- import Zwerg.Generator.Stairs
--- import Zwerg.Generator.Level.Cave
--- import Zwerg.Generator.Player.TestPlayer
 import Zwerg.Generator.World
 import Zwerg.Log
 import Zwerg.UI.Input
 import Zwerg.UI.Menu
 import Zwerg.UI.Port
+
+import qualified Data.List.NonEmpty as NE (cons)
 
 import Control.Monad.Random (runRandT, RandT, MonadRandom, getRandomR)
 
@@ -48,7 +45,7 @@ emptyGameState :: GameState
 emptyGameState = GameState
   { _gsComponents = zDefault
   , _userLog      = zDefault
-  , _portal       = [zDefault]
+  , _portal       = initMainMenu :| []
   , _gsEventQueue = zDefault
   , _playerGoofed = False
   }
@@ -77,7 +74,7 @@ generateGame = void $ generate world
 processNonPlayerEvents :: Game ()
 processNonPlayerEvents = do
   use portal >>= \case
-    (MainScreen:_) -> do
+    (MainScreen :| _) -> do
         (minTick, uuids) <- getMinimumUUIDs <$> getCompUUIDMap ticks
         (ticks . _2) %= fmap (\x -> max (x - minTick) 0)
         if | notElem playerUUID uuids ->
@@ -100,31 +97,31 @@ processUserInput k = do
 
 processUserInput' :: Portal -> KeyCode -> Game ()
 
-processUserInput' (MainMenu m : ps) (KeyChar 'j') = portal .= (MainMenu $ next m) : ps
-processUserInput' (MainMenu m : ps) (KeyChar 'k') = portal .= (MainMenu $ prev m) : ps
+processUserInput' (MainMenu m :| ps) (KeyChar 'j') = portal .= (MainMenu $ next m) :| ps
+processUserInput' (MainMenu m :| ps) (KeyChar 'k') = portal .= (MainMenu $ prev m) :| ps
 
-processUserInput' (MainMenu m:_) Return =
+processUserInput' (MainMenu m :| _) Return =
     case label (focus m) of
         "new game" -> do
             generateGame
-            portal .= [MainScreen]
+            portal .= MainScreen :| []
             updateGlyphMap
-        "exit" -> portal .= [ExitScreen]
+        "exit" -> portal .= ExitScreen :| []
         _ -> return ()
 
-processUserInput' (MainScreen:_) (KeyChar 'h') = processPlayerDirectionInput $ Cardinal West
-processUserInput' (MainScreen:_) (KeyChar 'j') = processPlayerDirectionInput $ Cardinal South
-processUserInput' (MainScreen:_) (KeyChar 'k') = processPlayerDirectionInput $ Cardinal North
-processUserInput' (MainScreen:_) (KeyChar 'l') = processPlayerDirectionInput $ Cardinal East
-processUserInput' (MainScreen:_) (LeftArrow)   = processPlayerDirectionInput $ Cardinal West
-processUserInput' (MainScreen:_) (UpArrow)     = processPlayerDirectionInput $ Cardinal South
-processUserInput' (MainScreen:_) (DownArrow)   = processPlayerDirectionInput $ Cardinal North
-processUserInput' (MainScreen:_) (RightArrow)  = processPlayerDirectionInput $ Cardinal East
+processUserInput' (MainScreen :| _) (KeyChar 'h') = processPlayerDirectionInput $ Cardinal West
+processUserInput' (MainScreen :| _) (KeyChar 'j') = processPlayerDirectionInput $ Cardinal South
+processUserInput' (MainScreen :| _) (KeyChar 'k') = processPlayerDirectionInput $ Cardinal North
+processUserInput' (MainScreen :| _) (KeyChar 'l') = processPlayerDirectionInput $ Cardinal East
+processUserInput' (MainScreen :| _) (LeftArrow)   = processPlayerDirectionInput $ Cardinal West
+processUserInput' (MainScreen :| _) (UpArrow)     = processPlayerDirectionInput $ Cardinal South
+processUserInput' (MainScreen :| _) (DownArrow)   = processPlayerDirectionInput $ Cardinal North
+processUserInput' (MainScreen :| _) (RightArrow)  = processPlayerDirectionInput $ Cardinal East
 
-processUserInput' (MainScreen:_) (KeyChar '>') = $(newEvent "EntityUseStairs") playerUUID Down
-processUserInput' (MainScreen:_) (KeyChar '<') = $(newEvent "EntityUseStairs") playerUUID Up
+processUserInput' (MainScreen :| _) (KeyChar '>') = $(newEvent "EntityUseStairs") playerUUID Down
+processUserInput' (MainScreen :| _) (KeyChar '<') = $(newEvent "EntityUseStairs") playerUUID Up
 
-processUserInput' p@(MainScreen:_) (KeyChar 'i') = do
+processUserInput' (MainScreen :| _) (KeyChar 'i') = do
   uuids <- unwrap <$> inventory <@> playerUUID
   names <- mapM (name <@>) uuids
   case zip names uuids of
@@ -132,49 +129,53 @@ processUserInput' p@(MainScreen:_) (KeyChar 'i') = do
       pushLogMsgM "You don't have any items to look at."
       playerGoofed .= True
     i:is -> do
-      portal .= (ViewInventory $ makeMenuGroupSelect $ i :| is) : p
+      portal %= NE.cons (ViewInventory $ makeMenuGroupSelect $ i :| is)
 
-processUserInput' (ViewInventory inv : ps) (KeyChar 'd') =
-  portal .= (ViewInventory $ toggleFocus inv) : ps
+processUserInput' (ViewInventory inv :| ps) (KeyChar 'd') =
+  portal .= (ViewInventory $ toggleFocus inv) :| ps
 
-processUserInput' (ViewInventory inv : ps) (KeyChar 'D') = do
+processUserInput' (ViewInventory inv :| ps) (KeyChar 'D') = do
     forM_ (getAllSelected inv) $ \droppedItemUUID ->
         $(newEvent "EntityDroppedItem") playerUUID droppedItemUUID
-    portal .= ps
+    case ps of
+      [] -> debug "Port stack empty after leaving Inventory screen!"
+      p:pss -> portal .= p :| pss
 
-processUserInput' (ViewInventory _ : ps) (KeyChar 'i') = portal .= ps
+processUserInput' (ViewInventory _ :| ps) (KeyChar 'i') =
+    case ps of
+      [] -> debug "Port stack empty after leaving Inventory screen!"
+      p:pss -> portal .= p :| pss
 
-processUserInput' (ViewInventory inv : ps) (KeyChar 'j') =
-  portal .= (ViewInventory $ next inv) : ps
+processUserInput' (ViewInventory inv :| ps) (KeyChar 'j') =
+  portal .= (ViewInventory $ next inv) :| ps
 
-processUserInput' (ViewInventory inv : ps) (KeyChar 'k') =
-  portal .= (ViewInventory $ prev inv) : ps
+processUserInput' (ViewInventory inv :| ps) (KeyChar 'k') =
+  portal .= (ViewInventory $ prev inv) :| ps
 
-processUserInput' p@(MainScreen:_) (KeyChar 'x') = do
+processUserInput' (MainScreen :| _) (KeyChar 'x') = do
   playerPos <- position <@> playerUUID
-  portal .= ExamineTiles playerPos : p
+  portal %= NE.cons (ExamineTiles playerPos)
 
-processUserInput' (ExamineTiles _ : ps) (KeyChar 'x') = portal .= ps
+processUserInput' (ExamineTiles _ :| ps) (KeyChar 'x') =
+    case ps of
+      [] -> debug "Port stack empty after leaving ExamineTiles screen!"
+      p:pss -> portal .= p :| pss
 
-processUserInput' (ExamineTiles pos : ps) (KeyChar 'h') =
-  case movePosDir (Cardinal West) pos of
-    Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return ()
+processUserInput' (ExamineTiles pos :| ps) (KeyChar 'h') =
+    whenJust (movePosDir (Cardinal West) pos) $
+        \newPos -> portal .= ExamineTiles newPos :| ps
 
-processUserInput' (ExamineTiles pos : ps) (KeyChar 'j') =
-  case movePosDir (Cardinal South) pos of
-    Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return ()
+processUserInput' (ExamineTiles pos :| ps) (KeyChar 'j') =
+    whenJust (movePosDir (Cardinal South) pos) $
+        \newPos -> portal .= ExamineTiles newPos :| ps
 
-processUserInput' (ExamineTiles pos : ps) (KeyChar 'k') =
-  case movePosDir (Cardinal North) pos of
-    Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return ()
+processUserInput' (ExamineTiles pos :| ps) (KeyChar 'k') =
+    whenJust (movePosDir (Cardinal North) pos) $
+        \newPos -> portal .= ExamineTiles newPos :| ps
 
-processUserInput' (ExamineTiles pos : ps) (KeyChar 'l') =
-  case movePosDir (Cardinal East) pos of
-    Just newPos -> portal .= ExamineTiles newPos : ps
-    Nothing -> return ()
+processUserInput' (ExamineTiles pos :| ps) (KeyChar 'l') =
+    whenJust (movePosDir (Cardinal East) pos) $
+        \newPos -> portal .= ExamineTiles newPos :| ps
 
 processUserInput' _ _ = return ()
 
@@ -182,7 +183,7 @@ processUserInput' _ _ = return ()
 updateGlyphMap :: Game ()
 updateGlyphMap =
   use portal >>= \case
-    MainScreen : _ -> do
+    MainScreen :| _ -> do
         levelUUID <- level <@> playerUUID
         gm <- glyphMap <@> levelUUID
         updatedGlyphs <- rc getGlyphMapUpdates
@@ -239,7 +240,7 @@ processEvent (WeaponAttackAttemptEvent WeaponAttackAttemptEventData{..}) = do
 processEvent (WeaponAttackHitEvent WeaponAttackHitEventData{..}) = do
   rc (getEquippedWeapon weapAtkHitAttackerUUID) >>= \case
     --TODO: decide how to handle unarmed attacks
-    Nothing -> debug "no weapon"
+    Nothing -> return ()
     Just weaponUUID -> do
       chain <- damageChain <@> weaponUUID
       forM_ chain $ \damageData -> do
@@ -295,7 +296,7 @@ processEvent (OutgoingDamageEvent OutgoingDamageEventData{..}) = do
 
         when (fst (unwrap newHP) == 0) $
           if outDamDefenderUUID == playerUUID
-             then portal %= (DeathScreen "You died." :)
+             then portal %= NE.cons (DeathScreen "You died.")
              else eraseEntity outDamDefenderUUID
 
 processEvent (EntityDroppedItemEvent EntityDroppedItemEventData{..}) = do
