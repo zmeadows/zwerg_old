@@ -6,6 +6,8 @@ module Zwerg.Geometry
 
 import Zwerg.Prelude
 
+-------------------------------------------------------------------------------
+
 {-# INLINABLE circle #-}
 circle :: (Int, Int) -> Int -> [(Int, Int)]
 circle p0 r = circle' p0 (r, 0) 0 []
@@ -28,9 +30,11 @@ circle' (x0, y0) (x, y) err s =
   in if | x >= y -> circle' (x0, y0) (x', y') err' s'
         | otherwise -> s'
 
+-------------------------------------------------------------------------------
+
 {-# INLINABLE line #-}
 line :: (Int, Int) -> (Int, Int) -> [(Int, Int)]
-line p1 p2 = bla p1 p2
+line = bla
 
 -- | Bresenham's line algorithm.
 -- Includes the first point and goes through the second to infinity.
@@ -51,15 +55,17 @@ balancedWord p q eps
   | eps + p < q = 0 : balancedWord p q (eps + p)
   | otherwise = 1 : balancedWord p q (eps + p - q)
 
+-------------------------------------------------------------------------------
+
 squareSpiral :: Int -> [(Int,Int)]
 squareSpiral radius = go 1 radius [(radius,0)]
     where go :: Int -> Int -> [(Int,Int)] -> [(Int,Int)]
           go 2 1 sps@((1,1):_) = sps
           go 1 r sps@((x,1):_) = go 1 (r-1) ((x-1,0):sps)
-          go 0 r sps@((x,y):_) = if (y == r) then go 2 r ((x+1,y):sps) else go 0 r ((x,y+1):sps)
-          go 1 r sps@((x,y):_) = if (y == -r) then go 3 r ((x-1,y):sps) else go 1 r ((x,y-1):sps)
-          go 2 r sps@((x,y):_) = if (x == r) then go 1 r ((x,y+1):sps) else go 2 r ((x+1,y):sps)
-          go 3 r sps@((x,y):_) = if (x == -r) then go 0 r ((x,y-1):sps) else go 3 r ((x-1,y):sps)
+          go 0 r sps@((x,y):_) = if y == r then go 2 r ((x+1,y):sps) else go 0 r ((x,y+1):sps)
+          go 1 r sps@((x,y):_) = if y == -r then go 3 r ((x-1,y):sps) else go 1 r ((x,y-1):sps)
+          go 2 r sps@((x,y):_) = if x == r then go 1 r ((x,y+1):sps) else go 2 r ((x+1,y):sps)
+          go 3 r sps@((x,y):_) = if x == -r then go 0 r ((x,y-1):sps) else go 3 r ((x-1,y):sps)
           go _ _ _ = error "apparently impossible case encountered while building square spiral"
 
 -- diamondSpiral :: Int -> [(Int,Int)]

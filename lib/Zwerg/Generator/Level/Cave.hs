@@ -14,8 +14,6 @@ import Control.Monad.Primitive
 
 cave :: Generator
 cave = Generator caveHatch []
-    -- replicateM_ 5 $ goblin >>= putOnRandomEmptyTile testSquareLevelUUID
-    -- replicateM_ 4 $ sword >>= putOnRandomEmptyTile testSquareLevelUUID
 
 type CaveCellType = Int
 
@@ -25,14 +23,14 @@ open = 0
 
 buildRandomStartCells :: MonadCompReadRand (GridMap CaveCellType)
 buildRandomStartCells = zBuildM $ const $ do
-    r <- (getRandomR (0.0, 1.0) :: MonadCompReadRand (Double))
+    r <- getRandomR (0.0, 1.0) :: MonadCompReadRand Double
     if r > 0.55
        then return blocked
        else return open
 
 caveHatch :: EntityHatcher
 caveHatch = MkEntityHatcher $ do
-    q <- IV.convert <$> unwrap <$> rcr buildRandomStartCells
+    q <- IV.convert . unwrap <$> rcr buildRandomStartCells
     let qs = runST $ automate q
 
     testSquareLevelUUID <- generateSkeleton Level
@@ -40,7 +38,7 @@ caveHatch = MkEntityHatcher $ do
     testSquareTiles <- tileMap <@> testSquareLevelUUID
 
     zTraverseWithKey_ testSquareTiles $ \pos tileUUID -> do
-        let isWallTile = (qs IV.! (to1DIndex pos)) == blocked
+        let isWallTile = (qs IV.! to1DIndex pos) == blocked
             (<.-) :: Component a -> a -> MonadCompState ()
             (<.-) = setComp tileUUID
         if isWallTile
@@ -48,14 +46,14 @@ caveHatch = MkEntityHatcher $ do
             tileType      <.- Wall
             blocksPassage <.- True
             blocksVision  <.- True
-            glyph         <.- (Glyph 'X' $ CellColor white $ Just darkslateblue)
+            glyph         <.- Glyph 'X' (CellColor white $ Just darkslateblue)
             name          <.- "Wall tile in the test level"
             description   <.- "It is a wall."
           else do
             tileType      <.- Floor
             blocksPassage <.- False
             blocksVision  <.- False
-            glyph         <.- (Glyph '·' $ CellColor white $ Just darkslateblue)
+            glyph         <.- Glyph '·' (CellColor white $ Just darkslateblue)
             name          <.- "Floor tile in the test level"
             description   <.- "It is a floor."
 
@@ -64,7 +62,7 @@ caveHatch = MkEntityHatcher $ do
 
 --FIXME: replace weird type signatures with just ST?
 
-automate :: (HasCallStack, PrimMonad m) => IV.Vector CaveCellType -> m (IV.Vector CaveCellType)
+automate :: HasCallStack => IV.Vector CaveCellType -> ST s (IV.Vector CaveCellType)
 automate v = do
     blockVec <- IV.unsafeThaw v
     --FIXME: use a fold, dummy
@@ -75,13 +73,13 @@ automate v = do
     blockVec''''' <- iterateCaveFormation blockVec''''
     IV.unsafeFreeze blockVec'''''
 
-isCellBlocked :: (HasCallStack, PrimMonad m) => MV.MVector (PrimState m) CaveCellType -> Int -> m Bool
+isCellBlocked :: HasCallStack => MV.MVector (PrimState (ST s)) CaveCellType -> Int -> ST s Bool
 isCellBlocked mv i =
     if i < 0 || i >= MV.length mv
        then return True
        else (== blocked) <$> MV.read mv i
 
-countBlockedNeighbors :: (HasCallStack, PrimMonad m) => MV.MVector (PrimState m) CaveCellType -> Int -> m Int
+countBlockedNeighbors :: HasCallStack => MV.MVector (PrimState (ST s)) CaveCellType -> Int -> ST s Int
 countBlockedNeighbors mv i =
     --FIXME: just do mutable STRef style
     length <$> filterM (isCellBlocked mv)
@@ -93,18 +91,17 @@ countBlockedNeighbors mv i =
               , i+mapWidthINT-1
               , i-mapWidthINT-1 ]
 
-iterateCaveFormation :: (HasCallStack, PrimMonad m) => MV.MVector (PrimState m) CaveCellType
-                       -> m (MV.MVector (PrimState m) CaveCellType)
+iterateCaveFormation :: HasCallStack
+                     => MV.MVector (PrimState (ST s)) CaveCellType
+                     -> ST s (MV.MVector (PrimState (ST s)) CaveCellType)
 iterateCaveFormation mv = do
     --FIXME: keep edges walled off
     nextIterVec <- MV.replicate (MV.length mv) open
-    forM_ [0..(MV.length mv) - 1] $ \i -> do
+    forM_ [0 .. MV.length mv - 1] $ \i -> do
         numNeighbors <- countBlockedNeighbors mv i
-        if (numNeighbors >= 5)
-           then do
-               MV.unsafeWrite nextIterVec i blocked
-           else do
-               MV.unsafeWrite nextIterVec i open
+        if numNeighbors >= 5
+           then MV.unsafeWrite nextIterVec i blocked
+           else MV.unsafeWrite nextIterVec i open
     return nextIterVec
 
 

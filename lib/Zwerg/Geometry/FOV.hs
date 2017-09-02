@@ -19,7 +19,7 @@ getFOV = getFOVLazy
 
 getFOVLazy :: Position -> Int -> BlockedMap -> [Position]
 getFOVLazy pos fov _ = [ unsafeWrap (x,y) | x <- [minX..maxX], y <- [minY..maxY], inPlayerSightRange (x,y) ]
-    where inPlayerSightRange (a,b) = (round $ distance Euclidean pos (unsafeWrap (a,b))) < fov
+    where inPlayerSightRange (a,b) = round (distance Euclidean pos (unsafeWrap (a,b))) < fov
           (posX,posY) = unwrap pos
           minX = max 0 (posX - fov)
           minY = max 0 (posY - fov)
@@ -28,13 +28,13 @@ getFOVLazy pos fov _ = [ unsafeWrap (x,y) | x <- [minX..maxX], y <- [minY..maxY]
 
 pureGetFOVRays :: Position -> Int -> BlockedMap -> [Position]
 pureGetFOVRays pos fov blockedMap = visiblePos
-    where fovEdges = circle (unwrap pos) (fov) ++ circle (unwrap pos) (fov+1)
+    where fovEdges = circle (unwrap pos) fov ++ circle (unwrap pos) (fov+1)
           linesToFovEdges = map (tail . line (unwrap pos)) fovEdges
-          notBlocked is = case (wrap is) of
-                            Just p -> (not $ zAt blockedMap p) && (round (distance Euclidean pos p) < fov)
+          notBlocked is = case wrap is of
+                            Just p -> not (zAt blockedMap p) && (round (distance Euclidean pos p) < fov)
                             Nothing -> False
           unbrokenLines = map (takeUntil notBlocked) linesToFovEdges
-          visiblePos = pos : (map unsafeWrap $ L.nub $ L.concat unbrokenLines)
+          visiblePos = pos : map unsafeWrap (L.nub $ L.concat unbrokenLines)
 
 --TODO: move RelativePosition to Data.Position
 type RelativePosition = (Int,Int)
@@ -68,7 +68,7 @@ getFOVSpiral' playerPos@(x0,y0) playerViewRange ((x,y):remainingSpiral) sq bm ps
               Nothing -> getFOVSpiral' playerPos playerViewRange remainingSpiral sq bm ps
               Just absPos ->
                   let alreadyBlocked = not $ null $ IM.search (shadowAngle (x,y) Nothing) sq
-                      newlyBlocked = (not alreadyBlocked) && (zAt bm absPos || not inView)
+                      newlyBlocked = not alreadyBlocked && (zAt bm absPos || not inView)
                   in if newlyBlocked
                         then getFOVSpiral' playerPos playerViewRange remainingSpiral sq' bm (absPos:ps)
                         else if alreadyBlocked

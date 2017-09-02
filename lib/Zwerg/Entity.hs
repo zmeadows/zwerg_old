@@ -144,8 +144,7 @@ transferOccupant transfereeUUID oldContainerUUID newContainerUUID =
           occupiedType <- entityType <@> oldContainerUUID'
           if occupiedType `notElem` [Tile, Container]
             then debug "Attempted to remove an occupant from an entity that doesn't support it"
-            else do
-              modComp oldContainerUUID' occupants $ zDelete transfereeUUID
+            else modComp oldContainerUUID' occupants $ zDelete transfereeUUID
 
 --FIXME: this is not at all complete
 eraseEntity :: UUID -> MonadCompState ()

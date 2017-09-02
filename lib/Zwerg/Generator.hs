@@ -34,8 +34,8 @@ import Zwerg.Util           as EXPORTED
 
 import Control.Monad.Random as EXPORTED (MonadRandom, getRandomR)
 
-data EntityHatcher = MkEntityHatcher (MonadCompStateRand UUID)
-data EntityAssembler = MkEntityAssembler (UUID -> MonadCompStateRand ())
+newtype EntityHatcher = MkEntityHatcher (MonadCompStateRand UUID)
+newtype EntityAssembler = MkEntityAssembler (UUID -> MonadCompStateRand ())
 data Generator = Generator EntityHatcher [EntityAssembler]
 
 (<+) :: Generator -> EntityAssembler -> Generator
@@ -57,8 +57,8 @@ generate (Generator (MkEntityHatcher hatch) assemblers) = do
     return newEntityUUID
 
 putOnRandomEmptyTile :: UUID -> EntityAssembler
-putOnRandomEmptyTile levelUUID = MkEntityAssembler $ \entityUUID -> do
-    (rcr $ getRandomEmptyTileR levelUUID) >>= \case
+putOnRandomEmptyTile levelUUID = MkEntityAssembler $ \entityUUID ->
+    rcr (getRandomEmptyTileR levelUUID) >>= \case
         Just tileUUID -> do
             addComp entityUUID level levelUUID
             transferOccupant entityUUID Nothing tileUUID
@@ -78,7 +78,7 @@ assignUniformRandomStats ss = MkEntityAssembler $ \entityUUID ->
 --TODO: check if slot is already filled and add to inventory if it is
 generateAndEquip :: Generator -> EntityAssembler
 generateAndEquip itemGen = MkEntityAssembler $ \wearerUUID ->
-    generate itemGen >>= (flip equipItem) wearerUUID
+    generate itemGen >>= flip equipItem wearerUUID
 
 generateAndHold :: Generator -> EntityAssembler
 generateAndHold itemGen = MkEntityAssembler $ \wearerUUID ->

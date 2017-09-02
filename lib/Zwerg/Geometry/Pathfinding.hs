@@ -23,9 +23,9 @@ pushPath dir (MkPath p) = MkPath $ p |> dir
 
 popPath :: Path -> Path
 popPath (MkPath p) =
-    case (S.viewr p) of
+    case S.viewr p of
       EmptyR -> emptyPath
-      (oldpath :> _) -> MkPath oldpath
+      oldpath :> _ -> MkPath oldpath
 
 -------------------------------------------------------------------------------
 
@@ -58,10 +58,9 @@ getValidMoveDirPairs :: PathFinder [(Position,Direction)]
 getValidMoveDirPairs = do
     blockFunc <- view blocked
     let isGoodPos (p,d) =
-            case (movePosDir d p) of
-              Just p' -> if (not $ blockFunc p')
-                            then Just (p',d)
-                            else Nothing
+            case movePosDir d p of
+              Just p' ->
+                  if not $ blockFunc p' then Just (p',d) else Nothing
               Nothing -> Nothing
     cp <- use currentPosition
     return $ mapMaybe isGoodPos $ zip (repeat cp) cardinalDirections
@@ -95,6 +94,6 @@ buildPath = do
 extractPath :: PathFinder (Maybe Path)
 extractPath = do
     bp <- use bestPath
-    if (not $ isEmptyPath bp)
+    if not $ isEmptyPath bp
        then return $ Just bp
        else return Nothing

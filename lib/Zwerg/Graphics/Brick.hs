@@ -29,7 +29,7 @@ handleEventZwerg :: HasCallStack
                  -> BT.EventM () (BT.Next ZwergState)
 handleEventZwerg zs (BT.VtyEvent ev) = do
   liftIO $ hFlush stderr
-  liftIO $ performGC
+  liftIO performGC
   let eventVTYtoZwergInput :: VTY.Event -> Maybe KeyCode
       eventVTYtoZwergInput (VTY.EvKey VTY.KEsc []) = Just Escape
       eventVTYtoZwergInput (VTY.EvKey (VTY.KChar ch) []) = Just $ KeyChar ch
@@ -45,8 +45,7 @@ handleEventZwerg zs (BT.VtyEvent ev) = do
       if badPlayerInput
         then BM.continue
              $ set (gameState . eventQueue) zDefault
-             $ set (gameState . userLog) (view (gameState . userLog) zs')
-             $ zs
+             $ set (gameState . userLog) (view (gameState . userLog) zs') zs
         else BM.continue zs'
     _ -> BM.continue zs
 

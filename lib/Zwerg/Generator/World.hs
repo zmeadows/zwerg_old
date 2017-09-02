@@ -14,8 +14,8 @@ world :: Generator
 world = Generator worldHatch []
 
 stackLevel :: Int -> EntityAssembler
-stackLevel i = MkEntityAssembler $ \levelUUID -> do
-    case (wrap i) of
+stackLevel i = MkEntityAssembler $ \levelUUID ->
+    case wrap i of
       Just z -> setComp levelUUID zLevel z
       Nothing -> debug "Attempted to stack a level with an improper zLevel!"
 

@@ -25,7 +25,7 @@ whenJustM mg f = maybe (return ()) f =<< mg
 
 {-# INLINABLE whenM #-}
 whenM :: Monad m => m Bool -> m () -> m ()
-whenM mg f = mg >>= (flip when) f
+whenM mg f = mg >>= flip when f
 
 {-# INLINABLE inM2 #-}
 inM2 :: Monad m => (a -> m b) -> (a,a) -> m (b,b)
@@ -43,7 +43,7 @@ takeWhileM1 :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
 takeWhileM1 _ [] = return []
 takeWhileM1 p (x:xs) = do
   q <- p x
-  if q then liftM ((:) x) (takeWhileM1 p xs)
+  if q then fmap ((:) x) (takeWhileM1 p xs)
        else return [x]
 
 leftPad :: Int -> Text -> Text

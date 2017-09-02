@@ -40,6 +40,6 @@ getPrimaryStationaryOccupant occupiedUUID =
         [] -> return occupiedUUID
         occs -> do
             sortedOccs <- sortByM compareEntitiesForVisibility occs
-            firstM (\uuid -> isTypicallyStationary <$> entityType <~> uuid) sortedOccs >>= \case
+            firstM (fmap isTypicallyStationary . (<~>) entityType) sortedOccs >>= \case
                 Nothing -> return occupiedUUID
                 Just x -> return x
